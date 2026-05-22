@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------- Abbode brand fonts ---------- */
+@font-face {
+  font-family: "Abbode New York";
+  src: url("/fonts/Abbode-NewYork-Font-1_0.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Abbode Paris";
+  src: url("/fonts/Abbode-Paris-Font-1_0.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Abbode Berlin";
+  src: url("/fonts/Abbode-Berlin-Font-1_0.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    /* Brand palette */
+    --porcelain:  #FFFCF7;
+    --parchment:  #F5F0EB;
+    --pink:       #F2B2AE;
+    --pink-soft:  #FBE3E1;
+    --berry:      #BB3767;
+    --cherry:     #972945;
+    --plum:       #671E30;
+    --espresso:   #432222;
+    --sage:       #D1C68F;
+    --olive:      #7D6E35;
+    --chartreuse: #E7E57E;
+    --lilac:      #C398B5;
+
+    /* Semantic tokens (used throughout the app) */
+    --color-bg:     var(--porcelain);
+    --color-surface: #FFFFFF;
+    --color-ink:    var(--espresso);
+    --color-border: #E6DDD2;
+  }
+
+  html, body {
+    background-color: var(--color-bg);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    /* Berlin is the brand body font */
+    font-family: "Abbode Berlin", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  ::selection {
+    background-color: var(--plum);
+    color: var(--porcelain);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Warm-paper background for hero / sign-in */
+  .bg-paper {
+    background-color: var(--parchment);
+    background-image:
+      radial-gradient(circle at 18% 25%, rgba(242, 178, 174, 0.18) 0%, transparent 55%),
+      radial-gradient(circle at 82% 75%, rgba(209, 198, 143, 0.14) 0%, transparent 55%);
+  }
+
+  /* System-font utility for compact UI elements (buttons, labels, badges) */
+  .font-ui {
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  .focus-ring:focus-visible {
+    outline: 2px solid var(--berry);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* ---------- Animations ---------- */
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.animate-slide-up { animation: slideUp 240ms cubic-bezier(0.16, 1, 0.3, 1); }
+.animate-fade-in  { animation: fadeIn 180ms ease-out; }
