@@ -234,9 +234,12 @@ function Badge({
 }
 
 function ThreadColorChips({ slots }: { slots: number[] }) {
+  // Display in numerical order regardless of how they were entered in the sheet.
+  // .slice() first so we don't mutate the array the parent owns.
+  const sortedSlots = slots.slice().sort((a, b) => a - b);
   return (
     <ul className="flex flex-wrap gap-2" aria-label="Thread colors used in this design">
-      {slots.map((slot, idx) => {
+      {sortedSlots.map((slot, idx) => {
         const thread = getThreadBySlot(slot);
         if (!thread) {
           // Unknown slot — render a neutral chip with the number so the user
@@ -244,13 +247,14 @@ function ThreadColorChips({ slots }: { slots: number[] }) {
           return (
             <li
               key={`unknown-${slot}-${idx}`}
-              className="flex items-center gap-2 rounded-full border border-dashed border-ink-muted bg-white px-2.5 py-1"
-              title={`Slot ${slot}: not in palette`}
+              aria-label={`Slot ${slot}, not in palette`}
+              className="group relative flex items-center gap-2 rounded-full border border-dashed border-ink-muted bg-white px-2.5 py-1"
             >
               <span className="h-4 w-4 rounded-full border border-parchment bg-parchment" aria-hidden />
               <span className="font-ui text-xs font-semibold text-ink-muted">
                 {slot}
               </span>
+              <ChipTooltip>Not in palette</ChipTooltip>
             </li>
           );
         }
@@ -258,8 +262,8 @@ function ThreadColorChips({ slots }: { slots: number[] }) {
         return (
           <li
             key={`${slot}-${idx}`}
-            className="flex items-center gap-2 rounded-full border border-parchment bg-white px-2.5 py-1 transition-shadow hover:shadow-sm"
-            title={`Slot ${thread.slot} — ${thread.name} (Madeira ${thread.code})`}
+            aria-label={`Slot ${thread.slot}, ${thread.name}, Madeira ${thread.code}`}
+            className="group relative flex items-center gap-2 rounded-full border border-parchment bg-white px-2.5 py-1 transition-shadow hover:shadow-sm"
           >
             <span
               className="h-4 w-4 rounded-full ring-1 ring-black/10"
@@ -272,10 +276,22 @@ function ThreadColorChips({ slots }: { slots: number[] }) {
             <span className="font-ui text-xs text-ink-soft">
               {thread.name}
             </span>
+            <ChipTooltip>Madeira {thread.code}</ChipTooltip>
           </li>
         );
       })}
     </ul>
+  );
+}
+
+function ChipTooltip({ children }: { children: React.ReactNode }) {
+  return (
+    <span
+      role="tooltip"
+      className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-espresso px-2 py-1 font-ui text-[10px] font-semibold tracking-wide text-porcelain opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100"
+    >
+      {children}
+    </span>
   );
 }
 
