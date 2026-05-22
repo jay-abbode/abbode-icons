@@ -1,6 +1,37 @@
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
+import { getIconCatalog } from "@/lib/sheets";
+import { THREAD_PALETTE, rgbToHex } from "@/lib/threadPalette";
 import SearchBar from "./SearchBar";
+import ColorDataMenu, { type ColorStat } from "./ColorDataMenu";
+
+/**
+ * Tally how many icons in the catalog use each thread spool, then sort
+ * descending so most-used appears first. Returns an entry for every spool
+ * in the palette — including unused ones with count 0.
+ */
+async function loadColorStats(): Promise<ColorStat[]> {
+  try {
+    const catalog = await getIconCatalog();
+    const counts = new Map<number, number>();
+    for (const icon of catalog.icons) {
+      for (const slot of icon.threadSlots) {
+        counts.set(slot, (counts.get(slot) || 0) + 1);
+      }
+    }
+    return THREAD_PALETTE.map((thread) => ({
+      slot: thread.slot,
+      name: thread.name,
+      code: thread.code,
+      hex: rgbToHex(thread.rgb),
+      count: counts.get(thread.slot) || 0,
+    })).sort((a, b) => b.count - a.count);
+  } catch {
+    // If the sheet read fails, show an empty dropdown rather than breaking
+    // the whole header.
+    return [];
+  }
+}
 
 export default async function Header({
   initialQuery = "",
@@ -11,6 +42,9 @@ export default async function Header({
 }) {
   const session = await auth();
   const user = session?.user;
+  // Only load stats if the user is signed in — anonymous /login views don't
+  // need them, and loadColorStats() hits the Sheets API.
+  const colorStats: ColorStat[] = user ? await loadColorStats() : [];
 
   return (
     <header className="sticky top-0 z-30 border-b border-parchment bg-porcelain/85 backdrop-blur-md">
@@ -47,7 +81,10 @@ export default async function Header({
           </Link>
 
           {user && (
-            <UserMenu name={user.name} email={user.email} image={user.image} />
+            <>
+              <UserMenu name={user.name} email={user.email} image={user.image} />
+              <ColorDataMenu stats={colorStats} />
+            </>
           )}
         </nav>
       </div>

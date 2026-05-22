@@ -89,7 +89,7 @@ export default async function BrowsePage({
         </div>
 
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-[220px_1fr]">
-          <aside className="lg:sticky lg:top-24 lg:self-start">
+          <aside className="lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-2">
             <FilterControls
               categories={catalog.categories}
               statuses={allStatuses}
