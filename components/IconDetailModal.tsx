@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Icon, IconSize } from "@/lib/sheets";
 
 interface Props {
@@ -83,12 +83,15 @@ export default function IconDetailModal({ icon, onClose }: Props) {
             {icon.pngFileId && (
               <section>
                 <SectionLabel>Preview image</SectionLabel>
-                <DownloadButton
-                  fileId={icon.pngFileId}
-                  filename={`${icon.name}.png`}
-                  format="PNG"
-                  primary
-                />
+                <div className="flex flex-wrap gap-2">
+                  <DownloadButton
+                    fileId={icon.pngFileId}
+                    filename={`${icon.name}.png`}
+                    format="PNG"
+                    primary
+                  />
+                  <CopyImageButton fileId={icon.pngFileId} />
+                </div>
               </section>
             )}
 
@@ -227,6 +230,83 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
     <h3 className="font-ui mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-olive">
       {children}
     </h3>
+  );
+}
+
+function CopyImageButton({ fileId }: { fileId: string }) {
+  const [status, setStatus] = useState<"idle" | "copying" | "copied" | "error">(
+    "idle"
+  );
+
+  async function handleCopy() {
+    setStatus("copying");
+    try {
+      // Pass a Promise to ClipboardItem rather than awaiting first — Safari
+      // requires the clipboard write to start synchronously in response to
+      // the click, otherwise it rejects with a NotAllowedError.
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "image/png": fetch(`/api/image/${fileId}`).then((r) => {
+            if (!r.ok) throw new Error(`Image fetch failed: ${r.status}`);
+            return r.blob();
+          }),
+        }),
+      ]);
+      setStatus("copied");
+      window.setTimeout(() => setStatus("idle"), 1800);
+    } catch (err) {
+      console.error("Copy to clipboard failed:", err);
+      setStatus("error");
+      window.setTimeout(() => setStatus("idle"), 2200);
+    }
+  }
+
+  const isCopied = status === "copied";
+  const isError = status === "error";
+  const isBusy = status === "copying";
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      disabled={isBusy}
+      aria-live="polite"
+      className={`font-ui inline-flex items-center justify-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-semibold uppercase tracking-wider transition-all focus-ring disabled:cursor-wait disabled:opacity-60 ${
+        isCopied
+          ? "border-olive bg-olive/10 text-olive"
+          : isError
+          ? "border-cherry bg-pink-soft text-cherry"
+          : "border-parchment bg-white text-espresso hover:border-pink hover:bg-pink-soft"
+      }`}
+    >
+      {isCopied ? <CheckIcon /> : isError ? <XIcon /> : <CopyIcon />}
+      {isCopied ? "Copied" : isError ? "Failed" : "Copy"}
+    </button>
+  );
+}
+
+function CopyIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="5.5" y="5.5" width="8" height="8" rx="1.2" />
+      <path d="M10.5 5.5V3.7c0-.66-.54-1.2-1.2-1.2H3.7c-.66 0-1.2.54-1.2 1.2v5.6c0 .66.54 1.2 1.2 1.2H5.5" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="m3 8.5 3.2 3.2L13 4.5" />
+    </svg>
+  );
+}
+
+function XIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden>
+      <path d="m4 4 8 8M12 4l-8 8" />
+    </svg>
   );
 }
 
