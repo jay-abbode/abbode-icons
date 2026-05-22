@@ -1,0 +1,11 @@
+slug,name,category,color_count,slots,colors,hex_codes
+8-ball,8 Ball,Hobby,2,"36, 35",36 Black (1800); 35 White (1801),#343838; #E2E4ED
+abbode-bow,Abbode Bow,Most Popular,2,"27, 0",27 Dusty Pink (1917); 0 Burgundy (1567),#C27989; #6E434C
+ace-of-hearts,Ace of Hearts,Hobby,2,"35, 1",35 White (1801); 1 Dark Red (1747),#EEEFF6; #A3373D
+adderall,Adderall,Apothecary,3,"17, 21, 19",17 Cool Periwinkle (1675); 21 Purple (1832); 19 Dark Royal (1843),#B8ECFA; #6B9AC8; #1F426D
+airplane,Airplane,Travel,2,"32, 20",32 Silver (1811); 20 Navy (1643),#C5CBCE; #37434D
+anchor,Anchor,Beach,2,"32, 34",32 Silver (1811); 34 Charcoal (1539),#C2CBCC; #545759
+aperol-bottle,Aperol Bottle,Drinks,8,"5, 19, 7, 4, 20, 35, 1, 32",5 Orange (1965); 19 Dark Royal (1843); 7 Dark Yellow (1725); 4 Rust Orange (1621); 20 Navy (1643); 35 White (1801); 1 Dark Red (1747); 32 Silver (1811),#DD6B11; #315585; #FA942F; #A94A04; #102949; #F0F2F8; #7E3A07; #AAAFC0
+aperol-spritz,Aperol Spritz,Drinks,5,"32, 5, 4, 7, 29",32 Silver (1811); 5 Orange (1965); 4 Rust Orange (1621); 7 Dark Yellow (1725); 29 Tan (1855),#BCC6C7; #E36F13; #B35C2A; #FA9630; #9E7F6C
+apple,Apple,Food,6,"1, 0, 10, 29, 12, 36",1 Dark Red (1747); 0 Burgundy (1567); 10 Olive Green (1769); 29 Tan (1855); 12 Dark Green (1902); 36 Black (1800),#9A2E35; #6D181D; #617933; #AA936E; #3A4B18; #4F1518
+apple-core,Apple Core,Food,6,"35, 1, 10, 30, 0, 31",35 White (1801); 1 Dark Red (1747); 10 Olive Green (1769); 30 Milk Chocolate (1657); 0 Burgundy (1567); 31 Dark Chocolate (1659),#EAEBF1; #963036; #5E7532; #83624A; #641C20; #494C4C

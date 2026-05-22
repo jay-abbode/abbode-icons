@@ -1,4 +1,5 @@
 import { getSheetsClient } from "./google";
+import { parseThreadSlots } from "./threadPalette";
 
 /**
  * Public shape of a single icon, as the rest of the app sees it.
@@ -25,6 +26,12 @@ export interface Icon {
   oldName: string | null;
   /** Drive file ID for the PNG, or null. */
   pngFileId: string | null;
+  /**
+   * Machine slot numbers for the Madeira spools used in this design,
+   * in the order entered in the sheet (typically most-prominent first).
+   * Empty array if the "Thread Colors" cell is blank for this row.
+   */
+  threadSlots: number[];
   sizes: {
     small: IconSize;
     medium: IconSize;
@@ -79,7 +86,7 @@ async function fetchCatalogFromSheet(): Promise<IconCatalog> {
   // hyperlinks attached to each cell, not just the display text.
   const response = await sheets.spreadsheets.get({
     spreadsheetId,
-    ranges: [`${tabName}!A1:Q5000`],
+    ranges: [`${tabName}!A1:Z5000`],
     fields: "sheets.data.rowData.values(formattedValue,hyperlink,userEnteredValue)",
   });
 
@@ -124,6 +131,7 @@ async function fetchCatalogFromSheet(): Promise<IconCatalog> {
       notes: getCellText(row, col.notes) || null,
       oldName: getCellText(row, col.oldName) || null,
       pngFileId: extractDriveFileId(getCellHyperlink(row, col.png)),
+      threadSlots: parseThreadSlots(getCellText(row, col.threadColors)),
       sizes: {
         small: {
           inches: normalizeSizeValue(getCellText(row, col.smallInches)),
@@ -174,6 +182,7 @@ interface ColumnIndex {
   notes: number;
   oldName: number;
   png: number;
+  threadColors: number;
   smallDst: number;
   mediumDst: number;
   largeDst: number;
@@ -221,6 +230,7 @@ function buildColumnIndex(headers: string[]): ColumnIndex {
     notes: findHeader(["NOTES", "Notes"]),
     oldName: findHeader(["OLD NAME", "Old Name"]),
     png: findHeader(["PNG"]),
+    threadColors: findHeader(["Thread Colors", "THREAD COLORS", "Thread Color", "Threads"]),
     smallDst: findHeader(["SMALL DST", "Small DST"]),
     mediumDst: findHeader(["MEDIUM DST", "Medium DST"]),
     largeDst: findHeader(["LARGE DST", "Large DST"]),

@@ -1,8 +1,8 @@
 # Thread Color Extraction Script
 
-Extracts dominant thread colors from every PNG in the icon catalog, attempts to
-match each color against a Madeira Polyneon color database, and writes results
-to CSV (for pasting into the sheet) and JSON (for programmatic use).
+Extracts dominant thread colors from every PNG in the icon catalog and matches
+each color to the nearest spool in your active Madeira palette. Outputs CSV and
+JSON listing, per icon, the machine slot numbers you'd thread up.
 
 ## What you'll need
 
@@ -11,8 +11,8 @@ to CSV (for pasting into the sheet) and JSON (for programmatic use).
   first page, **check the box that says "Add python.exe to PATH"** before
   clicking Install.
 - The `google-credentials.json` file in your project root (you already have this).
-- A few minutes for first install, ~5–10 minutes for the script to run on 699 icons
-  (subsequent runs are much faster because PNGs are cached locally).
+- A few minutes for first install, ~5–10 minutes for the script to run on 699
+  icons (subsequent runs are much faster because PNGs are cached locally).
 
 ## One-time setup
 
@@ -27,9 +27,6 @@ Install the Python dependencies:
 ```cmd
 pip install -r requirements.txt
 ```
-
-This installs Pillow (image library), scikit-learn (clustering), the Google
-API client, and a couple small helpers. Takes 1–2 minutes the first time.
 
 ## Running
 
@@ -48,76 +45,98 @@ python extract_colors.py
 
 Output goes to:
 
-- `output\thread_colors.csv` — one row per icon, columns include a `colors`
-  cell with all matched threads (e.g. `1633 Royal Blue (#1C409E); 1701 Soft White (#FCFAEE)`).
-  Paste that column into a new "Thread Colors" column in your MASTER tab.
-- `output\thread_colors.json` — the same data but with per-color shares and RGB,
-  useful if we later want to display proportional swatches in the app.
+- `output\thread_colors.csv` — one row per icon. Columns:
+  - **slots** — comma-separated machine slot numbers (e.g. `20, 35, 8`). This
+    is the "what spools do I load" answer at a glance.
+  - **colors** — full readable list (e.g. `20 Navy (1643); 35 White (1801); 8 Yellow (1735)`).
+  - **hex_codes** — the raw extracted hex codes, useful to spot when the
+    algorithm chose a poor palette match.
+- `output\thread_colors.json` — same data with per-color shares (proportion of
+  the design each color covers), useful if we later want to display weighted
+  swatches in the app.
 
 PNGs are cached to `.png_cache\` so re-runs skip the download step entirely.
 
-## Reading the output
+## How the extraction handles thread-rendered PNGs
 
-For each icon, the script gives up to 8 thread colors, sorted by how much of the
-design they cover. The label format is:
+Your PNGs aren't flat color — they show a simulated thread display with stitch
+texture, sheen, and shading. A single thread color in the render produces many
+pixel values (highlight + midtone + shadow). The script handles this with three
+specific steps:
 
-```
-1633 Royal Blue (#1C409E)   ← matched to Madeira
-#8A5C32                      ← no good Madeira match within tolerance
-```
+1. **Median filter pre-processing.** Before clustering, a 3×3 median filter
+   smooths out high-frequency stitch texture while preserving sharp color
+   boundaries between threads. This is what averages "sections" of the same
+   thread together — exactly what you described needing.
 
-Both formats can appear in the same row. When you see a raw hex code, it means
-the algorithm couldn't find a Madeira within ~60 RGB units of the extracted
-color — usually because the color isn't in the starter database yet, not
-because the extraction was bad.
+2. **Clustering and merging in CIELAB.** The script clusters pixels in CIELAB
+   color space (perceptually meaningful) and merges close clusters using a
+   ΔE-style distance that **down-weights lightness**. This means the same
+   thread color at different brightness levels (highlight vs shadow) lands in
+   the same merged cluster, while different threads of similar brightness stay
+   separate.
 
-## Extending the Madeira database
+3. **Palette-mapped deduplication.** As a final pass, any clusters that mapped
+   to the same machine spool are combined into a single output row. So if the
+   clustering imperfectly split a thread into "main" and "deepest shadow"
+   variants but both matched to slot 20 Navy, you get one row for slot 20
+   listing the combined share, not two duplicate Navy rows.
 
-`madeira_polyneon.json` ships with ~80 of the most commonly used Polyneon colors.
-The RGB values are approximations based on color names and Madeira's published
-shade cards — they're not pulled from spectrometer measurements, so treat them
-as starting points.
+The result: large color regions and small details both surface in the output,
+and a single thread color appears once even with heavy texture in the render.
 
-To add or correct entries, edit the JSON file. Each entry needs:
+## Your palette
 
-```json
-{ "code": "1845", "name": "Slate Blue", "rgb": [88, 110, 142] }
-```
+The script matches against the 24 colors defined in `madeira_polyneon.json`.
+These are your active spool colors with their machine slot numbers (0-37, with
+gaps where you don't have a spool).
 
-If your business uses a specific subset of Madeira colors a lot, prioritize
-getting those right first. You can also remove rows from the JSON if a color
-isn't in your inventory — the matcher just won't suggest it.
+The matching is straightforward: for each extracted color, find the spool with
+the smallest RGB distance and report it. **No tolerance threshold** — every
+extracted color gets mapped to the nearest of your 24 spools. This is intentional:
+those 24 are the only colors you can actually embroider with, so "nearest" is
+always the right answer.
 
-To get authoritative RGB values, the best source is Madeira's official Polyneon
-shade card PDF (madeirausa.com → Resources → Color Charts). Many entries
-include Pantone cross-references, and Pantone values translate to RGB via
-official Pantone-to-RGB charts.
+When the algorithm picks an oddly-distant match (e.g. it pairs a sage tone with
+Silver because there's no sage in your palette), the extracted hex code in the
+CSV's `hex_codes` column lets you spot it and decide what to do.
 
-## Tuning
+## Tuning your palette colors
 
-The top of `extract_colors.py` has constants you can adjust if results aren't
-quite right:
+The RGB values in `madeira_polyneon.json` are my best-effort approximations
+from the color names — they're not pulled from a spectrometer or Madeira's
+official color card data. If a match is consistently wrong (e.g. your "Dusty
+Pink" extracts to something that doesn't look like dusty pink), edit the JSON.
 
-- `INITIAL_CLUSTERS` (default 12): how many candidate colors k-means extracts.
-  Raise to catch subtle colors; lower for blockier flat-color designs.
-- `MIN_SHARE` (default 0.02 = 2%): minimum portion of the design a color must
-  cover to be reported. Raise to drop incidental colors.
-- `MERGE_DISTANCE` (default 25): RGB distance below which two near-identical
-  colors get merged into one. Raise if you're getting duplicates like
-  "Royal Blue" and "Slightly Different Royal Blue."
-- `MADEIRA_MAX_DISTANCE` (default 60): if no Madeira color is within this RGB
-  distance, output a raw hex instead of a wrong match.
+To get more accurate RGB values, the best source is Madeira's official
+Polyneon shade card PDF (madeirausa.com → Resources → Color Charts). Update
+an entry's `rgb` array with the better values and re-run — the script will
+use the new values immediately. No need to re-download PNGs; the cache is
+reused.
+
+## Tuning the extraction algorithm
+
+The constants near the top of `extract_colors.py`:
+
+- `RESIZE_TO` (400): max image dimension in pixels. Higher preserves more
+  small details, lower runs faster.
+- `MEDIAN_FILTER_SIZE` (3): window for thread-texture smoothing. Raise to 5
+  if texture artifacts are still showing up; lower to 0 to disable (then add
+  back if you want).
+- `INITIAL_CLUSTERS` (16): how many candidate colors k-means extracts before
+  merging.
+- `MIN_SHARE` (0.005 = 0.5%): minimum portion of the design a color must
+  cover to appear in output. Raise to 0.01–0.02 if too many noise colors
+  appear; lower to 0.002 if small details are still being missed.
+- `LAB_MERGE_THRESHOLD` (8): ΔE distance below which two clusters are
+  treated as the same color and merged. Higher = more aggressive merging.
 
 ## Limitations to know about
 
-- The PNGs are *renders*, not ground truth. Anti-aliased edges produce
-  intermediate pixel colors that the algorithm tries to filter but doesn't
-  always catch perfectly.
+- The PNGs are *renders*, not ground truth. The median filter handles most
+  stitch texture, but very stylized renders (heavy gradients, strong shadows,
+  metallic effects) may still produce extra entries.
 - Two visually-near-identical thread colors will collapse to one in the output.
-- Highlights, shadows, or gradient effects in a render may register as extra
-  "colors" that aren't real threads. Watch for these in icons with lots of
-  shading.
-- The starter Madeira database is small. Expect ~20–30% of extracted colors to
-  fall back to hex codes until you flesh it out.
-- Re-running after editing `madeira_polyneon.json` re-uses the PNG cache but
-  re-does the matching, so it's fast.
+- Because your palette is small, designs with colors outside your range will
+  get assigned to whatever's numerically closest — not necessarily what
+  *looks* closest perceptually. Always sanity-check via the `hex_codes` column.

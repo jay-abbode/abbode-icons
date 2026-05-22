@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Icon, IconSize } from "@/lib/sheets";
+import { getThreadBySlot, rgbToHex } from "@/lib/threadPalette";
 
 interface Props {
   icon: Icon;
@@ -92,6 +93,13 @@ export default function IconDetailModal({ icon, onClose }: Props) {
                   />
                   <CopyImageButton fileId={icon.pngFileId} />
                 </div>
+              </section>
+            )}
+
+            {icon.threadSlots.length > 0 && (
+              <section>
+                <SectionLabel>Thread colors</SectionLabel>
+                <ThreadColorChips slots={icon.threadSlots} />
               </section>
             )}
 
@@ -222,6 +230,52 @@ function Badge({
     >
       {children}
     </span>
+  );
+}
+
+function ThreadColorChips({ slots }: { slots: number[] }) {
+  return (
+    <ul className="flex flex-wrap gap-2" aria-label="Thread colors used in this design">
+      {slots.map((slot, idx) => {
+        const thread = getThreadBySlot(slot);
+        if (!thread) {
+          // Unknown slot — render a neutral chip with the number so the user
+          // notices and can fix the sheet entry (or add a missing palette color).
+          return (
+            <li
+              key={`unknown-${slot}-${idx}`}
+              className="flex items-center gap-2 rounded-full border border-dashed border-ink-muted bg-white px-2.5 py-1"
+              title={`Slot ${slot}: not in palette`}
+            >
+              <span className="h-4 w-4 rounded-full border border-parchment bg-parchment" aria-hidden />
+              <span className="font-ui text-xs font-semibold text-ink-muted">
+                {slot}
+              </span>
+            </li>
+          );
+        }
+        const hex = rgbToHex(thread.rgb);
+        return (
+          <li
+            key={`${slot}-${idx}`}
+            className="flex items-center gap-2 rounded-full border border-parchment bg-white px-2.5 py-1 transition-shadow hover:shadow-sm"
+            title={`Slot ${thread.slot} — ${thread.name} (Madeira ${thread.code})`}
+          >
+            <span
+              className="h-4 w-4 rounded-full ring-1 ring-black/10"
+              style={{ backgroundColor: hex }}
+              aria-hidden
+            />
+            <span className="font-ui text-xs font-semibold text-espresso">
+              {thread.slot}
+            </span>
+            <span className="font-ui text-xs text-ink-soft">
+              {thread.name}
+            </span>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 

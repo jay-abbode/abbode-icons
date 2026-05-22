@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Optional
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 from sklearn.cluster import KMeans
 
 from google.oauth2 import service_account
@@ -58,12 +58,14 @@ DEFAULT_OUTPUT_DIR = SCRIPT_DIR / "output"
 SHEET_TAB = os.environ.get("GOOGLE_SHEET_TAB", "MASTER")
 
 # Tunables for the color extraction algorithm
-RESIZE_TO = 200          # px on the longer side; smaller = faster, less accurate
-INITIAL_CLUSTERS = 12    # k-means cluster count before filtering/merging
-MIN_SHARE = 0.02         # drop clusters representing < 2% of foreground
-MERGE_DISTANCE = 25      # RGB Euclidean distance below which to merge colors
-MAX_COLORS_OUT = 8       # cap final colors per icon
-MADEIRA_MAX_DISTANCE = 60  # if no Madeira within this RGB distance, leave unmatched
+RESIZE_TO = 400               # px on longer side — higher than before to preserve small details
+MAX_SAMPLE_PIXELS = 20000     # max foreground pixels passed to k-means; raised to keep small regions
+MEDIAN_FILTER_SIZE = 3        # window size for the texture-smoothing median filter
+INITIAL_CLUSTERS = 16         # candidates extracted before merging/filtering
+MIN_SHARE = 0.005             # drop clusters representing < 0.5% (lower than before, to keep small details)
+LAB_MERGE_THRESHOLD = 8       # ΔE in CIELAB below which two clusters are considered the same color
+MAX_COLORS_OUT = 10           # cap final colors per icon
+MADEIRA_MAX_DISTANCE = 999    # effectively disabled: always pick nearest palette color
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets.readonly",
@@ -88,6 +90,7 @@ class MadeiraColor:
     code: str
     name: str
     rgb: tuple[int, int, int]
+    slot: Optional[int] = None
 
 
 @dataclass
@@ -97,10 +100,19 @@ class ExtractedColor:
     share: float            # proportion of foreground pixels in this cluster
     madeira_code: Optional[str]
     madeira_name: Optional[str]
+    madeira_slot: Optional[int]
     madeira_distance: Optional[float]
 
     def label(self) -> str:
-        """Human-readable label: '1764 Tiger (#E88A26)' or just '#E88A26'."""
+        """Human-readable label.
+
+        With a slot: '20 Navy (1643)' — slot number first since that's what
+        gets dialed in on the machine.
+        Without a slot: '1764 Tiger (#E88A26)' — Madeira code + hex.
+        Unmatched: just the hex.
+        """
+        if self.madeira_slot is not None:
+            return f"{self.madeira_slot} {self.madeira_name} ({self.madeira_code})"
         if self.madeira_code:
             return f"{self.madeira_code} {self.madeira_name} ({self.hex})"
         return self.hex
@@ -251,83 +263,164 @@ def download_png(drive, file_id: str, cache_dir: Path) -> Optional[bytes]:
 def extract_foreground_pixels(img: Image.Image) -> np.ndarray:
     """
     Returns an (N, 3) array of RGB pixels that are *not* background.
-    Handles two cases:
-      - Image has alpha: pixels with alpha < 200 are background.
-      - Image has no alpha: corner pixels are sampled to estimate background.
+    Steps:
+      - Resize to RESIZE_TO on long side (preserves small details, manages CPU).
+      - Apply a small median filter to RGB to smooth thread-render texture
+        (highlights/shadows of the same thread color blur into one tone).
+        Median is edge-preserving, so color boundaries between threads stay sharp.
+      - Detect background via alpha channel if present, otherwise sample corners.
     """
     img = img.convert("RGBA")
-    # Resize for speed
     img.thumbnail((RESIZE_TO, RESIZE_TO), Image.LANCZOS)
-    arr = np.array(img)
-    h, w = arr.shape[:2]
-    rgb = arr[..., :3]
-    alpha = arr[..., 3]
 
-    has_transparency = alpha.min() < 250
+    # Median-filter the RGB channels to remove thread texture without blurring edges
+    rgb_img = img.convert("RGB").filter(ImageFilter.MedianFilter(size=MEDIAN_FILTER_SIZE))
+    rgb_arr = np.array(rgb_img)
+    alpha_arr = np.array(img.split()[-1])
+
+    h, w = rgb_arr.shape[:2]
+
+    has_transparency = alpha_arr.min() < 250
     if has_transparency:
-        mask = alpha > 200
+        mask = alpha_arr > 200
     else:
-        # Background-from-corners heuristic
         corners = np.stack([
-            rgb[0, 0],
-            rgb[0, w - 1],
-            rgb[h - 1, 0],
-            rgb[h - 1, w - 1],
+            rgb_arr[0, 0],
+            rgb_arr[0, w - 1],
+            rgb_arr[h - 1, 0],
+            rgb_arr[h - 1, w - 1],
         ]).astype(int)
         bg = corners.mean(axis=0)
-        diff = rgb.astype(int) - bg
+        diff = rgb_arr.astype(int) - bg
         dist = np.sqrt((diff ** 2).sum(axis=-1))
-        mask = dist > 25  # keep pixels clearly different from background
+        mask = dist > 25
 
-    pixels = rgb[mask]
+    pixels = rgb_arr[mask]
     return pixels.astype(np.uint8)
 
 
-def cluster_colors(pixels: np.ndarray) -> list[tuple[np.ndarray, float]]:
+# --------------------------------------------------------------------------
+# CIELAB color space conversion
+# --------------------------------------------------------------------------
+
+def srgb_to_lab(rgb_arr: np.ndarray) -> np.ndarray:
     """
-    k-means cluster the pixels; return list of (rgb_center, share) sorted by share.
+    Convert (N, 3) or (..., 3) sRGB pixels (0-255) to CIELAB (D65).
+    Vectorized via numpy. Returns array of same outer shape with last axis = (L, a, b).
+    """
+    rgb = np.asarray(rgb_arr, dtype=float) / 255.0
+
+    # sRGB companding -> linear RGB
+    mask = rgb > 0.04045
+    rgb_linear = np.where(mask, ((rgb + 0.055) / 1.055) ** 2.4, rgb / 12.92)
+
+    # Linear RGB -> XYZ (D65)
+    M = np.array([
+        [0.4124564, 0.3575761, 0.1804375],
+        [0.2126729, 0.7151522, 0.0721750],
+        [0.0193339, 0.1191920, 0.9503041],
+    ])
+    xyz = rgb_linear @ M.T
+
+    # Normalize by D65 reference white
+    ref = np.array([0.95047, 1.0, 1.08883])
+    xyz_n = xyz / ref
+
+    # XYZ -> LAB
+    eps = 216.0 / 24389.0
+    kap = 24389.0 / 27.0
+    f = np.where(xyz_n > eps, np.cbrt(xyz_n), (kap * xyz_n + 16.0) / 116.0)
+
+    L = 116.0 * f[..., 1] - 16.0
+    a = 500.0 * (f[..., 0] - f[..., 1])
+    b = 200.0 * (f[..., 1] - f[..., 2])
+    return np.stack([L, a, b], axis=-1)
+
+
+def lab_distance(lab1, lab2) -> float:
+    """
+    Modified ΔE that down-weights lightness.
+
+    For thread-rendered PNGs, simulated stitches produce a single thread color
+    in many brightnesses — highlight, midtone, shadow. In raw ΔE these can be
+    far apart, but they share the same hue and chroma (a, b). So we weight L
+    at 0.2× to merge same-thread brightness variants while keeping different
+    threads of similar lightness clearly separated.
+    """
+    L_WEIGHT_SQ = 0.04   # i.e. L weighted at 0.2
+    l1, a1, b1 = lab1
+    l2, a2, b2 = lab2
+    return float(np.sqrt(L_WEIGHT_SQ * (l1 - l2) ** 2 + (a1 - a2) ** 2 + (b1 - b2) ** 2))
+
+
+def cluster_colors(pixels: np.ndarray) -> list[tuple[np.ndarray, np.ndarray, float]]:
+    """
+    Cluster pixels in CIELAB color space — perceptually meaningful, so different
+    brightnesses of the same thread color end up in the same cluster.
+
+    Returns a list of (rgb_center, lab_center, share) sorted by share descending.
+    The rgb_center is the mean RGB of pixels in that cluster (true average, not
+    the LAB centroid round-tripped to RGB, which can drift slightly).
     """
     if len(pixels) < 50:
-        # Very few foreground pixels — image is probably blank or tiny.
         return []
 
-    # Subsample for speed on large images
-    if len(pixels) > 8000:
-        idx = np.random.RandomState(42).choice(len(pixels), 8000, replace=False)
+    # Subsample for k-means speed; raised cap helps catch small regions
+    if len(pixels) > MAX_SAMPLE_PIXELS:
+        idx = np.random.RandomState(42).choice(len(pixels), MAX_SAMPLE_PIXELS, replace=False)
         pixels = pixels[idx]
 
+    pixels_lab = srgb_to_lab(pixels)
     k = min(INITIAL_CLUSTERS, len(pixels))
-    km = KMeans(n_clusters=k, n_init=5, random_state=42).fit(pixels)
+    km = KMeans(n_clusters=k, n_init=5, random_state=42).fit(pixels_lab)
     labels = km.labels_
-    centers = km.cluster_centers_
 
     counts = np.bincount(labels, minlength=k)
     shares = counts / counts.sum()
-    pairs = sorted(zip(centers, shares), key=lambda p: p[1], reverse=True)
-    return [(c.astype(int), float(s)) for c, s in pairs]
+
+    results: list[tuple[np.ndarray, np.ndarray, float]] = []
+    for i in range(k):
+        cluster_mask = labels == i
+        if not cluster_mask.any():
+            continue
+        rgb_center = pixels[cluster_mask].mean(axis=0).astype(int)
+        lab_center = pixels_lab[cluster_mask].mean(axis=0)
+        results.append((rgb_center, lab_center, float(shares[i])))
+
+    results.sort(key=lambda p: p[2], reverse=True)
+    return results
 
 
-def filter_and_merge(clusters: list[tuple[np.ndarray, float]]) -> list[tuple[np.ndarray, float]]:
-    """Drop low-share clusters; merge clusters within MERGE_DISTANCE."""
-    kept: list[tuple[np.ndarray, float]] = []
-    for center, share in clusters:
+def filter_and_merge(
+    clusters: list[tuple[np.ndarray, np.ndarray, float]]
+) -> list[tuple[np.ndarray, float]]:
+    """
+    Drop low-share clusters; merge clusters whose LAB centers are within
+    LAB_MERGE_THRESHOLD of each other. Merging is weighted by share, and both
+    the RGB and LAB centers are kept in sync during merges.
+
+    Returns (rgb_center, share) tuples — LAB is dropped here since downstream
+    code doesn't need it.
+    """
+    kept: list[list] = []  # mutable rows: [rgb, lab, share]
+    for rgb_c, lab_c, share in clusters:
         if share < MIN_SHARE:
             continue
-        # Try to merge into an existing cluster
+
         merged = False
-        for i, (kc, ks) in enumerate(kept):
-            dist = np.linalg.norm(center.astype(int) - kc.astype(int))
-            if dist < MERGE_DISTANCE:
-                # Weighted average
-                total = ks + share
-                new_center = (kc * ks + center * share) / total
-                kept[i] = (new_center.astype(int), total)
+        for row in kept:
+            if lab_distance(lab_c, row[1]) < LAB_MERGE_THRESHOLD:
+                total = row[2] + share
+                row[0] = ((row[0] * row[2] + rgb_c * share) / total).astype(int)
+                row[1] = (row[1] * row[2] + lab_c * share) / total
+                row[2] = total
                 merged = True
                 break
         if not merged:
-            kept.append((center, share))
-    kept.sort(key=lambda p: p[1], reverse=True)
-    return kept[:MAX_COLORS_OUT]
+            kept.append([rgb_c, lab_c, share])
+
+    kept.sort(key=lambda r: r[2], reverse=True)
+    return [(r[0], r[2]) for r in kept[:MAX_COLORS_OUT]]
 
 
 def rgb_to_hex(rgb) -> str:
@@ -344,12 +437,25 @@ def load_madeira_db(path: Path) -> list[MadeiraColor]:
         return []
     raw = json.loads(path.read_text(encoding="utf-8"))
     return [
-        MadeiraColor(code=str(e["code"]), name=e["name"], rgb=tuple(e["rgb"]))
+        MadeiraColor(
+            code=str(e["code"]),
+            name=e["name"],
+            rgb=tuple(e["rgb"]),
+            slot=e.get("slot"),
+        )
         for e in raw
     ]
 
 
 def match_madeira(rgb, db: list[MadeiraColor]) -> tuple[Optional[MadeiraColor], Optional[float]]:
+    """
+    Find the nearest color in the palette by Euclidean RGB distance.
+
+    Because the user's palette is a constrained set of physical thread spools,
+    there's always a 'nearest' — we don't apply a distance threshold. If the
+    distance is large, the user can see it via the extracted hex code (kept
+    in the output) and judge for themselves.
+    """
     if not db:
         return None, None
     target = np.array(rgb, dtype=int)
@@ -360,8 +466,6 @@ def match_madeira(rgb, db: list[MadeiraColor]) -> tuple[Optional[MadeiraColor], 
         if dist < best_dist:
             best_dist = dist
             best = color
-    if best_dist > MADEIRA_MAX_DISTANCE:
-        return None, best_dist
     return best, best_dist
 
 
@@ -405,9 +509,33 @@ def process_icon(
             share=share,
             madeira_code=match.code if match else None,
             madeira_name=match.name if match else None,
+            madeira_slot=match.slot if match else None,
             madeira_distance=dist,
         ))
-    return result
+
+    # Final dedup: clusters that mapped to the same physical spool are the same
+    # thread. Combine them into a single row so the output reflects actual spools,
+    # not internal clustering artifacts (e.g. thread highlight + shadow).
+    by_slot: dict[int, ExtractedColor] = {}
+    unslotted: list[ExtractedColor] = []
+    for c in result:
+        if c.madeira_slot is None:
+            unslotted.append(c)
+            continue
+        existing = by_slot.get(c.madeira_slot)
+        if existing is None:
+            by_slot[c.madeira_slot] = c
+            continue
+        # Keep the hex/rgb of whichever cluster had the larger share — that's the
+        # "main" appearance of this spool in the design.
+        if c.share > existing.share:
+            existing.hex, existing.rgb = c.hex, c.rgb
+            existing.madeira_distance = c.madeira_distance
+        existing.share += c.share
+
+    combined = list(by_slot.values()) + unslotted
+    combined.sort(key=lambda c: c.share, reverse=True)
+    return combined
 
 
 def write_outputs(results: list[tuple[IconRow, list[ExtractedColor]]], out_dir: Path):
@@ -417,11 +545,14 @@ def write_outputs(results: list[tuple[IconRow, list[ExtractedColor]]], out_dir: 
 
     with csv_path.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["slug", "name", "category", "color_count", "colors", "hex_codes"])
+        w.writerow(["slug", "name", "category", "color_count", "slots", "colors", "hex_codes"])
         for icon, colors in results:
             labels = "; ".join(c.label() for c in colors)
             hex_only = "; ".join(c.hex for c in colors)
-            w.writerow([icon.slug, icon.name, icon.category, len(colors), labels, hex_only])
+            slots = ", ".join(
+                str(c.madeira_slot) for c in colors if c.madeira_slot is not None
+            )
+            w.writerow([icon.slug, icon.name, icon.category, len(colors), slots, labels, hex_only])
 
     payload = [
         {
@@ -433,6 +564,7 @@ def write_outputs(results: list[tuple[IconRow, list[ExtractedColor]]], out_dir: 
                     "hex": c.hex,
                     "rgb": list(c.rgb),
                     "share": round(c.share, 4),
+                    "madeira_slot": c.madeira_slot,
                     "madeira_code": c.madeira_code,
                     "madeira_name": c.madeira_name,
                 }

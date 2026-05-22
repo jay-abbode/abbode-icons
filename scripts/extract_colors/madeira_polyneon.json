@@ -1,91 +1,242 @@
 [
-  { "code": "1701", "name": "Soft White", "rgb": [252, 250, 238] },
-  { "code": "1801", "name": "Cream", "rgb": [245, 230, 200] },
-  { "code": "1802", "name": "Ivory", "rgb": [238, 222, 188] },
-  { "code": "1800", "name": "Black", "rgb": [16, 14, 18] },
-  { "code": "1803", "name": "Off Black", "rgb": [38, 36, 40] },
-  { "code": "1804", "name": "Charcoal", "rgb": [62, 60, 64] },
-  { "code": "1808", "name": "Dark Gray", "rgb": [98, 98, 100] },
-  { "code": "1810", "name": "Steel Gray", "rgb": [134, 134, 138] },
-  { "code": "1811", "name": "Silver Gray", "rgb": [170, 170, 175] },
-  { "code": "1812", "name": "Pale Gray", "rgb": [210, 210, 212] },
-
-  { "code": "1747", "name": "Cherry Red", "rgb": [192, 30, 42] },
-  { "code": "1748", "name": "True Red", "rgb": [212, 28, 38] },
-  { "code": "1749", "name": "Tomato Red", "rgb": [228, 56, 46] },
-  { "code": "1839", "name": "Burgundy", "rgb": [120, 24, 38] },
-  { "code": "1840", "name": "Wine", "rgb": [98, 22, 44] },
-  { "code": "1843", "name": "Berry", "rgb": [156, 32, 70] },
-  { "code": "1922", "name": "Cranberry", "rgb": [140, 26, 56] },
-
-  { "code": "1716", "name": "Bubblegum Pink", "rgb": [242, 158, 178] },
-  { "code": "1717", "name": "Pastel Pink", "rgb": [248, 200, 210] },
-  { "code": "1815", "name": "Light Pink", "rgb": [244, 188, 196] },
-  { "code": "1816", "name": "Hot Pink", "rgb": [232, 60, 130] },
-  { "code": "1817", "name": "Fuchsia", "rgb": [210, 24, 130] },
-  { "code": "1819", "name": "Magenta", "rgb": [180, 28, 110] },
-  { "code": "1921", "name": "Salmon", "rgb": [240, 130, 118] },
-  { "code": "1820", "name": "Coral", "rgb": [248, 124, 100] },
-  { "code": "1924", "name": "Peach", "rgb": [248, 188, 152] },
-
-  { "code": "1623", "name": "Tangerine", "rgb": [244, 124, 38] },
-  { "code": "1624", "name": "Orange", "rgb": [240, 100, 26] },
-  { "code": "1625", "name": "Dark Orange", "rgb": [220, 84, 28] },
-  { "code": "1764", "name": "Tiger", "rgb": [232, 138, 38] },
-  { "code": "1671", "name": "Mustard", "rgb": [218, 168, 36] },
-  { "code": "1672", "name": "Goldenrod", "rgb": [232, 188, 52] },
-  { "code": "1673", "name": "Bright Yellow", "rgb": [248, 220, 50] },
-  { "code": "1602", "name": "Daffodil", "rgb": [248, 230, 86] },
-  { "code": "1969", "name": "Pastel Yellow", "rgb": [250, 240, 174] },
-  { "code": "1670", "name": "Brass", "rgb": [196, 158, 70] },
-
-  { "code": "1681", "name": "Hunter Green", "rgb": [24, 76, 50] },
-  { "code": "1684", "name": "Forest Green", "rgb": [32, 92, 56] },
-  { "code": "1648", "name": "Kelly Green", "rgb": [42, 152, 78] },
-  { "code": "1649", "name": "Bright Green", "rgb": [62, 170, 84] },
-  { "code": "1650", "name": "Grass Green", "rgb": [90, 178, 80] },
-  { "code": "1685", "name": "Olive", "rgb": [120, 124, 56] },
-  { "code": "1976", "name": "Sage", "rgb": [168, 180, 142] },
-  { "code": "1860", "name": "Mint", "rgb": [186, 224, 198] },
-  { "code": "1779", "name": "Seafoam", "rgb": [144, 210, 196] },
-  { "code": "1980", "name": "Teal", "rgb": [40, 140, 142] },
-  { "code": "1981", "name": "Dark Teal", "rgb": [22, 96, 108] },
-  { "code": "1982", "name": "Aqua", "rgb": [90, 196, 210] },
-
-  { "code": "1633", "name": "Royal Blue", "rgb": [28, 64, 158] },
-  { "code": "1634", "name": "True Blue", "rgb": [32, 90, 178] },
-  { "code": "1929", "name": "Sky Blue", "rgb": [124, 188, 232] },
-  { "code": "1934", "name": "Light Blue", "rgb": [180, 212, 238] },
-  { "code": "1742", "name": "Navy", "rgb": [22, 36, 84] },
-  { "code": "1743", "name": "Dark Navy", "rgb": [16, 26, 60] },
-  { "code": "1844", "name": "Denim Blue", "rgb": [76, 110, 158] },
-  { "code": "1845", "name": "Slate Blue", "rgb": [88, 110, 142] },
-  { "code": "1772", "name": "Cornflower", "rgb": [110, 140, 210] },
-  { "code": "1773", "name": "Periwinkle", "rgb": [140, 156, 218] },
-
-  { "code": "1832", "name": "Lavender", "rgb": [196, 178, 218] },
-  { "code": "1833", "name": "Lilac", "rgb": [200, 158, 212] },
-  { "code": "1834", "name": "Light Purple", "rgb": [168, 138, 200] },
-  { "code": "1835", "name": "Purple", "rgb": [114, 60, 156] },
-  { "code": "1836", "name": "Dark Purple", "rgb": [76, 38, 118] },
-  { "code": "1822", "name": "Plum", "rgb": [98, 50, 90] },
-  { "code": "1923", "name": "Eggplant", "rgb": [66, 36, 70] },
-
-  { "code": "1745", "name": "Tan", "rgb": [200, 168, 130] },
-  { "code": "1746", "name": "Khaki", "rgb": [188, 168, 132] },
-  { "code": "1858", "name": "Beige", "rgb": [220, 198, 168] },
-  { "code": "1859", "name": "Sand", "rgb": [218, 192, 152] },
-  { "code": "1755", "name": "Camel", "rgb": [180, 142, 96] },
-  { "code": "1757", "name": "Chocolate", "rgb": [92, 56, 38] },
-  { "code": "1758", "name": "Dark Brown", "rgb": [68, 44, 30] },
-  { "code": "1759", "name": "Espresso", "rgb": [54, 38, 28] },
-  { "code": "1760", "name": "Coffee", "rgb": [112, 78, 52] },
-  { "code": "1761", "name": "Caramel", "rgb": [158, 110, 64] },
-  { "code": "1762", "name": "Rust", "rgb": [158, 70, 38] },
-  { "code": "1763", "name": "Terracotta", "rgb": [190, 96, 60] },
-
-  { "code": "1900", "name": "Gold", "rgb": [212, 172, 64] },
-  { "code": "1901", "name": "Silver", "rgb": [200, 200, 204] },
-  { "code": "1902", "name": "Antique Gold", "rgb": [178, 142, 56] },
-  { "code": "1903", "name": "Bronze", "rgb": [148, 102, 50] }
+  {
+    "slot": 0,
+    "code": "1567",
+    "name": "Burgundy",
+    "rgb": [
+      111,
+      53,
+      60
+    ]
+  },
+  {
+    "slot": 1,
+    "code": "1747",
+    "name": "Dark Red",
+    "rgb": [
+      153,
+      44,
+      50
+    ]
+  },
+  {
+    "slot": 4,
+    "code": "1621",
+    "name": "Rust Orange",
+    "rgb": [
+      187,
+      93,
+      44
+    ]
+  },
+  {
+    "slot": 5,
+    "code": "1965",
+    "name": "Orange",
+    "rgb": [
+      236,
+      114,
+      18
+    ]
+  },
+  {
+    "slot": 6,
+    "code": "1752",
+    "name": "Peach",
+    "rgb": [
+      255,
+      215,
+      165
+    ]
+  },
+  {
+    "slot": 7,
+    "code": "1725",
+    "name": "Dark Yellow",
+    "rgb": [
+      206,
+      150,
+      60
+    ]
+  },
+  {
+    "slot": 8,
+    "code": "1735",
+    "name": "Yellow",
+    "rgb": [
+      255,
+      249,
+      118
+    ]
+  },
+  {
+    "slot": 10,
+    "code": "1769",
+    "name": "Olive Green",
+    "rgb": [
+      93,
+      118,
+      46
+    ]
+  },
+  {
+    "slot": 12,
+    "code": "1902",
+    "name": "Dark Green",
+    "rgb": [
+      47,
+      72,
+      55
+    ]
+  },
+  {
+    "slot": 13,
+    "code": "1648",
+    "name": "Matcha Green",
+    "rgb": [
+      142,
+      162,
+      101
+    ]
+  },
+  {
+    "slot": 17,
+    "code": "1675",
+    "name": "Cool Periwinkle",
+    "rgb": [
+      166,
+      221,
+      252
+    ]
+  },
+  {
+    "slot": 19,
+    "code": "1843",
+    "name": "Dark Royal",
+    "rgb": [
+      39,
+      76,
+      125
+    ]
+  },
+  {
+    "slot": 20,
+    "code": "1643",
+    "name": "Navy",
+    "rgb": [
+      48,
+      61,
+      72
+    ]
+  },
+  {
+    "slot": 21,
+    "code": "1832",
+    "name": "Purple",
+    "rgb": [
+      105,
+      88,
+      156
+    ]
+  },
+  {
+    "slot": 27,
+    "code": "1917",
+    "name": "Dusty Pink",
+    "rgb": [
+      201,
+      124,
+      140
+    ]
+  },
+  {
+    "slot": 28,
+    "code": "1816",
+    "name": "Light Pink",
+    "rgb": [
+      247,
+      191,
+      208
+    ]
+  },
+  {
+    "slot": 29,
+    "code": "1855",
+    "name": "Tan",
+    "rgb": [
+      179,
+      153,
+      114
+    ]
+  },
+  {
+    "slot": 30,
+    "code": "1657",
+    "name": "Milk Chocolate",
+    "rgb": [
+      128,
+      94,
+      68
+    ]
+  },
+  {
+    "slot": 31,
+    "code": "1659",
+    "name": "Dark Chocolate",
+    "rgb": [
+      88,
+      67,
+      57
+    ]
+  },
+  {
+    "slot": 32,
+    "code": "1811",
+    "name": "Silver",
+    "rgb": [
+      192,
+      203,
+      205
+    ]
+  },
+  {
+    "slot": 34,
+    "code": "1539",
+    "name": "Charcoal",
+    "rgb": [
+      103,
+      102,
+      97
+    ]
+  },
+  {
+    "slot": 35,
+    "code": "1801",
+    "name": "White",
+    "rgb": [
+      216,
+      222,
+      238
+    ]
+  },
+  {
+    "slot": 36,
+    "code": "1800",
+    "name": "Black",
+    "rgb": [
+      52,
+      56,
+      56
+    ]
+  },
+  {
+    "slot": 37,
+    "code": "1682",
+    "name": "Tusk",
+    "rgb": [
+      221,
+      211,
+      188
+    ]
+  }
 ]

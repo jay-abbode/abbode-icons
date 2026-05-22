@@ -1,0 +1,528 @@
+[
+  {
+    "slug": "8-ball",
+    "name": "8 Ball",
+    "category": "Hobby",
+    "colors": [
+      {
+        "hex": "#343838",
+        "rgb": [
+          52,
+          56,
+          56
+        ],
+        "share": 0.7444,
+        "madeira_slot": 36,
+        "madeira_code": "1800",
+        "madeira_name": "Black"
+      },
+      {
+        "hex": "#E2E4ED",
+        "rgb": [
+          226,
+          228,
+          237
+        ],
+        "share": 0.2556,
+        "madeira_slot": 35,
+        "madeira_code": "1801",
+        "madeira_name": "White"
+      }
+    ]
+  },
+  {
+    "slug": "abbode-bow",
+    "name": "Abbode Bow",
+    "category": "Most Popular",
+    "colors": [
+      {
+        "hex": "#C27989",
+        "rgb": [
+          194,
+          121,
+          137
+        ],
+        "share": 0.9709,
+        "madeira_slot": 27,
+        "madeira_code": "1917",
+        "madeira_name": "Dusty Pink"
+      },
+      {
+        "hex": "#6E434C",
+        "rgb": [
+          110,
+          67,
+          76
+        ],
+        "share": 0.0291,
+        "madeira_slot": 0,
+        "madeira_code": "1567",
+        "madeira_name": "Burgundy"
+      }
+    ]
+  },
+  {
+    "slug": "ace-of-hearts",
+    "name": "Ace of Hearts",
+    "category": "Hobby",
+    "colors": [
+      {
+        "hex": "#EEEFF6",
+        "rgb": [
+          238,
+          239,
+          246
+        ],
+        "share": 0.8204,
+        "madeira_slot": 35,
+        "madeira_code": "1801",
+        "madeira_name": "White"
+      },
+      {
+        "hex": "#A3373D",
+        "rgb": [
+          163,
+          55,
+          61
+        ],
+        "share": 0.1724,
+        "madeira_slot": 1,
+        "madeira_code": "1747",
+        "madeira_name": "Dark Red"
+      }
+    ]
+  },
+  {
+    "slug": "adderall",
+    "name": "Adderall",
+    "category": "Apothecary",
+    "colors": [
+      {
+        "hex": "#B8ECFA",
+        "rgb": [
+          184,
+          236,
+          250
+        ],
+        "share": 0.4959,
+        "madeira_slot": 17,
+        "madeira_code": "1675",
+        "madeira_name": "Cool Periwinkle"
+      },
+      {
+        "hex": "#6B9AC8",
+        "rgb": [
+          107,
+          154,
+          200
+        ],
+        "share": 0.4307,
+        "madeira_slot": 21,
+        "madeira_code": "1832",
+        "madeira_name": "Purple"
+      },
+      {
+        "hex": "#1F426D",
+        "rgb": [
+          31,
+          66,
+          109
+        ],
+        "share": 0.0735,
+        "madeira_slot": 19,
+        "madeira_code": "1843",
+        "madeira_name": "Dark Royal"
+      }
+    ]
+  },
+  {
+    "slug": "airplane",
+    "name": "Airplane",
+    "category": "Travel",
+    "colors": [
+      {
+        "hex": "#C5CBCE",
+        "rgb": [
+          197,
+          203,
+          206
+        ],
+        "share": 0.8893,
+        "madeira_slot": 32,
+        "madeira_code": "1811",
+        "madeira_name": "Silver"
+      },
+      {
+        "hex": "#37434D",
+        "rgb": [
+          55,
+          67,
+          77
+        ],
+        "share": 0.1107,
+        "madeira_slot": 20,
+        "madeira_code": "1643",
+        "madeira_name": "Navy"
+      }
+    ]
+  },
+  {
+    "slug": "anchor",
+    "name": "Anchor",
+    "category": "Beach",
+    "colors": [
+      {
+        "hex": "#C2CBCC",
+        "rgb": [
+          194,
+          203,
+          204
+        ],
+        "share": 0.9933,
+        "madeira_slot": 32,
+        "madeira_code": "1811",
+        "madeira_name": "Silver"
+      },
+      {
+        "hex": "#545759",
+        "rgb": [
+          84,
+          87,
+          89
+        ],
+        "share": 0.0066,
+        "madeira_slot": 34,
+        "madeira_code": "1539",
+        "madeira_name": "Charcoal"
+      }
+    ]
+  },
+  {
+    "slug": "aperol-bottle",
+    "name": "Aperol Bottle",
+    "category": "Drinks",
+    "colors": [
+      {
+        "hex": "#DD6B11",
+        "rgb": [
+          221,
+          107,
+          17
+        ],
+        "share": 0.5294,
+        "madeira_slot": 5,
+        "madeira_code": "1965",
+        "madeira_name": "Orange"
+      },
+      {
+        "hex": "#315585",
+        "rgb": [
+          49,
+          85,
+          133
+        ],
+        "share": 0.1628,
+        "madeira_slot": 19,
+        "madeira_code": "1843",
+        "madeira_name": "Dark Royal"
+      },
+      {
+        "hex": "#FA942F",
+        "rgb": [
+          250,
+          148,
+          47
+        ],
+        "share": 0.1328,
+        "madeira_slot": 7,
+        "madeira_code": "1725",
+        "madeira_name": "Dark Yellow"
+      },
+      {
+        "hex": "#A94A04",
+        "rgb": [
+          169,
+          74,
+          4
+        ],
+        "share": 0.0645,
+        "madeira_slot": 4,
+        "madeira_code": "1621",
+        "madeira_name": "Rust Orange"
+      },
+      {
+        "hex": "#102949",
+        "rgb": [
+          16,
+          41,
+          73
+        ],
+        "share": 0.0417,
+        "madeira_slot": 20,
+        "madeira_code": "1643",
+        "madeira_name": "Navy"
+      },
+      {
+        "hex": "#F0F2F8",
+        "rgb": [
+          240,
+          242,
+          248
+        ],
+        "share": 0.0296,
+        "madeira_slot": 35,
+        "madeira_code": "1801",
+        "madeira_name": "White"
+      },
+      {
+        "hex": "#7E3A07",
+        "rgb": [
+          126,
+          58,
+          7
+        ],
+        "share": 0.0207,
+        "madeira_slot": 1,
+        "madeira_code": "1747",
+        "madeira_name": "Dark Red"
+      },
+      {
+        "hex": "#AAAFC0",
+        "rgb": [
+          170,
+          175,
+          192
+        ],
+        "share": 0.014,
+        "madeira_slot": 32,
+        "madeira_code": "1811",
+        "madeira_name": "Silver"
+      }
+    ]
+  },
+  {
+    "slug": "aperol-spritz",
+    "name": "Aperol Spritz",
+    "category": "Drinks",
+    "colors": [
+      {
+        "hex": "#BCC6C7",
+        "rgb": [
+          188,
+          198,
+          199
+        ],
+        "share": 0.3473,
+        "madeira_slot": 32,
+        "madeira_code": "1811",
+        "madeira_name": "Silver"
+      },
+      {
+        "hex": "#E36F13",
+        "rgb": [
+          227,
+          111,
+          19
+        ],
+        "share": 0.2888,
+        "madeira_slot": 5,
+        "madeira_code": "1965",
+        "madeira_name": "Orange"
+      },
+      {
+        "hex": "#B35C2A",
+        "rgb": [
+          179,
+          92,
+          42
+        ],
+        "share": 0.2655,
+        "madeira_slot": 4,
+        "madeira_code": "1621",
+        "madeira_name": "Rust Orange"
+      },
+      {
+        "hex": "#FA9630",
+        "rgb": [
+          250,
+          150,
+          48
+        ],
+        "share": 0.0884,
+        "madeira_slot": 7,
+        "madeira_code": "1725",
+        "madeira_name": "Dark Yellow"
+      },
+      {
+        "hex": "#9E7F6C",
+        "rgb": [
+          158,
+          127,
+          108
+        ],
+        "share": 0.0101,
+        "madeira_slot": 29,
+        "madeira_code": "1855",
+        "madeira_name": "Tan"
+      }
+    ]
+  },
+  {
+    "slug": "apple",
+    "name": "Apple",
+    "category": "Food",
+    "colors": [
+      {
+        "hex": "#9A2E35",
+        "rgb": [
+          154,
+          46,
+          53
+        ],
+        "share": 0.8511,
+        "madeira_slot": 1,
+        "madeira_code": "1747",
+        "madeira_name": "Dark Red"
+      },
+      {
+        "hex": "#6D181D",
+        "rgb": [
+          109,
+          24,
+          29
+        ],
+        "share": 0.0561,
+        "madeira_slot": 0,
+        "madeira_code": "1567",
+        "madeira_name": "Burgundy"
+      },
+      {
+        "hex": "#617933",
+        "rgb": [
+          97,
+          121,
+          51
+        ],
+        "share": 0.0388,
+        "madeira_slot": 10,
+        "madeira_code": "1769",
+        "madeira_name": "Olive Green"
+      },
+      {
+        "hex": "#AA936E",
+        "rgb": [
+          170,
+          147,
+          110
+        ],
+        "share": 0.0324,
+        "madeira_slot": 29,
+        "madeira_code": "1855",
+        "madeira_name": "Tan"
+      },
+      {
+        "hex": "#3A4B18",
+        "rgb": [
+          58,
+          75,
+          24
+        ],
+        "share": 0.0119,
+        "madeira_slot": 12,
+        "madeira_code": "1902",
+        "madeira_name": "Dark Green"
+      },
+      {
+        "hex": "#4F1518",
+        "rgb": [
+          79,
+          21,
+          24
+        ],
+        "share": 0.0095,
+        "madeira_slot": 36,
+        "madeira_code": "1800",
+        "madeira_name": "Black"
+      }
+    ]
+  },
+  {
+    "slug": "apple-core",
+    "name": "Apple Core",
+    "category": "Food",
+    "colors": [
+      {
+        "hex": "#EAEBF1",
+        "rgb": [
+          234,
+          235,
+          241
+        ],
+        "share": 0.389,
+        "madeira_slot": 35,
+        "madeira_code": "1801",
+        "madeira_name": "White"
+      },
+      {
+        "hex": "#963036",
+        "rgb": [
+          150,
+          48,
+          54
+        ],
+        "share": 0.2823,
+        "madeira_slot": 1,
+        "madeira_code": "1747",
+        "madeira_name": "Dark Red"
+      },
+      {
+        "hex": "#5E7532",
+        "rgb": [
+          94,
+          117,
+          50
+        ],
+        "share": 0.1915,
+        "madeira_slot": 10,
+        "madeira_code": "1769",
+        "madeira_name": "Olive Green"
+      },
+      {
+        "hex": "#83624A",
+        "rgb": [
+          131,
+          98,
+          74
+        ],
+        "share": 0.0946,
+        "madeira_slot": 30,
+        "madeira_code": "1657",
+        "madeira_name": "Milk Chocolate"
+      },
+      {
+        "hex": "#641C20",
+        "rgb": [
+          100,
+          28,
+          32
+        ],
+        "share": 0.0213,
+        "madeira_slot": 0,
+        "madeira_code": "1567",
+        "madeira_name": "Burgundy"
+      },
+      {
+        "hex": "#494C4C",
+        "rgb": [
+          73,
+          76,
+          76
+        ],
+        "share": 0.0213,
+        "madeira_slot": 31,
+        "madeira_code": "1659",
+        "madeira_name": "Dark Chocolate"
+      }
+    ]
+  }
+]
