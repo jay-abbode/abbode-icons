@@ -86,7 +86,7 @@ async function fetchCatalogFromSheet(): Promise<IconCatalog> {
   // hyperlinks attached to each cell, not just the display text.
   const response = await sheets.spreadsheets.get({
     spreadsheetId,
-    ranges: [`${tabName}!A1:Z5000`],
+    ranges: [`${tabName}!A1:AZ5000`],
     fields: "sheets.data.rowData.values(formattedValue,hyperlink,userEnteredValue)",
   });
 
