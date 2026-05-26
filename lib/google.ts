@@ -50,7 +50,9 @@ function getAuthClient() {
     email: creds.client_email,
     key: creds.private_key,
     scopes: [
-      "https://www.googleapis.com/auth/spreadsheets.readonly",
+      // Full read/write — needed so we can append rows to the COMMENTS tab.
+      // Drive stays read-only since we only ever read PNG files.
+      "https://www.googleapis.com/auth/spreadsheets",
       "https://www.googleapis.com/auth/drive.readonly",
     ],
   });

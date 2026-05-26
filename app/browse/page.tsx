@@ -58,6 +58,10 @@ export default async function BrowsePage({
       ? `Search: "${query}"`
       : "All icons";
 
+  const hasActiveFilters = Boolean(
+    query || category || colorVarOnly || statusFilter
+  );
+
   return (
     <>
       <Header initialQuery={query} showSearch />
@@ -83,8 +87,19 @@ export default async function BrowsePage({
             </p>
           </div>
 
-          <div className="w-full md:hidden">
-            <SearchBar initialQuery={query} />
+          <div className="flex w-full flex-col gap-3 md:w-auto md:items-end">
+            <div className="w-full md:hidden">
+              <SearchBar initialQuery={query} />
+            </div>
+            {hasActiveFilters && (
+              <Link
+                href="/browse"
+                className="font-ui inline-flex items-center gap-1.5 self-start rounded-full border border-pink bg-white px-3.5 py-1.5 text-xs font-semibold text-cherry transition-colors hover:bg-pink-soft md:self-end"
+              >
+                Clear all filters
+                <CloseIcon className="h-3 w-3" />
+              </Link>
+            )}
           </div>
         </div>
 
@@ -139,6 +154,22 @@ function applyFilters(
   }
 
   return result.slice().sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function CloseIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="m4 4 8 8M12 4l-8 8" />
+    </svg>
+  );
 }
 
 function EmptyState({

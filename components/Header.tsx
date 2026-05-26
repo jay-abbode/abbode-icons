@@ -79,6 +79,12 @@ export default async function Header({
           >
             All icons
           </Link>
+          <Link
+            href="/comments"
+            className="hidden hover:text-espresso transition-colors focus-ring sm:inline"
+          >
+            Notes
+          </Link>
 
           {user && (
             <>

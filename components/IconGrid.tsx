@@ -3,9 +3,11 @@
 import { useState, useEffect, useCallback } from "react";
 import type { Icon } from "@/lib/sheets";
 import IconDetailModal from "./IconDetailModal";
+import CommentDialog from "./CommentDialog";
 
 export default function IconGrid({ icons }: { icons: Icon[] }) {
   const [selected, setSelected] = useState<Icon | null>(null);
+  const [commentingOn, setCommentingOn] = useState<Icon | null>(null);
 
   useEffect(() => {
     if (!selected) return;
@@ -26,18 +28,26 @@ export default function IconGrid({ icons }: { icons: Icon[] }) {
   }, [selected]);
 
   const handleClose = useCallback(() => setSelected(null), []);
+  const handleCloseComment = useCallback(() => setCommentingOn(null), []);
 
   return (
     <>
       <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
         {icons.map((icon) => (
-          <li key={icon.slug}>
+          <li key={icon.slug} className="relative">
             <IconCard icon={icon} onClick={() => setSelected(icon)} />
+            <CommentButton
+              icon={icon}
+              onOpen={(i) => setCommentingOn(i)}
+            />
           </li>
         ))}
       </ul>
 
       {selected && <IconDetailModal icon={selected} onClose={handleClose} />}
+      {commentingOn && (
+        <CommentDialog icon={commentingOn} onClose={handleCloseComment} />
+      )}
     </>
   );
 }
@@ -87,6 +97,48 @@ function IconCard({
         </p>
       </div>
     </button>
+  );
+}
+
+function CommentButton({
+  icon,
+  onOpen,
+}: {
+  icon: Icon;
+  onOpen: (icon: Icon) => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={`Leave a note on ${icon.name}`}
+      title="Leave a note"
+      onClick={(e) => {
+        // Sibling of the IconCard button; stopPropagation is belt-and-braces
+        // in case future markup nests them.
+        e.stopPropagation();
+        onOpen(icon);
+      }}
+      className="absolute bottom-1.5 right-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-ink-muted shadow-sm transition-colors hover:bg-pink-soft hover:text-cherry focus-ring"
+    >
+      <CommentIcon className="h-3.5 w-3.5" />
+    </button>
+  );
+}
+
+function CommentIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M13.5 9.5c0 .83-.67 1.5-1.5 1.5H6l-3 2.5V11H4c-.83 0-1.5-.67-1.5-1.5v-6C2.5 2.67 3.17 2 4 2h8c.83 0 1.5.67 1.5 1.5v6z" />
+    </svg>
   );
 }
 
