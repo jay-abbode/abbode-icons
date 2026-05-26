@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import type { Icon, IconSize } from "@/lib/sheets";
 import { getThreadBySlot, rgbToHex } from "@/lib/threadPalette";
 
@@ -96,11 +97,28 @@ export default function IconDetailModal({ icon, onClose }: Props) {
               </section>
             )}
 
-            {icon.threadSlots.length > 0 && (
+            {icon.hasColorVariation && icon.pngFileId ? (
               <section>
                 <SectionLabel>Thread colors</SectionLabel>
-                <ThreadColorChips slots={icon.threadSlots} />
+                <Link
+                  href={`/icon/${icon.slug}/variations`}
+                  className="group font-ui inline-flex items-center gap-2 rounded-full border border-pink bg-white px-4 py-2 text-xs font-semibold text-cherry transition-colors hover:bg-pink-soft focus-ring"
+                >
+                  <ColorWheel />
+                  Color variations
+                  <ArrowRight className="transition-transform duration-200 group-hover:translate-x-0.5" />
+                </Link>
+                <p className="font-ui mt-2 text-[11px] text-ink-muted">
+                  View this design in all 24 Madeira thread colors.
+                </p>
               </section>
+            ) : (
+              icon.threadSlots.length > 0 && (
+                <section>
+                  <SectionLabel>Thread colors</SectionLabel>
+                  <ThreadColorChips slots={icon.threadSlots} />
+                </section>
+              )
             )}
 
             <section>
@@ -230,6 +248,39 @@ function Badge({
     >
       {children}
     </span>
+  );
+}
+
+function ColorWheel() {
+  // A six-petal conic-gradient swatch to signal "many colors"
+  return (
+    <span
+      aria-hidden
+      className="inline-block h-3.5 w-3.5 rounded-full ring-1 ring-white"
+      style={{
+        background:
+          "conic-gradient(from 0deg, #BB3767, #F0691E, #F4DC5C, #7D6E35, #1C4072, #5A4F9C, #BB3767)",
+      }}
+    />
+  );
+}
+
+function ArrowRight({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+      width="12"
+      height="12"
+    >
+      <path d="M3 8h10M9 4l4 4-4 4" />
+    </svg>
   );
 }
 
