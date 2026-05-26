@@ -92,7 +92,7 @@ export async function GET(
     const raw = await fetchRawPng(fileId);
 
     if (!targetRgb) {
-      return new NextResponse(raw.buffer, {
+      return new NextResponse(new Uint8Array(raw.buffer), {
         headers: {
           "Content-Type": raw.mimeType,
           "Cache-Control": "public, max-age=3600, s-maxage=86400, immutable",
@@ -101,7 +101,7 @@ export async function GET(
     }
 
     const recolored = await recolorPng(raw.buffer, targetRgb);
-    return new NextResponse(recolored, {
+    return new NextResponse(new Uint8Array(recolored), {
       headers: {
         "Content-Type": "image/png",
         // Recolored output is deterministic for (fileId, slot) — safe to
