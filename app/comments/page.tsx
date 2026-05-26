@@ -1,11 +1,19 @@
 import Link from "next/link";
 import Header from "@/components/Header";
+import DeleteCommentButton from "@/components/DeleteCommentButton";
+import { auth } from "@/auth";
 import { getAllComments } from "@/lib/comments";
 
 export const dynamic = "force-dynamic";
 
+const STAFF_DOMAIN = (process.env.ALLOWED_DOMAIN || "shopabbode.com")
+  .toLowerCase()
+  .replace(/^@/, "");
+
 export default async function CommentsPage() {
-  const comments = await getAllComments();
+  const [session, comments] = await Promise.all([auth(), getAllComments()]);
+  const userEmail = (session?.user?.email || "").toLowerCase();
+  const isStaff = userEmail.endsWith(`@${STAFF_DOMAIN}`);
 
   return (
     <>
@@ -33,44 +41,57 @@ export default async function CommentsPage() {
           <EmptyState />
         ) : (
           <ol className="space-y-4">
-            {comments.map((c, idx) => (
-              <li
-                key={`${c.timestamp}-${idx}`}
-                className="rounded-2xl border border-parchment bg-white p-5"
-              >
-                <header className="flex items-baseline justify-between gap-3">
-                  <Link
-                    href={`/browse?q=${encodeURIComponent(c.iconName)}`}
-                    className="font-display text-lg text-espresso transition-colors hover:text-cherry"
-                  >
-                    {c.iconName || "(unknown icon)"}
-                  </Link>
-                  {c.iconCategory && (
-                    <span className="font-ui shrink-0 text-[11px] text-ink-muted">
-                      {c.iconCategory}
-                    </span>
-                  )}
-                </header>
+            {comments.map((c, idx) => {
+              const canDelete =
+                isStaff ||
+                (!!userEmail &&
+                  c.authorEmail.toLowerCase() === userEmail);
+              return (
+                <li
+                  key={`${c.timestamp}-${idx}`}
+                  className="rounded-2xl border border-parchment bg-white p-5"
+                >
+                  <header className="flex items-baseline justify-between gap-3">
+                    <Link
+                      href={`/browse?q=${encodeURIComponent(c.iconName)}`}
+                      className="font-display text-lg text-espresso transition-colors hover:text-cherry"
+                    >
+                      {c.iconName || "(unknown icon)"}
+                    </Link>
+                    {c.iconCategory && (
+                      <span className="font-ui shrink-0 text-[11px] text-ink-muted">
+                        {c.iconCategory}
+                      </span>
+                    )}
+                  </header>
 
-                <p className="font-ui mt-2 whitespace-pre-wrap text-sm leading-relaxed text-espresso">
-                  {c.text}
-                </p>
+                  <p className="font-ui mt-2 whitespace-pre-wrap text-sm leading-relaxed text-espresso">
+                    {c.text}
+                  </p>
 
-                <footer className="font-ui mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-ink-muted">
-                  <span className="font-semibold text-ink-soft">
-                    {c.authorName || c.authorEmail || "Unknown"}
-                  </span>
-                  {c.authorName && c.authorEmail && (
-                    <span className="text-ink-muted/70">·</span>
-                  )}
-                  {c.authorEmail && c.authorName !== c.authorEmail && (
-                    <span>{c.authorEmail}</span>
-                  )}
-                  <span className="text-ink-muted/70">·</span>
-                  <time dateTime={c.timestamp}>{formatTimestamp(c.timestamp)}</time>
-                </footer>
-              </li>
-            ))}
+                  <footer className="font-ui mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] text-ink-muted">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="font-semibold text-ink-soft">
+                        {c.authorName || c.authorEmail || "Unknown"}
+                      </span>
+                      {c.authorName && c.authorEmail && (
+                        <span className="text-ink-muted/70">·</span>
+                      )}
+                      {c.authorEmail && c.authorName !== c.authorEmail && (
+                        <span>{c.authorEmail}</span>
+                      )}
+                      <span className="text-ink-muted/70">·</span>
+                      <time dateTime={c.timestamp}>
+                        {formatTimestamp(c.timestamp)}
+                      </time>
+                    </div>
+                    {canDelete && (
+                      <DeleteCommentButton timestamp={c.timestamp} />
+                    )}
+                  </footer>
+                </li>
+              );
+            })}
           </ol>
         )}
       </main>

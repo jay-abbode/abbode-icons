@@ -162,6 +162,69 @@ async function ensureCommentsTab(
   });
 }
 
+/**
+ * Delete the comment row whose Timestamp column matches `timestamp`.
+ * No-op if the COMMENTS tab doesn't exist or the timestamp isn't found.
+ * Throws on Sheets API errors (so the server action can surface them).
+ */
+export async function deleteComment(timestamp: string): Promise<void> {
+  if (!timestamp) {
+    throw new Error("Missing timestamp.");
+  }
+  const sheets = getSheetsClient();
+  const spreadsheetId = requireSheetId();
+
+  // Locate the COMMENTS tab's internal sheetId (the gid, not the tab name).
+  const meta = await sheets.spreadsheets.get({
+    spreadsheetId,
+    fields: "sheets.properties(sheetId,title)",
+  });
+  const tab = (meta.data.sheets || []).find(
+    (s) => s.properties?.title === COMMENTS_TAB
+  );
+  const sheetId = tab?.properties?.sheetId;
+  if (sheetId === undefined || sheetId === null) {
+    throw new Error("COMMENTS tab not found.");
+  }
+
+  // Find the row whose timestamp column matches. We read only column A,
+  // starting at row 2 (row 1 is the header).
+  const valuesResp = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: `${COMMENTS_TAB}!A2:A5000`,
+  });
+  const timestamps: string[][] = (valuesResp.data.values as string[][]) || [];
+  const indexInValues = timestamps.findIndex(
+    (r) => (r[0] || "") === timestamp
+  );
+  if (indexInValues < 0) {
+    throw new Error("Note not found — it may have already been deleted.");
+  }
+
+  // deleteDimension uses 0-based row indices into the entire sheet, where
+  // row 1 (header) is index 0. Our value at indexInValues=0 lives at sheet
+  // row 2, i.e. index 1.
+  const rowIndexInSheet = indexInValues + 1;
+
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId,
+    requestBody: {
+      requests: [
+        {
+          deleteDimension: {
+            range: {
+              sheetId,
+              dimension: "ROWS",
+              startIndex: rowIndexInSheet,
+              endIndex: rowIndexInSheet + 1,
+            },
+          },
+        },
+      ],
+    },
+  });
+}
+
 // --------------------------------------------------------------------------
 // Optional Resend email notification
 // --------------------------------------------------------------------------
