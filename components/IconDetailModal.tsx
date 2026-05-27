@@ -113,7 +113,9 @@ export default function IconDetailModal({ icon, onClose, commentCount = 0 }: Pro
                   <ArrowRight className="transition-transform duration-200 group-hover:translate-x-0.5" />
                 </Link>
                 <p className="font-ui mt-2 text-[11px] text-ink-muted">
-                  View this design in all 24 Madeira thread colors.
+                  {icon.isMultiColor
+                    ? "View this design in its multi-color variations."
+                    : "View this design in all 24 Madeira thread colors."}
                 </p>
               </section>
             ) : (

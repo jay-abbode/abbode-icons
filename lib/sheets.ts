@@ -20,7 +20,15 @@ export interface Icon {
   slug: string;
   name: string;
   category: string;
+  /**
+   * True for designs that support color variations on the variations page.
+   * Covers both single-color icons (Col. Var. = "YES") and multi-color
+   * icons (Col. Var. = "YES/MC"). The variations page reads `isMultiColor`
+   * to decide which recolor algorithm to use.
+   */
   hasColorVariation: boolean;
+  /** True only when Col. Var. = "YES/MC". */
+  isMultiColor: boolean;
   status: string;
   notes: string | null;
   oldName: string | null;
@@ -122,11 +130,18 @@ async function fetchCatalogFromSheet(): Promise<IconCatalog> {
     const slug = makeSlug(name, seenSlugs);
     seenSlugs.add(slug);
 
+    const colorVar = getCellText(row, col.colorVar).toUpperCase().replace(/[\s_]/g, "");
+    // Accept both "YES/MC" and "YES-MC" spellings; both mean multi-color.
+    const isMultiColor = colorVar === "YES/MC" || colorVar === "YES-MC";
+    // YES, YES/MC, and YES-MC all unlock the variations workflow.
+    const hasColorVariation = colorVar === "YES" || isMultiColor;
+
     const icon: Icon = {
       slug,
       name,
       category,
-      hasColorVariation: getCellText(row, col.colorVar).toUpperCase() === "YES",
+      hasColorVariation,
+      isMultiColor,
       status: getCellText(row, col.status) || "Unknown",
       notes: getCellText(row, col.notes) || null,
       oldName: getCellText(row, col.oldName) || null,
