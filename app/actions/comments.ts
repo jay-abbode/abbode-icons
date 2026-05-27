@@ -59,8 +59,10 @@ export async function createComment(
     };
   }
 
-  // Tell the comments page to re-fetch next time it's loaded.
+  // Tell pages that show comment counts to re-fetch next time they load.
   revalidatePath("/comments");
+  revalidatePath("/browse");
+  revalidatePath("/");
   return { ok: true };
 }
 
@@ -119,5 +121,7 @@ export async function deleteCommentAction(
   }
 
   revalidatePath("/comments");
+  revalidatePath("/browse");
+  revalidatePath("/");
   return { ok: true };
 }

@@ -82,6 +82,42 @@ export async function getAllComments(): Promise<Comment[]> {
   }
 }
 
+// --------------------------------------------------------------------------
+// Comment-count cache
+// --------------------------------------------------------------------------
+// Both the browse grid (per-icon badges) and the header (total badge) need
+// counts on every page render. We cache them for 60 seconds in process
+// memory, and explicitly bust the cache from addComment / deleteComment so
+// the counts feel instant after a write.
+
+type CountSnapshot = { counts: Map<string, number>; total: number };
+type CountCacheEntry = CountSnapshot & { expiresAt: number };
+const COUNTS_TTL_MS = 60 * 1000;
+let countCache: CountCacheEntry | null = null;
+
+export async function getCommentCounts(): Promise<CountSnapshot> {
+  if (countCache && countCache.expiresAt > Date.now()) {
+    return { counts: countCache.counts, total: countCache.total };
+  }
+  const comments = await getAllComments();
+  const counts = new Map<string, number>();
+  for (const c of comments) {
+    const slug = (c.iconSlug || "").trim();
+    if (!slug) continue;
+    counts.set(slug, (counts.get(slug) || 0) + 1);
+  }
+  countCache = {
+    counts,
+    total: comments.length,
+    expiresAt: Date.now() + COUNTS_TTL_MS,
+  };
+  return { counts, total: comments.length };
+}
+
+function invalidateCountCache() {
+  countCache = null;
+}
+
 /**
  * Append a new comment, creating the COMMENTS tab + header row on first call.
  * Also fires an optional email notification (failure of which doesn't block
@@ -114,6 +150,10 @@ export async function addComment(input: NewComment): Promise<Comment> {
   });
 
   const saved: Comment = { ...input, timestamp };
+
+  // Bust the in-memory counts cache so the next call returns fresh numbers
+  // for the new comment.
+  invalidateCountCache();
 
   // Best-effort notification. Never let an email failure block save success.
   sendNotification(saved).catch((err) => {
@@ -223,6 +263,8 @@ export async function deleteComment(timestamp: string): Promise<void> {
       ],
     },
   });
+
+  invalidateCountCache();
 }
 
 // --------------------------------------------------------------------------

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
 import { getIconCatalog } from "@/lib/sheets";
+import { getCommentCounts } from "@/lib/comments";
 import { THREAD_PALETTE, rgbToHex } from "@/lib/threadPalette";
 import SearchBar from "./SearchBar";
 import ColorDataMenu, { type ColorStat } from "./ColorDataMenu";
@@ -45,6 +46,17 @@ export default async function Header({
   // Only load stats if the user is signed in — anonymous /login views don't
   // need them, and loadColorStats() hits the Sheets API.
   const colorStats: ColorStat[] = user ? await loadColorStats() : [];
+  // Same gating for comment counts. Cached for 60s, so this is cheap on
+  // repeat page loads.
+  let commentTotal = 0;
+  if (user) {
+    try {
+      const { total } = await getCommentCounts();
+      commentTotal = total;
+    } catch {
+      commentTotal = 0;
+    }
+  }
 
   return (
     <header className="sticky top-0 z-30 border-b border-parchment bg-porcelain/85 backdrop-blur-md">
@@ -81,9 +93,12 @@ export default async function Header({
           </Link>
           <Link
             href="/comments"
-            className="hidden hover:text-espresso transition-colors focus-ring sm:inline"
+            className="hidden hover:text-espresso transition-colors focus-ring sm:inline-flex sm:items-center sm:gap-1.5"
           >
             Notes
+            {commentTotal > 0 && (
+              <CountBadge value={commentTotal} />
+            )}
           </Link>
 
           {user && (
@@ -172,5 +187,29 @@ function AbbodeLogo({ className }: { className?: string }) {
       <path d="M610.69,287.48v-.09c-15.13,0-29.43,4.27-42.47,11.88V10.16c0-5.62-4.59-10.16-10.16-10.16h-71.8c-5.94,0-8.86,2.41-8.86,7.01v14.25c0,4.46,2.37,7.66,7.29,10.03,10.72,4.97,16.15,14.81,16.15,29.43v133.9h-.19v322.2c0,5.94-.88,10.91-2.37,15.18-1.9,3.9-4.27,7.1-7.29,9.98-3.11,2.6-4.64,6.82-4.64,12.76v16.66c0,3.85,3.16,7.01,7.01,7.01h63.45c6.13,0,11.09-4.97,11.09-11.09v-7.05c7.24,8.12,22.65,22.23,42.79,22.23,59.55,0,107.86-66.05,107.86-147.55s-48.22-147.45-107.86-147.45ZM634.54,525.86v-.05c-5.38,10.4-15.55,18.94-27.66,19.22-21.72.51-35.55-24.32-38.62-41.77v-130.37c0-3.51.22-7.02.78-10.49,0-.02,0-.03,0-.05,2.74-14.06,8.17-30.91,22.46-37.5,10.07-4.69,18.61-3.2,24.13-1.16,15.69,6.08,24.04,29.89,26.73,44,4.13,20,4.64,40.57,5.01,60.99.56,29.8,1.16,70.08-12.86,97.19Z" />
       <path d="M368.92,287.48v-.09c-15.08,0-29.43,4.27-42.47,11.88V10.16c0-5.62-4.59-10.16-10.16-10.16h-71.8c-5.94,0-8.86,2.41-8.86,7.01v14.25c0,4.46,2.37,7.66,7.29,10.03,10.72,4.97,16.15,14.81,16.15,29.43v133.9h-.19v322.2c0,5.94-.88,10.91-2.37,15.18-1.9,3.9-4.27,7.1-7.29,9.98-3.11,2.6-4.64,6.82-4.64,12.76v16.66c0,3.85,3.16,7.01,7.01,7.01h63.45c6.13,0,11.09-4.97,11.09-11.09v-7.05c7.24,8.12,22.65,22.23,42.79,22.23,59.55,0,107.86-66.05,107.86-147.55s-48.22-147.45-107.86-147.45ZM392.82,525.86v-.05c-5.38,10.4-15.55,18.94-27.66,19.22-21.72.51-35.55-24.32-38.62-41.77v-130.37c0-3.51.22-7.02.78-10.49,0-.02,0-.03,0-.05,2.74-14.06,8.17-30.91,22.46-37.5,10.07-4.69,18.66-3.2,24.13-1.16,15.64,6.08,24.04,29.89,26.73,44,4.13,20,4.64,40.57,5.01,60.99.56,29.8,1.16,70.08-12.86,97.19Z" />
     </svg>
+  );
+}
+
+/**
+ * Small numeric pill used in the header next to "Notes" and on icon grid
+ * cards when an icon has comments. Single digits render as a circle; 2+
+ * digits expand to a pill. 99+ caps the display.
+ */
+export function CountBadge({
+  value,
+  tone = "cherry",
+}: {
+  value: number;
+  tone?: "cherry" | "berry";
+}) {
+  const bg = tone === "berry" ? "bg-berry" : "bg-cherry";
+  const label = value > 99 ? "99+" : String(value);
+  return (
+    <span
+      aria-label={`${value} ${value === 1 ? "note" : "notes"}`}
+      className={`font-ui inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none text-porcelain tabular-nums ${bg}`}
+    >
+      {label}
+    </span>
   );
 }

@@ -5,7 +5,14 @@ import type { Icon } from "@/lib/sheets";
 import IconDetailModal from "./IconDetailModal";
 import CommentDialog from "./CommentDialog";
 
-export default function IconGrid({ icons }: { icons: Icon[] }) {
+export default function IconGrid({
+  icons,
+  commentCounts = {},
+}: {
+  icons: Icon[];
+  /** Map of icon slug → number of notes left on that icon. */
+  commentCounts?: Record<string, number>;
+}) {
   const [selected, setSelected] = useState<Icon | null>(null);
   const [commentingOn, setCommentingOn] = useState<Icon | null>(null);
 
@@ -38,13 +45,20 @@ export default function IconGrid({ icons }: { icons: Icon[] }) {
             <IconCard icon={icon} onClick={() => setSelected(icon)} />
             <CommentButton
               icon={icon}
+              count={commentCounts[icon.slug] || 0}
               onOpen={(i) => setCommentingOn(i)}
             />
           </li>
         ))}
       </ul>
 
-      {selected && <IconDetailModal icon={selected} onClose={handleClose} />}
+      {selected && (
+        <IconDetailModal
+          icon={selected}
+          onClose={handleClose}
+          commentCount={commentCounts[selected.slug] || 0}
+        />
+      )}
       {commentingOn && (
         <CommentDialog icon={commentingOn} onClose={handleCloseComment} />
       )}
@@ -102,16 +116,23 @@ function IconCard({
 
 function CommentButton({
   icon,
+  count,
   onOpen,
 }: {
   icon: Icon;
+  count: number;
   onOpen: (icon: Icon) => void;
 }) {
+  const hasNotes = count > 0;
   return (
     <button
       type="button"
-      aria-label={`Leave a note on ${icon.name}`}
-      title="Leave a note"
+      aria-label={
+        hasNotes
+          ? `${count} ${count === 1 ? "note" : "notes"} on ${icon.name} · leave another`
+          : `Leave a note on ${icon.name}`
+      }
+      title={hasNotes ? `${count} ${count === 1 ? "note" : "notes"}` : "Leave a note"}
       onClick={(e) => {
         // Sibling of the IconCard button; stopPropagation is belt-and-braces
         // in case future markup nests them.
@@ -121,6 +142,14 @@ function CommentButton({
       className="absolute bottom-1.5 right-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-ink-muted shadow-sm transition-colors hover:bg-pink-soft hover:text-cherry focus-ring"
     >
       <CommentIcon className="h-3.5 w-3.5" />
+      {hasNotes && (
+        <span
+          aria-hidden
+          className="font-ui absolute -top-1 -right-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-cherry px-1 text-[10px] font-bold leading-none text-porcelain tabular-nums shadow-sm"
+        >
+          {count > 99 ? "99+" : count}
+        </span>
+      )}
     </button>
   );
 }

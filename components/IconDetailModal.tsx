@@ -4,14 +4,18 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { Icon, IconSize } from "@/lib/sheets";
 import { getThreadBySlot, rgbToHex } from "@/lib/threadPalette";
+import CommentDialog from "./CommentDialog";
 
 interface Props {
   icon: Icon;
   onClose: () => void;
+  /** Number of notes already left on this icon. Optional; defaults to 0. */
+  commentCount?: number;
 }
 
-export default function IconDetailModal({ icon, onClose }: Props) {
+export default function IconDetailModal({ icon, onClose, commentCount = 0 }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null);
+  const [commentOpen, setCommentOpen] = useState(false);
 
   useEffect(() => {
     dialogRef.current?.focus();
@@ -129,9 +133,43 @@ export default function IconDetailModal({ icon, onClose }: Props) {
                 <SizeRow icon={icon} sizeKey="large" label="Large" />
               </div>
             </section>
+
+            <section>
+              <SectionLabel>Notes</SectionLabel>
+              <button
+                type="button"
+                onClick={() => setCommentOpen(true)}
+                className="group font-ui inline-flex items-center gap-2 rounded-full border border-parchment bg-white px-4 py-2 text-xs font-semibold text-espresso transition-colors hover:border-pink hover:bg-pink-soft focus-ring"
+              >
+                <CommentBubbleIcon className="h-3.5 w-3.5 text-ink-muted group-hover:text-cherry transition-colors" />
+                <span>Leave a note</span>
+                {commentCount > 0 && (
+                  <span
+                    aria-label={`${commentCount} existing ${commentCount === 1 ? "note" : "notes"}`}
+                    className="font-ui inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-cherry px-1 text-[10px] font-bold leading-none text-porcelain tabular-nums"
+                  >
+                    {commentCount > 99 ? "99+" : commentCount}
+                  </span>
+                )}
+              </button>
+              {commentCount > 0 && (
+                <p className="font-ui mt-2 text-[11px] text-ink-muted">
+                  <Link href="/comments" className="hover:text-espresso underline-offset-2 hover:underline">
+                    View all notes →
+                  </Link>
+                </p>
+              )}
+            </section>
           </div>
         </div>
       </div>
+
+      {commentOpen && (
+        <CommentDialog
+          icon={icon}
+          onClose={() => setCommentOpen(false)}
+        />
+      )}
     </div>
   );
 }
@@ -248,6 +286,23 @@ function Badge({
     >
       {children}
     </span>
+  );
+}
+
+function CommentBubbleIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M13.5 9.5c0 .83-.67 1.5-1.5 1.5H6l-3 2.5V11H4c-.83 0-1.5-.67-1.5-1.5v-6C2.5 2.67 3.17 2 4 2h8c.83 0 1.5.67 1.5 1.5v6z" />
+    </svg>
   );
 }
 

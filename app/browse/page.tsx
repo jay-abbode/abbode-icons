@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getIconCatalog, type Icon } from "@/lib/sheets";
+import { getCommentCounts } from "@/lib/comments";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
 import FilterControls from "@/components/FilterControls";
@@ -20,8 +21,14 @@ export default async function BrowsePage({
   searchParams: SearchParams;
 }) {
   let catalog;
+  let commentCounts: Record<string, number> = {};
   try {
-    catalog = await getIconCatalog();
+    const [c, { counts }] = await Promise.all([
+      getIconCatalog(),
+      getCommentCounts().catch(() => ({ counts: new Map<string, number>() })),
+    ]);
+    catalog = c;
+    commentCounts = Object.fromEntries(counts);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return (
@@ -119,7 +126,7 @@ export default async function BrowsePage({
             {filtered.length === 0 ? (
               <EmptyState query={query} category={category} />
             ) : (
-              <IconGrid icons={filtered} />
+              <IconGrid icons={filtered} commentCounts={commentCounts} />
             )}
           </section>
         </div>
