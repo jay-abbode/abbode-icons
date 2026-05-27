@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { auth } from "@/auth";
 import { addComment, deleteComment, getAllComments } from "@/lib/comments";
 
@@ -59,7 +59,11 @@ export async function createComment(
     };
   }
 
-  // Tell pages that show comment counts to re-fetch next time they load.
+  // Invalidate the comment-counts cache globally (across all serverless
+  // instances on Vercel) so the next call returns fresh numbers immediately.
+  revalidateTag("comments");
+  // Belt-and-suspenders: revalidate the routes that render badge UI so any
+  // route-level caching also clears.
   revalidatePath("/comments");
   revalidatePath("/browse");
   revalidatePath("/");
@@ -120,6 +124,7 @@ export async function deleteCommentAction(
     return { ok: false, error: msg };
   }
 
+  revalidateTag("comments");
   revalidatePath("/comments");
   revalidatePath("/browse");
   revalidatePath("/");

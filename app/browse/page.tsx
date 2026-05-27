@@ -23,12 +23,12 @@ export default async function BrowsePage({
   let catalog;
   let commentCounts: Record<string, number> = {};
   try {
-    const [c, { counts }] = await Promise.all([
+    const [c, countsResult] = await Promise.all([
       getIconCatalog(),
-      getCommentCounts().catch(() => ({ counts: new Map<string, number>() })),
+      getCommentCounts().catch(() => ({ counts: {} as Record<string, number>, total: 0 })),
     ]);
     catalog = c;
-    commentCounts = Object.fromEntries(counts);
+    commentCounts = countsResult.counts;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return (

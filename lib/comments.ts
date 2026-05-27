@@ -17,6 +17,7 @@
  * just no email goes out.
  */
 
+import { unstable_cache } from "next/cache";
 import { getSheetsClient } from "./google";
 
 const COMMENTS_TAB = "COMMENTS";
@@ -86,37 +87,31 @@ export async function getAllComments(): Promise<Comment[]> {
 // Comment-count cache
 // --------------------------------------------------------------------------
 // Both the browse grid (per-icon badges) and the header (total badge) need
-// counts on every page render. We cache them for 60 seconds in process
-// memory, and explicitly bust the cache from addComment / deleteComment so
-// the counts feel instant after a write.
+// counts on every page render. We use Next.js's unstable_cache so the data
+// lives in the globally-shared cache (not in per-instance memory) and can
+// be busted from any serverless invocation by revalidating the "comments"
+// tag. The server actions call revalidateTag("comments") after every add
+// or delete, so badges update on the very next request.
 
-type CountSnapshot = { counts: Map<string, number>; total: number };
-type CountCacheEntry = CountSnapshot & { expiresAt: number };
-const COUNTS_TTL_MS = 60 * 1000;
-let countCache: CountCacheEntry | null = null;
+type CountSnapshot = { counts: Record<string, number>; total: number };
 
-export async function getCommentCounts(): Promise<CountSnapshot> {
-  if (countCache && countCache.expiresAt > Date.now()) {
-    return { counts: countCache.counts, total: countCache.total };
-  }
-  const comments = await getAllComments();
-  const counts = new Map<string, number>();
-  for (const c of comments) {
-    const slug = (c.iconSlug || "").trim();
-    if (!slug) continue;
-    counts.set(slug, (counts.get(slug) || 0) + 1);
-  }
-  countCache = {
-    counts,
-    total: comments.length,
-    expiresAt: Date.now() + COUNTS_TTL_MS,
-  };
-  return { counts, total: comments.length };
-}
-
-function invalidateCountCache() {
-  countCache = null;
-}
+export const getCommentCounts = unstable_cache(
+  async (): Promise<CountSnapshot> => {
+    const comments = await getAllComments();
+    const counts: Record<string, number> = {};
+    for (const c of comments) {
+      const slug = (c.iconSlug || "").trim();
+      if (!slug) continue;
+      counts[slug] = (counts[slug] || 0) + 1;
+    }
+    return { counts, total: comments.length };
+  },
+  ["comment-counts"],
+  // 60-second safety TTL so a missed invalidation can't leave stale counts
+  // around indefinitely; revalidateTag is what actually drives invalidation
+  // in normal flow.
+  { tags: ["comments"], revalidate: 60 },
+);
 
 /**
  * Append a new comment, creating the COMMENTS tab + header row on first call.
@@ -151,9 +146,8 @@ export async function addComment(input: NewComment): Promise<Comment> {
 
   const saved: Comment = { ...input, timestamp };
 
-  // Bust the in-memory counts cache so the next call returns fresh numbers
-  // for the new comment.
-  invalidateCountCache();
+  // Counts cache invalidation is handled by the server action via
+  // revalidateTag("comments") — works across all serverless instances.
 
   // Best-effort notification. Never let an email failure block save success.
   sendNotification(saved).catch((err) => {
@@ -264,7 +258,8 @@ export async function deleteComment(timestamp: string): Promise<void> {
     },
   });
 
-  invalidateCountCache();
+  // Counts cache invalidation is handled by the server action via
+  // revalidateTag("comments") — works across all serverless instances.
 }
 
 // --------------------------------------------------------------------------
