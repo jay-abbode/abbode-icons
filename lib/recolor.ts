@@ -33,20 +33,25 @@ export type RGB = readonly [number, number, number];
  * reads as honest shadow on e.g. burgundy or navy.
  *
  * For light targets (luminance > 0.7) we taper the shadow strength toward
- * 0.25 as luminance approaches white. This compresses the dark end of the
- * curve so a pure-white target produces output in the [75%–100%] of-white
- * range across the icon instead of dropping to 50% gray for mid-brightness
- * pixels (which is what made white recolors look silver).
+ * 0.15 as luminance approaches pure white. The floor is intentionally low:
+ * multi-color icons re-color body regions whose source brightness is
+ * already compressed (e.g. a red bandana body's 90th-percentile brightness
+ * is well below a typical mid-bright stitched icon's), so any non-trivial
+ * shadow strength leaves the result reading as light gray instead of
+ * white. With floor 0.15, even mid-brightness body pixels stay at ~85% of
+ * the target color, which reads cleanly as "white with subtle stitch
+ * texture" rather than silver.
  *
- * Stitch texture is still preserved — the same brightness variations across
- * stitches still produce proportional output variations, just within a
- * lighter band when the target itself is light.
+ * Stitch texture is still preserved — the same brightness variations
+ * across stitches still produce proportional output variations, just
+ * within a tighter band when the target itself is light.
  */
 function shadowStrengthFor(target: RGB): number {
   const luminance = (target[0] + target[1] + target[2]) / 765;
-  // No lift below 0.7, ramps linearly to 0.25 at luminance 1.0.
-  const lifted = 1.0 - Math.max(0, luminance - 0.7) * 2.5;
-  return lifted < 0.25 ? 0.25 : lifted;
+  // No lift below 0.7, ramps linearly to 0.15 at luminance 1.0.
+  // Slope = (1 - 0.15) / (1 - 0.7) ≈ 2.84.
+  const lifted = 1.0 - Math.max(0, luminance - 0.7) * 2.84;
+  return lifted < 0.15 ? 0.15 : lifted;
 }
 
 /** Recolor a PNG buffer to the target RGB. Returns a new PNG buffer. */
