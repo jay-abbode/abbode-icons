@@ -32,26 +32,27 @@ export type RGB = readonly [number, number, number];
  * multiplicative behavior — the natural darkening at mid-brightness pixels
  * reads as honest shadow on e.g. burgundy or navy.
  *
- * For light targets (luminance > 0.7) we taper the shadow strength toward
- * 0.15 as luminance approaches pure white. The floor is intentionally low:
- * multi-color icons re-color body regions whose source brightness is
- * already compressed (e.g. a red bandana body's 90th-percentile brightness
- * is well below a typical mid-bright stitched icon's), so any non-trivial
- * shadow strength leaves the result reading as light gray instead of
- * white. With floor 0.15, even mid-brightness body pixels stay at ~85% of
- * the target color, which reads cleanly as "white with subtle stitch
- * texture" rather than silver.
+ * For light targets (luminance > 0.7) we ramp shadow strength down linearly
+ * to zero at pure white (luminance 1.0). This means slot 35 White
+ * effectively gets no shadow — every body pixel becomes fully white —
+ * which matches what dense white satin stitching actually looks like in
+ * real embroidery (uniformly white, no inter-stitch shadows). It also
+ * keeps a meaningful amount of texture for moderately-light colors like
+ * Tusk, Light Pink, and Silver where some shadow IS realistic.
  *
- * Stitch texture is still preserved — the same brightness variations
- * across stitches still produce proportional output variations, just
- * within a tighter band when the target itself is light.
+ * Why zero at white and not a small floor: heart dice and the polka-dot
+ * bikini source images have very visible diagonal stitch patterns in their
+ * body regions. Any non-zero shadow strength turns those into gray stripes
+ * when recolored to white, which reads as silver rather than white.
  */
 function shadowStrengthFor(target: RGB): number {
   const luminance = (target[0] + target[1] + target[2]) / 765;
-  // No lift below 0.7, ramps linearly to 0.15 at luminance 1.0.
-  // Slope = (1 - 0.15) / (1 - 0.7) ≈ 2.84.
-  const lifted = 1.0 - Math.max(0, luminance - 0.7) * 2.84;
-  return lifted < 0.15 ? 0.15 : lifted;
+  // Linear ramp: 1.0 at luminance 0.7, 0.0 at luminance 1.0.
+  // (1 - lum) / 0.3 hits 0 exactly at lum = 1, 1 at lum = 0.7.
+  const lifted = (1.0 - luminance) / 0.3;
+  if (lifted > 1.0) return 1.0;
+  if (lifted < 0.0) return 0.0;
+  return lifted;
 }
 
 /** Recolor a PNG buffer to the target RGB. Returns a new PNG buffer. */
