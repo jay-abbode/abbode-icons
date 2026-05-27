@@ -25,6 +25,30 @@ import sharp from "sharp";
 
 export type RGB = readonly [number, number, number];
 
+/**
+ * Compute how much shadow (darkening) to apply when recoloring to a target.
+ *
+ * For dark/saturated targets (luminance ≤ 0.7) we keep the original full
+ * multiplicative behavior — the natural darkening at mid-brightness pixels
+ * reads as honest shadow on e.g. burgundy or navy.
+ *
+ * For light targets (luminance > 0.7) we taper the shadow strength toward
+ * 0.25 as luminance approaches white. This compresses the dark end of the
+ * curve so a pure-white target produces output in the [75%–100%] of-white
+ * range across the icon instead of dropping to 50% gray for mid-brightness
+ * pixels (which is what made white recolors look silver).
+ *
+ * Stitch texture is still preserved — the same brightness variations across
+ * stitches still produce proportional output variations, just within a
+ * lighter band when the target itself is light.
+ */
+function shadowStrengthFor(target: RGB): number {
+  const luminance = (target[0] + target[1] + target[2]) / 765;
+  // No lift below 0.7, ramps linearly to 0.25 at luminance 1.0.
+  const lifted = 1.0 - Math.max(0, luminance - 0.7) * 2.5;
+  return lifted < 0.25 ? 0.25 : lifted;
+}
+
 /** Recolor a PNG buffer to the target RGB. Returns a new PNG buffer. */
 export async function recolorPng(
   input: Buffer,
@@ -84,13 +108,18 @@ export async function recolorPng(
   const tB = target[2];
   const invRef = 1 / refBrightness;
   const factorCap = 1.2;
+  // Constant per recolor call: how aggressively to apply shadow vs target.
+  const shadowStrength = shadowStrengthFor(target);
 
   for (let p = 0; p < pixelCount; p++) {
     const off = p * 4;
     const br = brightness[p];
 
-    let factor = br * invRef;
-    if (factor > factorCap) factor = factorCap;
+    let rawFactor = br * invRef;
+    if (rawFactor > factorCap) rawFactor = factorCap;
+    // f blends between full multiplicative (shadowStrength = 1) and
+    // "target with only mild shadow" (shadowStrength ≈ 0.25 for white).
+    const factor = 1 - shadowStrength * (1 - rawFactor);
 
     const nr = (tR * factor + 0.5) | 0;
     const ng = (tG * factor + 0.5) | 0;
@@ -325,6 +354,12 @@ export async function recolorPngTwoRegion(
   const taR = targetAccent[0];
   const taG = targetAccent[1];
   const taB = targetAccent[2];
+  // Each region gets its own shadow strength based on its own target's
+  // luminance. So in a Bandana with base=white and accent=black, the white
+  // body uses a low shadow strength (stays clearly white) while the black
+  // pattern uses full multiplicative behavior (natural shadow depth).
+  const shadowStrengthBase = shadowStrengthFor(targetBase);
+  const shadowStrengthAccent = shadowStrengthFor(targetAccent);
 
   for (let p = 0; p < pixelCount; p++) {
     const off = p * 4;
@@ -343,20 +378,24 @@ export async function recolorPngTwoRegion(
     let tG: number;
     let tB: number;
     let invRef: number;
+    let shadowStrength: number;
     if (tag === 1) {
       tR = tbR;
       tG = tbG;
       tB = tbB;
       invRef = invBaseRef;
+      shadowStrength = shadowStrengthBase;
     } else {
       tR = taR;
       tG = taG;
       tB = taB;
       invRef = invAccentRef;
+      shadowStrength = shadowStrengthAccent;
     }
 
-    let factor = br * invRef;
-    if (factor > 1.2) factor = 1.2;
+    let rawFactor = br * invRef;
+    if (rawFactor > 1.2) rawFactor = 1.2;
+    const factor = 1 - shadowStrength * (1 - rawFactor);
     const nr = (tR * factor + 0.5) | 0;
     const ng = (tG * factor + 0.5) | 0;
     const nb = (tB * factor + 0.5) | 0;
