@@ -11,15 +11,42 @@ interface Props {
   onClose: () => void;
   /** Number of notes already left on this icon. Optional; defaults to 0. */
   commentCount?: number;
+  /** When provided, the modal shows a previous-icon arrow + handles ←. */
+  onPrev?: () => void;
+  /** When provided, the modal shows a next-icon arrow + handles →. */
+  onNext?: () => void;
+  /** "N of M" position indicator shown near the category label. */
+  position?: { current: number; total: number };
 }
 
-export default function IconDetailModal({ icon, onClose, commentCount = 0 }: Props) {
+export default function IconDetailModal({
+  icon,
+  onClose,
+  commentCount = 0,
+  onPrev,
+  onNext,
+  position,
+}: Props) {
   const dialogRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [commentOpen, setCommentOpen] = useState(false);
 
   useEffect(() => {
     dialogRef.current?.focus();
   }, []);
+
+  // When we navigate to a different icon via the arrow buttons / arrow keys
+  // the modal stays mounted but the icon prop changes. Reset any per-icon UI
+  // state so we don't carry over (e.g.) an open comment dialog or stale
+  // scroll position from the previous icon.
+  useEffect(() => {
+    setCommentOpen(false);
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+    // Re-focus the dialog when the icon changes so subsequent arrow
+    // keypresses are received by our window listener and not stolen by the
+    // arrow button the user just clicked.
+    dialogRef.current?.focus();
+  }, [icon.slug]);
 
   return (
     <div
@@ -27,6 +54,29 @@ export default function IconDetailModal({ icon, onClose, commentCount = 0 }: Pro
       onClick={onClose}
     >
       <div className="absolute inset-0 bg-espresso/40 backdrop-blur-sm" aria-hidden />
+
+      {/* Lightbox-style prev/next arrows. Always rendered when the parent
+          declares it has prev/next; we don't render the button at all when
+          there's nothing to navigate to so screen readers don't see a dead
+          control. */}
+      {onPrev && (
+        <NavArrowButton
+          direction="prev"
+          onClick={(e) => {
+            e.stopPropagation();
+            onPrev();
+          }}
+        />
+      )}
+      {onNext && (
+        <NavArrowButton
+          direction="next"
+          onClick={(e) => {
+            e.stopPropagation();
+            onNext();
+          }}
+        />
+      )}
 
       <div
         ref={dialogRef}
@@ -46,7 +96,7 @@ export default function IconDetailModal({ icon, onClose, commentCount = 0 }: Pro
           <CloseIcon />
         </button>
 
-        <div className="grid grid-cols-1 overflow-y-auto sm:grid-cols-[1fr_1.1fr]">
+        <div ref={scrollRef} className="grid grid-cols-1 overflow-y-auto sm:grid-cols-[1fr_1.1fr]">
           <div className="flex aspect-square items-center justify-center bg-white p-10 sm:aspect-auto sm:min-h-[420px]">
             {icon.pngFileId ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -65,8 +115,19 @@ export default function IconDetailModal({ icon, onClose, commentCount = 0 }: Pro
 
           <div className="flex flex-col gap-6 p-6 sm:p-8">
             <header>
-              <p className="font-ui text-[10px] font-semibold uppercase tracking-[0.18em] text-berry">
-                {icon.category}
+              <p className="font-ui flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-berry">
+                <span>{icon.category}</span>
+                {position && position.total > 1 && (
+                  <>
+                    <span aria-hidden className="text-ink-muted/60">·</span>
+                    <span
+                      className="text-ink-muted"
+                      aria-label={`Icon ${position.current} of ${position.total} in the current view`}
+                    >
+                      {position.current} of {position.total}
+                    </span>
+                  </>
+                )}
               </p>
               <h2
                 id="icon-modal-title"
@@ -96,7 +157,7 @@ export default function IconDetailModal({ icon, onClose, commentCount = 0 }: Pro
                     format="PNG"
                     primary
                   />
-                  <CopyImageButton fileId={icon.pngFileId} />
+                  <CopyImageButton key={icon.pngFileId} fileId={icon.pngFileId} />
                 </div>
               </section>
             )}
@@ -288,6 +349,71 @@ function Badge({
     >
       {children}
     </span>
+  );
+}
+
+function NavArrowButton({
+  direction,
+  onClick,
+}: {
+  direction: "prev" | "next";
+  onClick: (e: React.MouseEvent) => void;
+}) {
+  const isPrev = direction === "prev";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={isPrev ? "Previous icon" : "Next icon"}
+      title={isPrev ? "Previous icon (←)" : "Next icon (→)"}
+      className={
+        // Vertically centered on the viewport, hugging the edge. Slightly
+        // smaller and pulled in on mobile so they don't overlap the panel's
+        // content; lightbox-spaced on desktop.
+        "group absolute top-1/2 z-[55] flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-espresso shadow-lg backdrop-blur transition-all hover:scale-110 hover:bg-white hover:text-cherry focus-ring sm:h-12 sm:w-12 " +
+        (isPrev ? "left-3 sm:left-6" : "right-3 sm:right-6")
+      }
+    >
+      {isPrev ? <ChevronLeft /> : <ChevronRight />}
+    </button>
+  );
+}
+
+function ChevronLeft() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      className="transition-transform group-hover:-translate-x-0.5"
+    >
+      <path d="M12.5 4 6.5 10l6 6" />
+    </svg>
+  );
+}
+
+function ChevronRight() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      className="transition-transform group-hover:translate-x-0.5"
+    >
+      <path d="M7.5 4 13.5 10l-6 6" />
+    </svg>
   );
 }
 

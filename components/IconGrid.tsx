@@ -16,14 +16,48 @@ export default function IconGrid({
   const [selected, setSelected] = useState<Icon | null>(null);
   const [commentingOn, setCommentingOn] = useState<Icon | null>(null);
 
+  // Locate the selected icon's index in the current filtered list so we can
+  // step backward/forward through whatever the user has filtered down to.
+  const selectedIndex = selected
+    ? icons.findIndex((i) => i.slug === selected.slug)
+    : -1;
+  const hasPrev = selectedIndex > 0;
+  const hasNext = selectedIndex >= 0 && selectedIndex < icons.length - 1;
+
+  const goPrev = useCallback(() => {
+    if (selectedIndex > 0) setSelected(icons[selectedIndex - 1]);
+  }, [icons, selectedIndex]);
+  const goNext = useCallback(() => {
+    if (selectedIndex >= 0 && selectedIndex < icons.length - 1) {
+      setSelected(icons[selectedIndex + 1]);
+    }
+  }, [icons, selectedIndex]);
+
   useEffect(() => {
     if (!selected) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setSelected(null);
+      // Ignore navigation keys when the user is typing in a form field
+      // (e.g. the comment dialog's textarea, the search bar). Escape still
+      // closes the modal so they can always bail out.
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      const inField = tag === "INPUT" || tag === "TEXTAREA";
+
+      if (e.key === "Escape") {
+        setSelected(null);
+        return;
+      }
+      if (inField) return;
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        goPrev();
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        goNext();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selected]);
+  }, [selected, goPrev, goNext]);
 
   useEffect(() => {
     if (!selected) return;
@@ -57,6 +91,13 @@ export default function IconGrid({
           icon={selected}
           onClose={handleClose}
           commentCount={commentCounts[selected.slug] || 0}
+          onPrev={hasPrev ? goPrev : undefined}
+          onNext={hasNext ? goNext : undefined}
+          position={
+            selectedIndex >= 0
+              ? { current: selectedIndex + 1, total: icons.length }
+              : undefined
+          }
         />
       )}
       {commentingOn && (
