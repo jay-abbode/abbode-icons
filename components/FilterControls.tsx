@@ -90,13 +90,13 @@ export default function FilterControls({
       <FilterGroup label="View">
         <div className="space-y-0.5">
           <ViewLinkRow
-            label="Draft designs"
+            label="DRAFT"
             count={draftCount}
             href="/browse?status=DRAFT"
             active={currentStatusView === "DRAFT"}
           />
           <ViewLinkRow
-            label="Archived designs"
+            label="ARCHIVED"
             count={archivedCount}
             href="/browse?status=ARCHIVED"
             active={currentStatusView === "ARCHIVED"}

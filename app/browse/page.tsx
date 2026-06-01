@@ -103,9 +103,9 @@ export default async function BrowsePage({
   // clearly labeled as Draft.
   const viewLabel =
     statusView === "DRAFT"
-      ? "Draft designs"
+      ? "DRAFT"
       : statusView === "ARCHIVED"
-        ? "Archived designs"
+        ? "ARCHIVED"
         : null;
   const heading = category
     ? category
