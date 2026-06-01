@@ -1,15 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { ColorStat } from "@/lib/colorStats";
 
-export type ColorStat = {
-  slot: number;
-  name: string;
-  code: string;
-  hex: string;
-  /** Number of icons that include this thread. */
-  count: number;
-};
+// Re-export so existing import sites that pull the type from this component
+// keep working without churn.
+export type { ColorStat };
 
 /**
  * Header dropdown showing how many icons in the catalog use each thread color.
@@ -78,6 +74,14 @@ export default function ColorDataMenu({ stats }: { stats: ColorStat[] }) {
             <p className="font-ui mt-1 text-[11px] text-ink-muted">
               Top 15 highlighted · {totalUsages.toLocaleString()} total uses
             </p>
+            <a
+              href="/api/color-data"
+              download
+              className="font-ui mt-2.5 inline-flex items-center gap-1.5 rounded-full border border-pink bg-white px-3 py-1 text-[11px] font-semibold text-cherry transition-colors hover:bg-pink-soft focus-ring"
+            >
+              <DownloadIcon className="h-3 w-3" />
+              Download PDF
+            </a>
           </div>
 
           <ul className="max-h-[420px] overflow-y-auto py-1">
@@ -124,6 +128,24 @@ export default function ColorDataMenu({ stats }: { stats: ColorStat[] }) {
         </div>
       )}
     </div>
+  );
+}
+
+function DownloadIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M8 2v8m0 0 3-3m-3 3-3-3" />
+      <path d="M3 12v1.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V12" />
+    </svg>
   );
 }
 

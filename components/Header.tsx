@@ -1,35 +1,19 @@
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
-import { getIconCatalog } from "@/lib/sheets";
 import { getCommentCounts } from "@/lib/comments";
-import { THREAD_PALETTE, rgbToHex } from "@/lib/threadPalette";
+import { getColorStats, type ColorStat } from "@/lib/colorStats";
 import SearchBar from "./SearchBar";
-import ColorDataMenu, { type ColorStat } from "./ColorDataMenu";
+import ColorDataMenu from "./ColorDataMenu";
 
 /**
- * Tally how many icons in the catalog use each thread spool, then sort
- * descending so most-used appears first. Returns an entry for every spool
- * in the palette — including unused ones with count 0.
+ * Wrapper around `getColorStats` that swallows sheet-fetch errors so the
+ * header still renders if the catalog is briefly unavailable — we just show
+ * an empty Color Data dropdown rather than tanking the whole page.
  */
 async function loadColorStats(): Promise<ColorStat[]> {
   try {
-    const catalog = await getIconCatalog();
-    const counts = new Map<number, number>();
-    for (const icon of catalog.icons) {
-      for (const slot of icon.threadSlots) {
-        counts.set(slot, (counts.get(slot) || 0) + 1);
-      }
-    }
-    return THREAD_PALETTE.map((thread) => ({
-      slot: thread.slot,
-      name: thread.name,
-      code: thread.code,
-      hex: rgbToHex(thread.rgb),
-      count: counts.get(thread.slot) || 0,
-    })).sort((a, b) => b.count - a.count);
+    return await getColorStats();
   } catch {
-    // If the sheet read fails, show an empty dropdown rather than breaking
-    // the whole header.
     return [];
   }
 }
