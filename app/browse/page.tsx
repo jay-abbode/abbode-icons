@@ -46,38 +46,75 @@ export default async function BrowsePage({
   const query = (searchParams.q || "").trim().toLowerCase();
   const category = searchParams.category || "";
   const colorVarOnly = searchParams.colorVar === "1";
-  const statusFilter = searchParams.status || "";
 
-  const filtered = applyFilters(catalog.icons, {
+  // Status now works as a view mode rather than a filter:
+  //   - default (no ?status)  → "Active": every icon that isn't DRAFT or ARCHIVED
+  //   - ?status=DRAFT         → only DRAFT icons
+  //   - ?status=ARCHIVED      → only ARCHIVED icons
+  // Anything in the sheet that isn't explicitly DRAFT or ARCHIVED falls into
+  // Active by default, so unrecognized / blank statuses stay visible.
+  const statusParamRaw = (searchParams.status || "").toUpperCase();
+  const statusView: "DRAFT" | "ARCHIVED" | null =
+    statusParamRaw === "DRAFT"
+      ? "DRAFT"
+      : statusParamRaw === "ARCHIVED"
+        ? "ARCHIVED"
+        : null;
+
+  const inCurrentView = (i: Icon) => {
+    const s = (i.status || "").toUpperCase();
+    if (statusView === "DRAFT") return s === "DRAFT";
+    if (statusView === "ARCHIVED") return s === "ARCHIVED";
+    return s !== "DRAFT" && s !== "ARCHIVED";
+  };
+  const scopedIcons = catalog.icons.filter(inCurrentView);
+
+  const filtered = applyFilters(scopedIcons, {
     query,
     category,
     colorVarOnly,
-    statusFilter,
   });
 
-  const allStatuses = Array.from(
-    new Set(catalog.icons.map((i) => i.status))
-  ).sort();
-
-  // Per-category icon counts, shown in the filter sidebar. Computed from the
-  // full catalog (not the filtered view) so the numbers represent the
-  // catalog's distribution, independent of whatever filter the user has
-  // currently applied.
-  const categoryCounts: Record<string, number> = {};
+  // Catalog-wide counts for the Draft and Archived links in the sidebar.
+  // These don't change as the user navigates between views — they always
+  // reflect the totals across the whole catalog.
+  let draftCount = 0;
+  let archivedCount = 0;
   for (const i of catalog.icons) {
+    const s = (i.status || "").toUpperCase();
+    if (s === "DRAFT") draftCount++;
+    else if (s === "ARCHIVED") archivedCount++;
+  }
+
+  // Per-category counts are scoped to the current view: on the default
+  // (Active) view they're active icons by category, on the Draft view they're
+  // draft icons by category, etc. That way the numbers always match what the
+  // user would actually see if they clicked the category.
+  const categoryCounts: Record<string, number> = {};
+  for (const i of scopedIcons) {
     if (!i.category) continue;
     categoryCounts[i.category] = (categoryCounts[i.category] || 0) + 1;
   }
-  const totalCount = catalog.icons.length;
+  const totalCount = scopedIcons.length;
 
+  // Heading reflects category > query > view, in that order of specificity.
+  // The view name is also surfaced as a small eyebrow above the heading when
+  // we're not on the default view, so a "Bows" page under the Draft view is
+  // clearly labeled as Draft.
+  const viewLabel =
+    statusView === "DRAFT"
+      ? "Draft designs"
+      : statusView === "ARCHIVED"
+        ? "Archived designs"
+        : null;
   const heading = category
     ? category
     : query
       ? `Search: "${query}"`
-      : "All icons";
+      : viewLabel ?? "All icons";
 
   const hasActiveFilters = Boolean(
-    query || category || colorVarOnly || statusFilter
+    query || category || colorVarOnly || statusView
   );
 
   return (
@@ -94,6 +131,11 @@ export default async function BrowsePage({
 
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
+            {viewLabel && (category || query) && (
+              <p className="font-ui text-[10px] font-semibold uppercase tracking-[0.18em] text-berry">
+                {viewLabel}
+              </p>
+            )}
             <h1 className="font-display text-4xl font-medium tracking-tightest text-espresso md:text-5xl">
               {heading}
             </h1>
@@ -125,13 +167,14 @@ export default async function BrowsePage({
           <aside className="lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-2">
             <FilterControls
               categories={catalog.categories}
-              statuses={allStatuses}
               currentCategory={category}
               currentColorVar={colorVarOnly}
-              currentStatus={statusFilter}
               currentQuery={query}
               categoryCounts={categoryCounts}
               totalCount={totalCount}
+              currentStatusView={statusView}
+              draftCount={draftCount}
+              archivedCount={archivedCount}
             />
           </aside>
 
@@ -154,14 +197,12 @@ function applyFilters(
     query: string;
     category: string;
     colorVarOnly: boolean;
-    statusFilter: string;
   }
 ): Icon[] {
   let result = icons;
 
   if (opts.category) result = result.filter((i) => i.category === opts.category);
   if (opts.colorVarOnly) result = result.filter((i) => i.hasColorVariation);
-  if (opts.statusFilter) result = result.filter((i) => i.status === opts.statusFilter);
 
   if (opts.query) {
     const q = opts.query;
