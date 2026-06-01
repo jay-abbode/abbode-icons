@@ -59,6 +59,17 @@ export default async function BrowsePage({
     new Set(catalog.icons.map((i) => i.status))
   ).sort();
 
+  // Per-category icon counts, shown in the filter sidebar. Computed from the
+  // full catalog (not the filtered view) so the numbers represent the
+  // catalog's distribution, independent of whatever filter the user has
+  // currently applied.
+  const categoryCounts: Record<string, number> = {};
+  for (const i of catalog.icons) {
+    if (!i.category) continue;
+    categoryCounts[i.category] = (categoryCounts[i.category] || 0) + 1;
+  }
+  const totalCount = catalog.icons.length;
+
   const heading = category
     ? category
     : query
@@ -119,6 +130,8 @@ export default async function BrowsePage({
               currentColorVar={colorVarOnly}
               currentStatus={statusFilter}
               currentQuery={query}
+              categoryCounts={categoryCounts}
+              totalCount={totalCount}
             />
           </aside>
 

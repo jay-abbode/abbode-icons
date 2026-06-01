@@ -11,6 +11,10 @@ interface Props {
   currentColorVar: boolean;
   currentStatus: string;
   currentQuery: string;
+  /** Number of icons per category, used to show counts beside each name. */
+  categoryCounts?: Record<string, number>;
+  /** Total icon count, shown next to "All categories". */
+  totalCount?: number;
 }
 
 export default function FilterControls({
@@ -20,6 +24,8 @@ export default function FilterControls({
   currentColorVar,
   currentStatus,
   currentQuery,
+  categoryCounts,
+  totalCount,
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -44,6 +50,7 @@ export default function FilterControls({
           <RadioRow
             label="All categories"
             checked={!currentCategory}
+            count={totalCount}
             onSelect={() => setParam("category", null)}
           />
           {categories.map((cat) => (
@@ -51,6 +58,7 @@ export default function FilterControls({
               key={cat}
               label={cat}
               checked={currentCategory === cat}
+              count={categoryCounts?.[cat]}
               onSelect={() => setParam("category", cat)}
             />
           ))}
@@ -121,23 +129,37 @@ function FilterGroup({
 function RadioRow({
   label,
   checked,
+  count,
   onSelect,
 }: {
   label: string;
   checked: boolean;
+  count?: number;
   onSelect: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onSelect}
-      className={`font-ui group flex w-full items-center justify-between rounded-md px-1.5 py-1 text-left text-sm transition-colors ${
+      className={`font-ui group flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left text-sm transition-colors ${
         checked ? "text-espresso font-medium" : "text-ink-soft hover:text-espresso"
       }`}
     >
-      <span className="truncate">{label}</span>
+      <span className="flex-1 truncate">{label}</span>
+      {typeof count === "number" && (
+        <span
+          className={`tabular-nums text-xs transition-colors ${
+            checked ? "text-berry" : "text-ink-muted group-hover:text-ink-soft"
+          }`}
+        >
+          {count}
+        </span>
+      )}
       {checked && (
-        <span className="ml-2 inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-berry" />
+        <span
+          aria-hidden
+          className="ml-0.5 inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-berry"
+        />
       )}
     </button>
   );
