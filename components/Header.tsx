@@ -6,6 +6,7 @@ import { getOrderStats, type OrderStatsSnapshot } from "@/lib/orderStats";
 import SearchBar from "./SearchBar";
 import ColorDataMenu from "./ColorDataMenu";
 import LiveOrderDataMenu from "./LiveOrderDataMenu";
+import ReportsMenu from "./ReportsMenu";
 import FiltersMenu from "./FiltersMenu";
 
 /**
@@ -59,7 +60,7 @@ export default async function Header({
 
   return (
     <header className="sticky top-0 z-30 border-b border-parchment bg-porcelain/85 backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl items-center gap-8 px-6 py-4 lg:px-10">
+      <div className="mx-auto flex max-w-7xl items-center gap-5 px-6 py-4 lg:px-10">
         <Link
           href="/"
           aria-label="Abbode Icons — home"
@@ -80,46 +81,46 @@ export default async function Header({
           </div>
         )}
 
-        <nav className="ml-auto flex items-center gap-6 text-sm font-medium text-ink-soft">
-          <Link
-            href="/"
-            className="hidden hover:text-espresso transition-colors focus-ring sm:inline"
-          >
-            Categories
-          </Link>
-          <Link
-            href="/browse"
-            className="hidden hover:text-espresso transition-colors focus-ring sm:inline"
-          >
-            All icons
-          </Link>
-          <Link
-            href="/comments"
-            className="hidden hover:text-espresso transition-colors focus-ring sm:inline-flex sm:items-center sm:gap-1.5"
-          >
-            Notes
-            {commentTotal > 0 && (
-              <CountBadge value={commentTotal} />
-            )}
-          </Link>
+        <nav className="ml-auto flex items-center gap-4 text-sm font-medium text-ink-soft">
+          {/* Primary navigation — collapses first on narrower screens. */}
+          <div className="hidden items-center gap-5 lg:flex">
+            <Link
+              href="/"
+              className="hover:text-espresso transition-colors focus-ring"
+            >
+              Categories
+            </Link>
+            <Link
+              href="/browse"
+              className="hover:text-espresso transition-colors focus-ring"
+            >
+              All icons
+            </Link>
+            <Link
+              href="/comments"
+              className="inline-flex items-center gap-1.5 hover:text-espresso transition-colors focus-ring"
+            >
+              Notes
+              {commentTotal > 0 && <CountBadge value={commentTotal} />}
+            </Link>
+          </div>
 
           {user && (
             <>
+              {/* Divider between the primary links and the analytics tools. */}
+              <span
+                aria-hidden="true"
+                className="hidden h-5 w-px bg-parchment lg:block"
+              />
+
+              {/* Analytics cluster — the matching set of data controls. */}
+              <div className="hidden items-center gap-2 md:flex">
+                <ColorDataMenu stats={colorStats} />
+                <LiveOrderDataMenu snapshot={orderStats} />
+                <ReportsMenu />
+              </div>
+
               <UserMenu name={user.name} email={user.email} image={user.image} />
-              <ColorDataMenu stats={colorStats} />
-              <LiveOrderDataMenu snapshot={orderStats} />
-              <Link
-                href="/composite"
-                className="font-ui flex items-center gap-1.5 rounded-full border border-parchment bg-white px-3 py-1.5 text-xs font-semibold text-espresso transition-colors hover:border-pink hover:bg-pink-soft focus-ring"
-              >
-                Composite Data
-              </Link>
-              <Link
-                href="/trends"
-                className="font-ui flex items-center gap-1.5 rounded-full border border-parchment bg-white px-3 py-1.5 text-xs font-semibold text-espresso transition-colors hover:border-pink hover:bg-pink-soft focus-ring"
-              >
-                Trends
-              </Link>
             </>
           )}
         </nav>
