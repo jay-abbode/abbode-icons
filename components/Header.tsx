@@ -2,8 +2,10 @@ import Link from "next/link";
 import { auth, signOut } from "@/auth";
 import { getCommentCounts } from "@/lib/comments";
 import { getColorStats, type ColorStat } from "@/lib/colorStats";
+import { getOrderStats, type OrderStatsSnapshot } from "@/lib/orderStats";
 import SearchBar from "./SearchBar";
 import ColorDataMenu from "./ColorDataMenu";
+import LiveOrderDataMenu from "./LiveOrderDataMenu";
 
 /**
  * Wrapper around `getColorStats` that swallows sheet-fetch errors so the
@@ -15,6 +17,15 @@ async function loadColorStats(): Promise<ColorStat[]> {
     return await getColorStats();
   } catch {
     return [];
+  }
+}
+
+/** Same resilience for order stats — empty dropdown beats a broken header. */
+async function loadOrderStats(): Promise<OrderStatsSnapshot> {
+  try {
+    return await getOrderStats();
+  } catch {
+    return { stats: [], totalOrders: 0, window: "", updatedAt: null };
   }
 }
 
@@ -30,6 +41,9 @@ export default async function Header({
   // Only load stats if the user is signed in — anonymous /login views don't
   // need them, and loadColorStats() hits the Sheets API.
   const colorStats: ColorStat[] = user ? await loadColorStats() : [];
+  const orderStats: OrderStatsSnapshot = user
+    ? await loadOrderStats()
+    : { stats: [], totalOrders: 0, window: "", updatedAt: null };
   // Same gating for comment counts. Cached for 60s, so this is cheap on
   // repeat page loads.
   let commentTotal = 0;
@@ -89,6 +103,7 @@ export default async function Header({
             <>
               <UserMenu name={user.name} email={user.email} image={user.image} />
               <ColorDataMenu stats={colorStats} />
+              <LiveOrderDataMenu snapshot={orderStats} />
             </>
           )}
         </nav>
