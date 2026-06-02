@@ -6,6 +6,7 @@ import { getOrderStats, type OrderStatsSnapshot } from "@/lib/orderStats";
 import SearchBar from "./SearchBar";
 import ColorDataMenu from "./ColorDataMenu";
 import LiveOrderDataMenu from "./LiveOrderDataMenu";
+import FiltersMenu from "./FiltersMenu";
 
 /**
  * Wrapper around `getColorStats` that swallows sheet-fetch errors so the
@@ -71,8 +72,11 @@ export default async function Header({
         </Link>
 
         {showSearch && (
-          <div className="hidden flex-1 max-w-md md:block">
-            <SearchBar initialQuery={initialQuery} compact />
+          <div className="hidden flex-1 max-w-md items-center gap-2 md:flex">
+            <div className="flex-1">
+              <SearchBar initialQuery={initialQuery} compact />
+            </div>
+            <FiltersMenu />
           </div>
         )}
 

@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { getIconCatalog, type Icon } from "@/lib/sheets";
 import { getCommentCounts } from "@/lib/comments";
+import { getThreadBySlot, rgbToHex } from "@/lib/threadPalette";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
+import FiltersMenu from "@/components/FiltersMenu";
 import FilterControls from "@/components/FilterControls";
 import IconGrid from "@/components/IconGrid";
 
@@ -13,6 +15,7 @@ interface SearchParams {
   category?: string;
   colorVar?: string;
   status?: string;
+  colors?: string;
 }
 
 export default async function BrowsePage({
@@ -46,6 +49,10 @@ export default async function BrowsePage({
   const query = (searchParams.q || "").trim().toLowerCase();
   const category = searchParams.category || "";
   const colorVarOnly = searchParams.colorVar === "1";
+  const colorSlots = (searchParams.colors || "")
+    .split(",")
+    .map((s) => parseInt(s, 10))
+    .filter((n) => !Number.isNaN(n));
 
   // Status now works as a view mode rather than a filter:
   //   - default (no ?status)  → "Active": every icon that isn't DRAFT or ARCHIVED
@@ -73,6 +80,7 @@ export default async function BrowsePage({
     query,
     category,
     colorVarOnly,
+    colorSlots,
   });
 
   // Catalog-wide counts for the Draft and Archived links in the sidebar.
@@ -114,7 +122,7 @@ export default async function BrowsePage({
       : viewLabel ?? "All icons";
 
   const hasActiveFilters = Boolean(
-    query || category || colorVarOnly || statusView
+    query || category || colorVarOnly || statusView || colorSlots.length
   );
 
   return (
@@ -145,11 +153,38 @@ export default async function BrowsePage({
               {category && ` in ${category}`}
               {query && ` matching "${query}"`}
             </p>
+            {colorSlots.length > 0 && (
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <span className="font-ui text-[11px] text-ink-muted">
+                  Uses all of:
+                </span>
+                {colorSlots.map((slot) => {
+                  const t = getThreadBySlot(slot);
+                  if (!t) return null;
+                  return (
+                    <span
+                      key={slot}
+                      className="font-ui inline-flex items-center gap-1.5 rounded-full border border-parchment bg-white px-2 py-0.5 text-[11px] text-ink-soft"
+                    >
+                      <span
+                        className="h-2.5 w-2.5 rounded-full ring-1 ring-black/10"
+                        style={{ backgroundColor: rgbToHex(t.rgb) }}
+                        aria-hidden
+                      />
+                      {t.name}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div className="flex w-full flex-col gap-3 md:w-auto md:items-end">
-            <div className="w-full md:hidden">
-              <SearchBar initialQuery={query} />
+            <div className="flex w-full items-center gap-2 md:hidden">
+              <div className="flex-1">
+                <SearchBar initialQuery={query} />
+              </div>
+              <FiltersMenu />
             </div>
             {hasActiveFilters && (
               <Link
@@ -197,12 +232,21 @@ function applyFilters(
     query: string;
     category: string;
     colorVarOnly: boolean;
+    colorSlots: number[];
   }
 ): Icon[] {
   let result = icons;
 
   if (opts.category) result = result.filter((i) => i.category === opts.category);
   if (opts.colorVarOnly) result = result.filter((i) => i.hasColorVariation);
+
+  // Compound color filter: keep only icons whose design uses EVERY selected
+  // color (AND), not just any one of them.
+  if (opts.colorSlots.length) {
+    result = result.filter((i) =>
+      opts.colorSlots.every((slot) => i.threadSlots.includes(slot))
+    );
+  }
 
   if (opts.query) {
     const q = opts.query;
