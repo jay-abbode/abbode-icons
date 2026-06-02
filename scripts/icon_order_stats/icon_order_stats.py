@@ -54,7 +54,10 @@ MASTER_TAB = "MASTER"
 ALIAS_TAB = "ICON_ALIASES"      # optional: columns "Customizer Name", "Catalog Name"
 OUT_TAB = "ORDER_STATS"
 COMPOSITE_TAB = "COMPOSITE"
+ICON_TRENDS_TAB = "ICON_TRENDS"     # rising/spiking icons (recent vs previous window)
+COLOR_TRENDS_TAB = "COLOR_TRENDS"   # rising/spiking TEXT colors
 WINDOWS = (3, 6, 12)  # rolling-month buckets for the composite
+TREND_DAYS_DEFAULT = 30  # trend = last N days vs the N days before that
 
 # 24-spool palette (slot -> name). Mirror of lib/threadPalette.ts.
 PALETTE = {0:"Burgundy",1:"Dark Red",4:"Rust Orange",5:"Orange",6:"Peach",7:"Dark Yellow",
@@ -69,29 +72,46 @@ OVERRIDES = {
     "brown cowboy boot":[29,30], "blue cowboy boot":[17,20], "pink cowboy boot":[28,27],
     "pink claw":[28,27], "pink claw clip":[28,27], "black claw":[36], "red claw":[1],
     "pink bow":[27], "long bow":[35],
-    "blue bow":[17], "white bow":[35],
+    "blue bow":[17], "white bow":[35], "red bow":[1], "black bow":[36],
 }
 OVERRIDE_BASE = {  # for category lookup
     "red heart":"Heart","pink heart":"Heart",
     "brown cowboy boot":"Cowboy Boot","blue cowboy boot":"Cowboy Boot","pink cowboy boot":"Cowboy Boot",
     "pink claw":"Claw Clip","pink claw clip":"Claw Clip","black claw":"Claw Clip","red claw":"Claw Clip",
     "pink bow":"Long Bow","long bow":"Long Bow","blue bow":"Long Bow","white bow":"Long Bow",
+    "red bow":"Long Bow","black bow":"Long Bow",
 }
 OVERRIDE_NAME = {
     "red heart":"Red Heart","pink heart":"Pink Heart","brown cowboy boot":"Brown Cowboy Boot",
     "blue cowboy boot":"Blue Cowboy Boot","pink cowboy boot":"Pink Cowboy Boot","pink claw":"Pink Claw",
     "pink claw clip":"Pink Claw Clip","black claw":"Black Claw","red claw":"Red Claw",
     "pink bow":"Pink Bow","long bow":"Long Bow","blue bow":"Blue Bow","white bow":"White Bow",
+    "red bow":"Red Bow","black bow":"Black Bow",
 }
 
 # Order names that map to an existing catalog icon under a different spelling.
 MANUAL_ALIASES = {
     "blue handbag": "Navy Suitcase",
+    "handbag blue": "Navy Suitcase",
+    "pink handbag": "Pink Suitcase",
     "vespa": "Moped",
     "surfboard": "Surf Board",
+    "bichon frise": "Fluffy White Dog",
+    "ski bichon frise": "Ski Fluffy White Dog",
+    "labrador retriever": "Yellow Lab",
+    "black labrador retriever": "Black Lab",
+    "west highland white terrier": "Westie",
+    "shih tzu long hair": "Longhair Shi Tzu",
+    "long hair shih tzu": "Longhair Shi Tzu",
+    "tan long haired dachshund": "Tan Longhair Dachshund",
+    "tricolor basset hound": "Dark Brown and White Basset Hound",
 }
 # Non-icon values to skip entirely (no icon chosen, or discontinued/cut designs).
-IGNORE = {"none", "baguette", "boot prints", "corndog", "bread", "avocado"}
+IGNORE = {"none", "baguette", "boot prints", "corndog", "bread", "avocado",
+          "no selection", "hand bag", "texas flag", "texas boot", "red college boot",
+          "tcu boot", "tcu hand", "smu horse", "sooners logo", "yankees",
+          "ski gondola", "gelato", "wreath", "earmuffs",
+          "ketchup", "penne", "nugget dip", "elbow pasta"}
 
 # Lines that are never embroidered icons — never count these.
 SKU_SKIP_EXACT = {"ONWARDINS01", "ES-UPCHARGE", "CUST-DIG-FEE"}
@@ -352,16 +372,37 @@ def windows_for(created_at_iso, now):
 # --------------------------------------------------------------------------
 # Aggregate + write
 # --------------------------------------------------------------------------
-def aggregate(order_lines, matcher, catalog):
-    """Returns (counts, composite):
-      counts    -> {icon canon: order count} for ORDER_STATS / Icon Data
-      composite -> {window: {slot: {"icons": n, "text": n}}} for Composite Data
+def aggregate(order_lines, matcher, catalog, trend_days=TREND_DAYS_DEFAULT):
+    """Returns (counts, composite, icon_trends, color_trends):
+      counts        -> {icon canon: order count} for ORDER_STATS / Icon Data
+      composite     -> {window: {slot: {"icons": n, "text": n}}} for Composite Data
+      icon_trends   -> {canon: {"recent": n, "previous": n}}  rising/spiking icons
+      color_trends  -> {slot:  {"recent": n, "previous": n}}  rising/spiking TEXT colors
+    Trend windows: recent = orders in the last `trend_days`; previous = the
+    `trend_days` before that (so both fit inside the ~60-day order window we can
+    currently read, and give a real rise/spike signal today).
     Icon colors come from the catalog (croc-adjusted), the text color from the
     customizer attribute; both counted once per line, bucketed by order age.
     """
     counts = {}
     composite = {w: {} for w in WINDOWS}
+    icon_trends = {}
+    color_trends = {}
     now = datetime.now(timezone.utc)
+
+    def trend_bucket(created_at_iso):
+        """'recent', 'previous', or None based on order age in days."""
+        try:
+            dt = datetime.fromisoformat((created_at_iso or "").replace("Z", "+00:00"))
+            age = (now - dt).days
+        except Exception:
+            return None
+        if age <= trend_days:
+            return "recent"
+        if age <= 2 * trend_days:
+            return "previous"
+        return None
+
     for created_at, li in order_lines:
         sku = li.get("sku")
         handle = (li.get("variant") or {}).get("product", {}).get("handle") if li.get("variant") else None
@@ -370,6 +411,7 @@ def aggregate(order_lines, matcher, catalog):
         attrs = {a["key"]: a["value"] for a in (li.get("customAttributes") or [])}
         croc = is_croc(sku, handle)
         wins = windows_for(created_at, now)
+        tb = trend_bucket(created_at)
 
         # text thread color (once per line)
         tslot = parse_color_slot(attrs.get("color-text-one") or attrs.get("font_color"), croc)
@@ -377,6 +419,8 @@ def aggregate(order_lines, matcher, catalog):
             for w in wins:
                 d = composite[w].setdefault(tslot, {"icons": 0, "text": 0})
                 d["text"] += 1
+            if tb:
+                color_trends.setdefault(tslot, {"recent": 0, "previous": 0})[tb] += 1
 
         # icon colors (each thread color in the design, once per line)
         for key in ("icon-one", "icon-two", "icon-three"):
@@ -387,12 +431,14 @@ def aggregate(order_lines, matcher, catalog):
             if not canon:
                 continue
             counts[canon] = counts.get(canon, 0) + 1
+            if tb:
+                icon_trends.setdefault(canon, {"recent": 0, "previous": 0})[tb] += 1
             slots, _cat = catalog_slots_for(canon, catalog)
             for s in adjust_slots(slots, croc):
                 for w in wins:
                     d = composite[w].setdefault(s, {"icons": 0, "text": 0})
                     d["icons"] += 1
-    return counts, composite
+    return counts, composite, icon_trends, color_trends
 
 
 def catalog_slots_for(canon, catalog):
@@ -464,6 +510,43 @@ def write_composite(sheets, sheet_id, composite, coverage, today):
     return len(rows) - 1
 
 
+def _ensure_clear_update(sheets, sheet_id, tab, rows, clear_range="A1:Z5000"):
+    """Create the tab if missing, clear it, then write rows. Returns data row count."""
+    meta = sheets.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    tabs = {s["properties"]["title"] for s in meta["sheets"]}
+    if tab not in tabs:
+        sheets.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{"addSheet": {"properties": {"title": tab}}}]}).execute()
+    sheets.spreadsheets().values().clear(spreadsheetId=sheet_id, range=f"{tab}!{clear_range}").execute()
+    sheets.spreadsheets().values().update(
+        spreadsheetId=sheet_id, range=f"{tab}!A1",
+        valueInputOption="RAW", body={"values": rows}).execute()
+    return len(rows) - 1
+
+
+def write_icon_trends(sheets, sheet_id, icon_trends, catalog, window_label, today):
+    header = ["Icon", "Category", "Recent", "Previous", "Window", "Updated"]
+    rows = [header]
+    # biggest absolute rise first, then highest current volume
+    for canon, d in sorted(icon_trends.items(),
+                           key=lambda x: (-(x[1]["recent"] - x[1]["previous"]), -x[1]["recent"])):
+        _slots, category = catalog_slots_for(canon, catalog)
+        rows.append([canon, category, d["recent"], d["previous"], window_label, today])
+    return _ensure_clear_update(sheets, sheet_id, ICON_TRENDS_TAB, rows)
+
+
+def write_color_trends(sheets, sheet_id, color_trends, window_label, today):
+    header = ["Slot", "Color", "Recent", "Previous", "Window", "Updated"]
+    rows = [header]
+    for slot, d in sorted(color_trends.items(),
+                          key=lambda x: (-(x[1]["recent"] - x[1]["previous"]), -x[1]["recent"])):
+        if slot not in PALETTE:
+            continue
+        rows.append([slot, PALETTE[slot], d["recent"], d["previous"], window_label, today])
+    return _ensure_clear_update(sheets, sheet_id, COLOR_TRENDS_TAB, rows, clear_range="A1:Z200")
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--sheet-id", default=os.environ.get("GOOGLE_SHEET_ID"))
@@ -474,6 +557,8 @@ def main():
     p.add_argument("--months", type=float, default=12)
     p.add_argument("--limit", type=int, default=None, help="cap orders scanned (testing)")
     p.add_argument("--dry-run", action="store_true", help="don't write the tab; print a preview")
+    p.add_argument("--trend-days", type=int, default=TREND_DAYS_DEFAULT,
+                   help="trend = last N days vs the prior N days (default 30)")
     args = p.parse_args()
 
     for need, val in [("GOOGLE_SHEET_ID", args.sheet_id), ("SHOPIFY_SHOP", args.shop),
@@ -497,11 +582,12 @@ def main():
     matcher = Matcher(catalog, aliases)
     print(f"Scanning Shopify orders (up to {args.months:g} months, gross)...")
     state = {"seen": 0, "yielded": False, "capped": False}
-    counts, composite = aggregate(
-        scan_orders(shop, token, args.months, state, args.limit), matcher, catalog)
+    counts, composite, icon_trends, color_trends = aggregate(
+        scan_orders(shop, token, args.months, state, args.limit), matcher, catalog, args.trend_days)
 
     coverage = ("Last ~60 days (read_all_orders pending)" if state["capped"]
                 else f"Rolling {args.months:g} months")
+    trend_label = f"Last {args.trend_days}d vs prior {args.trend_days}d"
     today = datetime.now(timezone.utc).date().isoformat()
 
     print(f"  matched {len(counts)} distinct icons across "
@@ -529,11 +615,24 @@ def main():
             d = composite[12].get(s) or {"icons": 0, "text": 0}
             print(f"  {s:>2} {PALETTE[s]:16} icons={d['icons']:>5} "
                   f"text={d['text']:>5} total={d['icons'] + d['text']:>5}")
+        print(f"\nTrending icons ({trend_label}) — top 12 by rise:")
+        for canon, d in sorted(icon_trends.items(),
+                               key=lambda x: -(x[1]["recent"] - x[1]["previous"]))[:12]:
+            print(f"  {canon:28} now={d['recent']:>4} prev={d['previous']:>4} "
+                  f"rise={d['recent'] - d['previous']:>+4}")
+        print(f"\nTrending TEXT colors ({trend_label}) — by rise:")
+        for slot, d in sorted(color_trends.items(),
+                              key=lambda x: -(x[1]["recent"] - x[1]["previous"]))[:12]:
+            print(f"  {slot:>2} {PALETTE.get(slot, '?'):16} now={d['recent']:>4} "
+                  f"prev={d['previous']:>4} rise={d['recent'] - d['previous']:>+4}")
         return
 
     n1 = write_stats(sheets, args.sheet_id, counts, catalog, coverage)
     n2 = write_composite(sheets, args.sheet_id, composite, coverage, today)
-    print(f"\nWrote {n1} rows to {OUT_TAB} and {n2} rows to {COMPOSITE_TAB}. "
+    n3 = write_icon_trends(sheets, args.sheet_id, icon_trends, catalog, trend_label, today)
+    n4 = write_color_trends(sheets, args.sheet_id, color_trends, trend_label, today)
+    print(f"\nWrote {n1} rows to {OUT_TAB}, {n2} to {COMPOSITE_TAB}, "
+          f"{n3} to {ICON_TRENDS_TAB}, {n4} to {COLOR_TRENDS_TAB}. "
           "The app will show them within ~60s.")
 
 

@@ -110,6 +110,12 @@ export default async function Header({
               >
                 Composite Data
               </Link>
+              <Link
+                href="/trends"
+                className="font-ui flex items-center gap-1.5 rounded-full border border-parchment bg-white px-3 py-1.5 text-xs font-semibold text-espresso transition-colors hover:border-pink hover:bg-pink-soft focus-ring"
+              >
+                Trends
+              </Link>
             </>
           )}
         </nav>
