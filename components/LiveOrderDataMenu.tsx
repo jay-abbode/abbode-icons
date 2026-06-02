@@ -48,7 +48,7 @@ export default function LiveOrderDataMenu({
         aria-haspopup="true"
         className="font-ui flex items-center gap-1.5 rounded-full border border-parchment bg-white px-3 py-1.5 text-xs font-semibold text-espresso transition-colors hover:border-pink hover:bg-pink-soft focus-ring"
       >
-        Live Order Data
+        Icon Data
         <ChevronIcon
           className={`transition-transform duration-150 ${open ? "rotate-180" : ""}`}
         />
@@ -62,7 +62,7 @@ export default function LiveOrderDataMenu({
         >
           <div className="border-b border-parchment px-4 py-3">
             <p className="font-ui text-[10px] font-semibold uppercase tracking-[0.16em] text-berry">
-              Live order data
+              Icon data
             </p>
             <p className="font-display mt-0.5 text-base text-espresso">
               Most-ordered icons
@@ -75,13 +75,10 @@ export default function LiveOrderDataMenu({
 
           <ul className="max-h-[420px] overflow-y-auto py-1">
             {stats.map((stat, idx) => {
-              const isTop = idx < 15;
               return (
                 <li
                   key={`${stat.icon}-${idx}`}
-                  className={`flex items-center gap-2.5 px-4 py-1.5 ${
-                    isTop ? "bg-pink-soft/40" : "opacity-60"
-                  }`}
+                  className="flex items-center gap-2.5 px-4 py-1.5"
                 >
                   <span className="flex flex-none -space-x-0.5" aria-hidden>
                     {stat.hexes.length > 0 ? (
@@ -102,11 +99,7 @@ export default function LiveOrderDataMenu({
                       <span className="text-ink-muted"> · {stat.category}</span>
                     )}
                   </span>
-                  <span
-                    className={`font-ui tabular-nums text-xs ${
-                      isTop ? "font-semibold text-cherry" : "text-ink-muted"
-                    }`}
-                  >
+                  <span className="font-ui tabular-nums text-xs text-ink-soft">
                     {stat.count.toLocaleString()}
                   </span>
                 </li>

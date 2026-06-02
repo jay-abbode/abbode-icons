@@ -104,6 +104,12 @@ export default async function Header({
               <UserMenu name={user.name} email={user.email} image={user.image} />
               <ColorDataMenu stats={colorStats} />
               <LiveOrderDataMenu snapshot={orderStats} />
+              <Link
+                href="/composite"
+                className="font-ui flex items-center gap-1.5 rounded-full border border-parchment bg-white px-3 py-1.5 text-xs font-semibold text-espresso transition-colors hover:border-pink hover:bg-pink-soft focus-ring"
+              >
+                Composite Data
+              </Link>
             </>
           )}
         </nav>

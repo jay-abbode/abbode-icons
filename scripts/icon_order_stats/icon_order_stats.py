@@ -53,6 +53,8 @@ API_VERSION = "2024-10"
 MASTER_TAB = "MASTER"
 ALIAS_TAB = "ICON_ALIASES"      # optional: columns "Customizer Name", "Catalog Name"
 OUT_TAB = "ORDER_STATS"
+COMPOSITE_TAB = "COMPOSITE"
+WINDOWS = (3, 6, 12)  # rolling-month buckets for the composite
 
 # 24-spool palette (slot -> name). Mirror of lib/threadPalette.ts.
 PALETTE = {0:"Burgundy",1:"Dark Red",4:"Rust Orange",5:"Orange",6:"Peach",7:"Dark Yellow",
@@ -67,19 +69,29 @@ OVERRIDES = {
     "brown cowboy boot":[29,30], "blue cowboy boot":[17,20], "pink cowboy boot":[28,27],
     "pink claw":[28,27], "pink claw clip":[28,27], "black claw":[36], "red claw":[1],
     "pink bow":[27], "long bow":[35],
+    "blue bow":[17], "white bow":[35],
 }
 OVERRIDE_BASE = {  # for category lookup
     "red heart":"Heart","pink heart":"Heart",
     "brown cowboy boot":"Cowboy Boot","blue cowboy boot":"Cowboy Boot","pink cowboy boot":"Cowboy Boot",
     "pink claw":"Claw Clip","pink claw clip":"Claw Clip","black claw":"Claw Clip","red claw":"Claw Clip",
-    "pink bow":"Long Bow","long bow":"Long Bow",
+    "pink bow":"Long Bow","long bow":"Long Bow","blue bow":"Long Bow","white bow":"Long Bow",
 }
 OVERRIDE_NAME = {
     "red heart":"Red Heart","pink heart":"Pink Heart","brown cowboy boot":"Brown Cowboy Boot",
     "blue cowboy boot":"Blue Cowboy Boot","pink cowboy boot":"Pink Cowboy Boot","pink claw":"Pink Claw",
     "pink claw clip":"Pink Claw Clip","black claw":"Black Claw","red claw":"Red Claw",
-    "pink bow":"Pink Bow","long bow":"Long Bow",
+    "pink bow":"Pink Bow","long bow":"Long Bow","blue bow":"Blue Bow","white bow":"White Bow",
 }
+
+# Order names that map to an existing catalog icon under a different spelling.
+MANUAL_ALIASES = {
+    "blue handbag": "Navy Suitcase",
+    "vespa": "Moped",
+    "surfboard": "Surf Board",
+}
+# Non-icon values to skip entirely (no icon chosen, or discontinued/cut designs).
+IGNORE = {"none", "baguette", "boot prints", "corndog", "bread", "avocado"}
 
 # Lines that are never embroidered icons — never count these.
 SKU_SKIP_EXACT = {"ONWARDINS01", "ES-UPCHARGE", "CUST-DIG-FEE"}
@@ -93,6 +105,7 @@ FUZZY_REVIEW = 78
 def norm(s):
     s = (s or "").lower().strip()
     s = re.sub(r"[^a-z0-9 ]", " ", s)
+    s = s.replace("pitbull", "pit bull")   # orders say "Pitbull"; catalog says "Pit Bull"
     return re.sub(r"\s+", " ", s).strip()
 
 
@@ -165,7 +178,9 @@ class Matcher:
 
     def match(self, name):
         n = norm(name)
+        if n in IGNORE:           return None, "ignored"
         if n in OVERRIDES:        return OVERRIDE_NAME[n], "override"
+        if n in MANUAL_ALIASES:   return MANUAL_ALIASES[n], "manual-alias"
         if n in self.aliases:     return self.aliases[n], "alias-tab"
         if n in self.by_norm:     return self.by_norm[n], "exact"
         if n in self.alias_norm:  return self.alias_norm[n], "old-name"
@@ -187,9 +202,10 @@ class Matcher:
 # --------------------------------------------------------------------------
 ORDERS_QUERY = """
 query($q: String!, $after: String) {
-  orders(first: 100, query: $q, sortKey: CREATED_AT, after: $after) {
+  orders(first: 100, query: $q, sortKey: CREATED_AT, reverse: true, after: $after) {
     pageInfo { hasNextPage endCursor }
     edges { node {
+      createdAt
       lineItems(first: 20) { edges { node {
         sku
         customAttributes { key value }
@@ -225,12 +241,24 @@ def get_access_token(shop, client_id, client_secret):
     return resp.json()["access_token"]
 
 
-def shopify_orders(shop, token, months, limit=None):
+class ReadAllOrdersError(Exception):
+    """Shopify refused orders older than 60 days (read_all_orders not granted)."""
+
+
+def _is_read_all_orders_error(errors):
+    blob = json.dumps(errors).lower()
+    return ("read_all_orders" in blob or "merchant approval" in blob
+            or "older than 60 days" in blob or "60 days" in blob)
+
+
+def _scan(shop, token, months, state, limit=None):
+    """Yield (created_at_iso, line_item) newest-first. Raise ReadAllOrdersError
+    if Shopify blocks orders beyond the 60-day window."""
     cutoff = (datetime.now(timezone.utc) - timedelta(days=int(months * 30.5))).date().isoformat()
     url = f"https://{shop}.myshopify.com/admin/api/{API_VERSION}/graphql.json"
     headers = {"X-Shopify-Access-Token": token, "Content-Type": "application/json"}
     q = f"created_at:>={cutoff}"
-    after, seen = None, 0
+    after = None
     while True:
         for attempt in range(5):
             resp = requests.post(url, headers=headers,
@@ -241,18 +269,40 @@ def shopify_orders(shop, token, months, limit=None):
             break
         data = resp.json()
         if "errors" in data:
+            if _is_read_all_orders_error(data["errors"]):
+                raise ReadAllOrdersError()
             sys.exit(f"Shopify error: {data['errors']}")
         block = data["data"]["orders"]
         for edge in block["edges"]:
-            for li in edge["node"]["lineItems"]["edges"]:
-                yield li["node"]
-            seen += 1
-            if limit and seen >= limit:
+            node = edge["node"]
+            created = node.get("createdAt")
+            for li in node["lineItems"]["edges"]:
+                yield created, li["node"]
+            state["seen"] += 1
+            state["yielded"] = True
+            if limit and state["seen"] >= limit:
                 return
         if not block["pageInfo"]["hasNextPage"]:
             return
         after = block["pageInfo"]["endCursor"]
         time.sleep(0.3)  # be polite to the API
+
+
+def scan_orders(shop, token, months, state, limit=None):
+    """Wrap _scan with a graceful fallback: if read_all_orders isn't granted,
+    keep whatever recent orders we already pulled (or retry capped at ~60 days
+    if we hadn't pulled any yet), and flag the run as capped."""
+    try:
+        yield from _scan(shop, token, months, state, limit)
+    except ReadAllOrdersError:
+        state["capped"] = True
+        if state.get("yielded"):
+            print("  note: only the last ~60 days are available "
+                  "(read_all_orders pending) \u2014 using what was pulled.")
+            return
+        print("  note: read_all_orders not yet approved \u2014 "
+              "capping this run to the last ~60 days.")
+        yield from _scan(shop, token, 1.95, state, limit)
 
 
 def line_is_noise(sku, handle):
@@ -278,19 +328,57 @@ def parse_color_slot(raw, croc):
     return slot if slot in PALETTE else None   # drop retired
 
 
+def adjust_slots(slots, croc):
+    """Croc -> White(35) becomes Tusk(37); drop any retired (non-palette) slot."""
+    out = []
+    for s in slots:
+        if croc and s == 35:
+            s = 37
+        if s in PALETTE:
+            out.append(s)
+    return out
+
+
+def windows_for(created_at_iso, now):
+    """Which rolling windows (3/6/12 mo) an order falls into, by age in days."""
+    try:
+        dt = datetime.fromisoformat((created_at_iso or "").replace("Z", "+00:00"))
+        age = (now - dt).days
+    except Exception:
+        return WINDOWS  # unparseable date -> count everywhere, conservatively
+    return tuple(w for w in WINDOWS if age <= w * 30.5)
+
+
 # --------------------------------------------------------------------------
 # Aggregate + write
 # --------------------------------------------------------------------------
-def aggregate(line_items, matcher):
-    counts, colors = {}, {}
-    for li in line_items:
+def aggregate(order_lines, matcher, catalog):
+    """Returns (counts, composite):
+      counts    -> {icon canon: order count} for ORDER_STATS / Icon Data
+      composite -> {window: {slot: {"icons": n, "text": n}}} for Composite Data
+    Icon colors come from the catalog (croc-adjusted), the text color from the
+    customizer attribute; both counted once per line, bucketed by order age.
+    """
+    counts = {}
+    composite = {w: {} for w in WINDOWS}
+    now = datetime.now(timezone.utc)
+    for created_at, li in order_lines:
         sku = li.get("sku")
         handle = (li.get("variant") or {}).get("product", {}).get("handle") if li.get("variant") else None
         if line_is_noise(sku, handle):
             continue
         attrs = {a["key"]: a["value"] for a in (li.get("customAttributes") or [])}
         croc = is_croc(sku, handle)
-        slot = parse_color_slot(attrs.get("color-text-one") or attrs.get("font_color"), croc)
+        wins = windows_for(created_at, now)
+
+        # text thread color (once per line)
+        tslot = parse_color_slot(attrs.get("color-text-one") or attrs.get("font_color"), croc)
+        if tslot is not None:
+            for w in wins:
+                d = composite[w].setdefault(tslot, {"icons": 0, "text": 0})
+                d["text"] += 1
+
+        # icon colors (each thread color in the design, once per line)
         for key in ("icon-one", "icon-two", "icon-three"):
             name = (attrs.get(key) or "").strip()
             if not name:
@@ -299,9 +387,12 @@ def aggregate(line_items, matcher):
             if not canon:
                 continue
             counts[canon] = counts.get(canon, 0) + 1
-            if slot is not None:
-                colors.setdefault(canon, {})[slot] = colors.setdefault(canon, {}).get(slot, 0) + 1
-    return counts, colors
+            slots, _cat = catalog_slots_for(canon, catalog)
+            for s in adjust_slots(slots, croc):
+                for w in wins:
+                    d = composite[w].setdefault(s, {"icons": 0, "text": 0})
+                    d["icons"] += 1
+    return counts, composite
 
 
 def catalog_slots_for(canon, catalog):
@@ -332,6 +423,43 @@ def write_stats(sheets, sheet_id, counts, catalog, window_label):
     sheets.spreadsheets().values().clear(spreadsheetId=sheet_id, range=f"{OUT_TAB}!A1:Z5000").execute()
     sheets.spreadsheets().values().update(
         spreadsheetId=sheet_id, range=f"{OUT_TAB}!A1",
+        valueInputOption="RAW", body={"values": rows}).execute()
+    return len(rows) - 1
+
+
+def write_composite(sheets, sheet_id, composite, coverage, today):
+    header = ["Slot", "Color",
+              "3mo Icons", "3mo Text", "3mo Total",
+              "6mo Icons", "6mo Text", "6mo Total",
+              "12mo Icons", "12mo Text", "12mo Total",
+              "Updated", "Coverage"]
+
+    def cell(w, slot, field):
+        d = composite[w].get(slot)
+        return d[field] if d else 0
+
+    def total(w, slot):
+        d = composite[w].get(slot)
+        return (d["icons"] + d["text"]) if d else 0
+
+    rows = [header]
+    for slot in sorted(PALETTE.keys(), key=lambda s: -total(12, s)):
+        row = [slot, PALETTE[slot]]
+        for w in (3, 6, 12):
+            row += [cell(w, slot, "icons"), cell(w, slot, "text"), total(w, slot)]
+        row += [today, coverage]
+        rows.append(row)
+
+    meta = sheets.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    tabs = {s["properties"]["title"] for s in meta["sheets"]}
+    if COMPOSITE_TAB not in tabs:
+        sheets.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{"addSheet": {"properties": {"title": COMPOSITE_TAB}}}]}).execute()
+
+    sheets.spreadsheets().values().clear(spreadsheetId=sheet_id, range=f"{COMPOSITE_TAB}!A1:Z100").execute()
+    sheets.spreadsheets().values().update(
+        spreadsheetId=sheet_id, range=f"{COMPOSITE_TAB}!A1",
         valueInputOption="RAW", body={"values": rows}).execute()
     return len(rows) - 1
 
@@ -367,30 +495,46 @@ def main():
     token = get_access_token(shop, args.client_id, args.client_secret)
 
     matcher = Matcher(catalog, aliases)
-    window_label = f"Rolling {args.months:g} months"
-    print(f"Scanning Shopify orders ({window_label}, gross)...")
-    counts, colors = aggregate(shopify_orders(shop, token, args.months, args.limit), matcher)
+    print(f"Scanning Shopify orders (up to {args.months:g} months, gross)...")
+    state = {"seen": 0, "yielded": False, "capped": False}
+    counts, composite = aggregate(
+        scan_orders(shop, token, args.months, state, args.limit), matcher, catalog)
+
+    coverage = ("Last ~60 days (read_all_orders pending)" if state["capped"]
+                else f"Rolling {args.months:g} months")
+    today = datetime.now(timezone.utc).date().isoformat()
 
     print(f"  matched {len(counts)} distinct icons across "
-          f"{sum(counts.values())} icon-orders")
+          f"{sum(counts.values())} icon-orders ({state['seen']} orders · {coverage})")
     if matcher.review:
         print(f"  {len(matcher.review)} fuzzy matches to review (add to {ALIAS_TAB} to lock):")
         for raw, (canon, sc) in sorted(matcher.review.items()):
             print(f"     {raw!r:32} -> {canon!r}  ({sc:.0f})")
     if matcher.unmatched:
         print(f"  {len(matcher.unmatched)} UNMATCHED (add to {ALIAS_TAB} or the catalog):")
-        for raw, n in sorted(matcher.unmatched.items(), key=lambda x: -x[1]):
-            print(f"     {raw!r:32} x{n}")
+        for raw, cnt in sorted(matcher.unmatched.items(), key=lambda x: -x[1]):
+            print(f"     {raw!r:32} x{cnt}")
 
     if args.dry_run:
-        print("\n--dry-run: top 20 preview (not written)")
-        for canon, cnt in sorted(counts.items(), key=lambda x: -x[1])[:20]:
+        print("\n--dry-run: nothing written.")
+        print("Top 15 icons:")
+        for canon, cnt in sorted(counts.items(), key=lambda x: -x[1])[:15]:
             slots, cat = catalog_slots_for(canon, catalog)
             print(f"  {canon:28} {cat:14} {cnt:>5}  slots={slots}")
+        print("\nComposite — top 12 threads (12-month bucket):")
+        ranked = sorted(PALETTE.keys(),
+                        key=lambda s: -((composite[12].get(s) or {}).get("icons", 0)
+                                        + (composite[12].get(s) or {}).get("text", 0)))
+        for s in ranked[:12]:
+            d = composite[12].get(s) or {"icons": 0, "text": 0}
+            print(f"  {s:>2} {PALETTE[s]:16} icons={d['icons']:>5} "
+                  f"text={d['text']:>5} total={d['icons'] + d['text']:>5}")
         return
 
-    n = write_stats(sheets, args.sheet_id, counts, catalog, window_label)
-    print(f"\nWrote {n} rows to the {OUT_TAB} tab. The app will show them within ~60s.")
+    n1 = write_stats(sheets, args.sheet_id, counts, catalog, coverage)
+    n2 = write_composite(sheets, args.sheet_id, composite, coverage, today)
+    print(f"\nWrote {n1} rows to {OUT_TAB} and {n2} rows to {COMPOSITE_TAB}. "
+          "The app will show them within ~60s.")
 
 
 if __name__ == "__main__":
