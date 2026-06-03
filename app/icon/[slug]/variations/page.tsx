@@ -1,14 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Header from "@/components/Header";
-import { getIconCatalog, type Icon } from "@/lib/sheets";
-import { THREAD_PALETTE, getThreadBySlot, rgbToHex } from "@/lib/threadPalette";
-import {
-  getMultiColorRule,
-  getAnchorRgb,
-  getAccentForBase,
-  type MultiColorRule,
-} from "@/lib/multiColorRules";
+import { getIconCatalog } from "@/lib/sheets";
+import { getMultiColorRule } from "@/lib/multiColorRules";
+import { buildVariants } from "@/lib/variants";
 
 export const dynamic = "force-dynamic";
 
@@ -29,77 +24,10 @@ interface Props {
  *      before.
  */
 
-type Variant = {
-  key: string;
-  label: string;
-  sublabel: string;
-  swatchHex: string;
-  src: string;
-  downloadName: string;
-};
+// Variant type, filename helpers, and buildVariants now live in
+// "@/lib/variants" so the bulk Asset Downloads export reuses identical logic.
 
-/** Drop a leading "Abbode " from icon names used in download filenames. */
-function iconFileLabel(name: string): string {
-  return name.replace(/^abbode\s+/i, "").trim();
-}
 
-/** Keep a label usable as a filename while preserving spaces. */
-function fileSafe(s: string): string {
-  return s.replace(/[\/\\:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim();
-}
-
-function buildVariants(icon: Icon, rule: MultiColorRule | null): Variant[] {
-  if (!icon.pngFileId) return [];
-
-  // Multi-color path with a rule
-  if (icon.isMultiColor && rule) {
-    const anchor = getAnchorRgb(rule);
-    const anchorStr = anchor.join(",");
-
-    if (rule.mode === "named") {
-      return rule.variants.map((v, i) => {
-        const baseThread = getThreadBySlot(v.base);
-        const accentThread = getThreadBySlot(v.accent);
-        const baseName = baseThread ? baseThread.name : `Slot ${v.base}`;
-        const accentName = accentThread ? accentThread.name : `Slot ${v.accent}`;
-        const swatchHex = baseThread ? rgbToHex(baseThread.rgb) : "#999999";
-        return {
-          key: `named-${i}`,
-          label: v.label,
-          sublabel: `${baseName} · ${accentName}`,
-          swatchHex,
-          src: `/api/image/${icon.pngFileId}?base=${v.base}&accent=${v.accent}&anchor=${anchorStr}`,
-          downloadName: `${fileSafe(`${v.label} ${iconFileLabel(icon.name)}`)}.png`,
-        };
-      });
-    }
-
-    // all-24 mode
-    return THREAD_PALETTE.map((thread) => {
-      const accentSlot = getAccentForBase(rule, thread.slot);
-      const accentThread = getThreadBySlot(accentSlot);
-      const accentName = accentThread ? accentThread.name : `Slot ${accentSlot}`;
-      return {
-        key: `slot-${thread.slot}`,
-        label: `${thread.slot} ${thread.name}`,
-        sublabel: `with ${accentName}`,
-        swatchHex: rgbToHex(thread.rgb),
-        src: `/api/image/${icon.pngFileId}?base=${thread.slot}&accent=${accentSlot}&anchor=${anchorStr}`,
-        downloadName: `${fileSafe(`${thread.name} ${iconFileLabel(icon.name)}`)}.png`,
-      };
-    });
-  }
-
-  // Single-color path (Col. Var. = YES)
-  return THREAD_PALETTE.map((thread) => ({
-    key: `slot-${thread.slot}`,
-    label: `${thread.slot} ${thread.name}`,
-    sublabel: `Madeira ${thread.code}`,
-    swatchHex: rgbToHex(thread.rgb),
-    src: `/api/image/${icon.pngFileId}?slot=${thread.slot}`,
-    downloadName: `${fileSafe(`${thread.name} ${iconFileLabel(icon.name)}`)}.png`,
-  }));
-}
 
 export default async function VariationsPage({ params }: Props) {
   const catalog = await getIconCatalog();

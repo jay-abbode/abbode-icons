@@ -97,6 +97,12 @@ export default async function Header({
               All icons
             </Link>
             <Link
+              href="/assets"
+              className="hover:text-espresso transition-colors focus-ring"
+            >
+              Downloads
+            </Link>
+            <Link
               href="/comments"
               className="inline-flex items-center gap-1.5 hover:text-espresso transition-colors focus-ring"
             >

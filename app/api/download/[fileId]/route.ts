@@ -20,16 +20,13 @@ export async function GET(
   }
 
   const url = new URL(request.url);
-  const requestedName = url.searchParams.get("filename") || "download";
-
-  // Sanitize filename: strip any path separators or control chars
-  const safeName = requestedName.replace(/[\\/\0\r\n]/g, "_").slice(0, 200);
+  const requestedName = url.searchParams.get("filename");
 
   try {
     const drive = getDriveClient();
 
     const [metaResp, contentResp] = await Promise.all([
-      drive.files.get({ fileId, fields: "mimeType" }),
+      drive.files.get({ fileId, fields: "mimeType,name" }),
       drive.files.get(
         { fileId, alt: "media" },
         { responseType: "arraybuffer" }
@@ -40,10 +37,19 @@ export async function GET(
     const mimeType =
       metaResp.data.mimeType || "application/octet-stream";
 
+    // Prefer an explicit ?filename=, otherwise fall back to the file's real
+    // Drive name. The bulk asset export relies on this fallback so downloaded
+    // files keep their original names. Sanitize path separators / control chars.
+    const rawName = requestedName || metaResp.data.name || "download";
+    const safeName = rawName.replace(/[\\/\0\r\n]/g, "_").slice(0, 200);
+
     return new NextResponse(buffer, {
       headers: {
         "Content-Type": mimeType,
         "Content-Disposition": `attachment; filename="${safeName}"; filename*=UTF-8''${encodeURIComponent(safeName)}`,
+        // Same value, machine-readable, so a fetch() caller (the exporter) can
+        // learn the Drive filename without parsing Content-Disposition.
+        "X-Filename": encodeURIComponent(safeName),
         "Cache-Control": "private, max-age=300",
       },
     });
