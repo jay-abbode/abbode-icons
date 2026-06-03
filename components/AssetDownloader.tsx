@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { makeZip, downloadZip } from "client-zip";
+import { downloadZip } from "client-zip";
 import type { Icon } from "@/lib/sheets";
 import { buildExportVariants, iconFileLabel, fileSafe } from "@/lib/variants";
 
@@ -9,11 +9,11 @@ import { buildExportVariants, iconFileLabel, fileSafe } from "@/lib/variants";
  * Bulk asset downloader.
  *
  * The user picks categories, file types (OFM / DST / PNG), and sizes; we build
- * the full list of files and assemble a single ZIP IN THE BROWSER, streaming it
- * straight to a file on disk. Doing the zipping client-side (rather than in one
- * serverless function) is what makes "download the whole catalog" possible — no
- * single request has to hold gigabytes in memory or finish inside a function
- * timeout. The server just keeps serving individual files as it already does.
+ * the full list of files and assemble a single ZIP IN THE BROWSER, then hand it
+ * over as one finished download. Doing the zipping client-side (rather than in
+ * one serverless function) is what makes "download the whole catalog" possible —
+ * the server just keeps serving individual files as it already does, and the
+ * browser stitches them together and backs large archives on disk.
  *
  * Folder layout inside the zip:
  *   ICON OFM/<CATEGORY> OFM/<file as named in Drive>
@@ -227,12 +227,7 @@ export default function AssetDownloader({ icons, categories }: Props) {
     const tasks = buildTasks();
     if (tasks.length === 0) return;
 
-    const suggestedName = timestampName();
-    const win = window as unknown as {
-      showSaveFilePicker?: (opts: unknown) => Promise<{
-        createWritable: () => Promise<WritableStream<Uint8Array>>;
-      }>;
-    };
+    const fileName = timestampName();
 
     doneRef.current = 0;
     errRef.current = 0;
@@ -244,37 +239,25 @@ export default function AssetDownloader({ icons, categories }: Props) {
     }, 200);
 
     try {
-      if (typeof win.showSaveFilePicker === "function") {
-        const handle = await win.showSaveFilePicker({
-          suggestedName,
-          types: [
-            { description: "ZIP archive", accept: { "application/zip": [".zip"] } },
-          ],
-        });
-        const writable = await handle.createWritable();
-        await makeZip(runTasks(tasks)).pipeTo(writable);
-      } else {
-        // Fallback for browsers without the File System Access API: build the
-        // zip in memory. Fine for modest selections, but a whole-catalog export
-        // can be multiple GB and may exhaust memory — Chrome/Edge are required
-        // for the big ones.
-        const blob = await downloadZip(runTasks(tasks)).blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = suggestedName;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-      }
+      // Assemble the entire archive first, then hand the browser ONE finished
+      // file. Files are pulled through a bounded-concurrency pool, and the
+      // browser backs large blobs on disk rather than holding them all in RAM,
+      // so this still works for big exports. Crucially, nothing downloads until
+      // the zip is complete — no empty placeholder file appears up front.
+      const blob = await downloadZip(runTasks(tasks)).blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      // Revoke after a delay so the download has time to start.
+      setTimeout(() => URL.revokeObjectURL(url), 30_000);
+
       setProgress((p) => ({ ...p, done: doneRef.current, errors: errRef.current }));
       setStatus("done");
     } catch (err) {
-      if (err instanceof DOMException && err.name === "AbortError") {
-        setStatus("idle"); // user cancelled the save dialog
-        return;
-      }
       setMessage(err instanceof Error ? err.message : "Download failed.");
       setStatus("error");
     } finally {
@@ -443,12 +426,11 @@ export default function AssetDownloader({ icons, categories }: Props) {
       </section>
 
       <p className="font-ui max-w-2xl text-xs text-ink-muted">
-        The zip is built in your browser and streamed straight to disk, so even a
-        full-catalog export won&apos;t run out of memory. Large selections can take
-        a while and make many requests — Chrome or Edge are recommended for the
-        biggest pulls (other browsers fall back to building the file in memory,
-        which is only suitable for smaller batches). Files missing from Drive are
-        skipped automatically.
+        The zip is assembled in your browser and saved as a single file once it
+        finishes — nothing downloads until it&apos;s complete. Large selections
+        make many requests and can take a while, so keep this tab open; Chrome or
+        Edge handle the biggest exports best. Files missing from Drive are skipped
+        automatically.
       </p>
     </div>
   );
