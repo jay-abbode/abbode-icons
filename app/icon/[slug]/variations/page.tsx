@@ -38,8 +38,14 @@ type Variant = {
   downloadName: string;
 };
 
-function safeFileName(name: string): string {
-  return name.replace(/[^\w-]+/g, "_");
+/** Drop a leading "Abbode " from icon names used in download filenames. */
+function iconFileLabel(name: string): string {
+  return name.replace(/^abbode\s+/i, "").trim();
+}
+
+/** Keep a label usable as a filename while preserving spaces. */
+function fileSafe(s: string): string {
+  return s.replace(/[\/\\:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim();
 }
 
 function buildVariants(icon: Icon, rule: MultiColorRule | null): Variant[] {
@@ -63,7 +69,7 @@ function buildVariants(icon: Icon, rule: MultiColorRule | null): Variant[] {
           sublabel: `${baseName} · ${accentName}`,
           swatchHex,
           src: `/api/image/${icon.pngFileId}?base=${v.base}&accent=${v.accent}&anchor=${anchorStr}`,
-          downloadName: `${safeFileName(icon.name)}_${safeFileName(v.label)}.png`,
+          downloadName: `${fileSafe(`${v.label} ${iconFileLabel(icon.name)}`)}.png`,
         };
       });
     }
@@ -79,7 +85,7 @@ function buildVariants(icon: Icon, rule: MultiColorRule | null): Variant[] {
         sublabel: `with ${accentName}`,
         swatchHex: rgbToHex(thread.rgb),
         src: `/api/image/${icon.pngFileId}?base=${thread.slot}&accent=${accentSlot}&anchor=${anchorStr}`,
-        downloadName: `${safeFileName(icon.name)}_${thread.slot}_${safeFileName(thread.name)}.png`,
+        downloadName: `${fileSafe(`${thread.name} ${iconFileLabel(icon.name)}`)}.png`,
       };
     });
   }
@@ -91,7 +97,7 @@ function buildVariants(icon: Icon, rule: MultiColorRule | null): Variant[] {
     sublabel: `Madeira ${thread.code}`,
     swatchHex: rgbToHex(thread.rgb),
     src: `/api/image/${icon.pngFileId}?slot=${thread.slot}`,
-    downloadName: `${safeFileName(icon.name)}_${thread.slot}_${safeFileName(thread.name)}.png`,
+    downloadName: `${fileSafe(`${thread.name} ${iconFileLabel(icon.name)}`)}.png`,
   }));
 }
 
