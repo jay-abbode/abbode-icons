@@ -56,6 +56,7 @@ OUT_TAB = "ORDER_STATS"
 COMPOSITE_TAB = "COMPOSITE"
 ICON_TRENDS_TAB = "ICON_TRENDS"     # rising/spiking icons (recent vs previous window)
 COLOR_TRENDS_TAB = "COLOR_TRENDS"   # rising/spiking TEXT colors
+USAGE_TAB = "PRODUCT_USAGE"         # most-common icons/fonts/colors per product & template
 WINDOWS = (3, 6, 12)  # rolling-month buckets for the composite
 TREND_DAYS_DEFAULT = 30  # trend = last N days vs the N days before that
 
@@ -229,12 +230,60 @@ query($q: String!, $after: String) {
       lineItems(first: 20) { edges { node {
         sku
         customAttributes { key value }
-        variant { product { handle } }
+        variant { product { id handle } }
       } } }
     } }
   }
 }
 """
+
+PRODUCTS_QUERY = """
+query($after: String) {
+  products(first: 100, after: $after) {
+    pageInfo { hasNextPage endCursor }
+    edges { node {
+      id
+      base: metafield(namespace: "custom", key: "base_product_name_nb") { value }
+      template: metafield(namespace: "custom", key: "design_template_name_nb") { value }
+    } }
+  }
+}
+"""
+
+
+def fetch_product_map(shop, token, max_pages=80):
+    """Map product GID -> (base_product, design_template) from product metafields.
+    Only products carrying at least one of the two metafields are kept; that's
+    the set of customizable 'template' products the usage report cares about.
+    A missing half is recorded as 'Unspecified'."""
+    url = f"https://{shop}.myshopify.com/admin/api/{API_VERSION}/graphql.json"
+    headers = {"X-Shopify-Access-Token": token, "Content-Type": "application/json"}
+    out, after, pages = {}, None, 0
+    while pages < max_pages:
+        for attempt in range(5):
+            resp = requests.post(url, headers=headers,
+                                 json={"query": PRODUCTS_QUERY, "variables": {"after": after}})
+            if resp.status_code == 429:
+                time.sleep(2 * (attempt + 1)); continue
+            resp.raise_for_status()
+            break
+        data = resp.json()
+        if "errors" in data:
+            sys.exit(f"Shopify error (products): {data['errors']}")
+        block = data["data"]["products"]
+        for edge in block["edges"]:
+            n = edge["node"]
+            b = ((n.get("base") or {}).get("value") or "").strip()
+            t = ((n.get("template") or {}).get("value") or "").strip()
+            if not b and not t:
+                continue
+            out[n["id"]] = (b or "Unspecified", t or "Unspecified")
+        if not block["pageInfo"]["hasNextPage"]:
+            break
+        after = block["pageInfo"]["endCursor"]
+        pages += 1
+        time.sleep(0.2)
+    return out
 
 
 def normalize_shop(shop):
@@ -359,6 +408,39 @@ def adjust_slots(slots, croc):
     return out
 
 
+def parse_color_label(raw):
+    """'35 — White' -> 'White'. Falls back to the trimmed string if there's no
+    'NN — Name' shape. Returns None for blanks. We report the customer-facing
+    color NAME here (not a palette slot), since the customizer's color list has
+    options beyond the 24 production spools."""
+    s = (raw or "").strip()
+    if not s:
+        return None
+    m = re.match(r"\s*\d+\s*[\u2014\u2013-]\s*(.+)$", s)
+    name = (m.group(1) if m else s).strip()
+    return name or None
+
+
+def fonts_from_attrs(attrs):
+    """Distinct font choices on a line (current + legacy customizer keys)."""
+    out = []
+    for k in ("font-text-one", "font-text-two", "font_style"):
+        v = (attrs.get(k) or "").strip()
+        if v and v not in out:
+            out.append(v)
+    return out
+
+
+def colors_from_attrs(attrs):
+    """Distinct text-color labels on a line (current + legacy customizer keys)."""
+    out = []
+    for k in ("color-text-one", "color-text-two", "font_color"):
+        name = parse_color_label(attrs.get(k))
+        if name and name not in out:
+            out.append(name)
+    return out
+
+
 def windows_for(created_at_iso, now):
     """Which rolling windows (3/6/12 mo) an order falls into, by age in days."""
     try:
@@ -372,12 +454,14 @@ def windows_for(created_at_iso, now):
 # --------------------------------------------------------------------------
 # Aggregate + write
 # --------------------------------------------------------------------------
-def aggregate(order_lines, matcher, catalog, trend_days=TREND_DAYS_DEFAULT):
-    """Returns (counts, composite, icon_trends, color_trends):
+def aggregate(order_lines, matcher, catalog, trend_days=TREND_DAYS_DEFAULT, product_map=None):
+    """Returns (counts, composite, icon_trends, color_trends, usage):
       counts        -> {icon canon: order count} for ORDER_STATS / Icon Data
       composite     -> {window: {slot: {"icons": n, "text": n}}} for Composite Data
       icon_trends   -> {canon: {"recent": n, "previous": n}}  rising/spiking icons
       color_trends  -> {slot:  {"recent": n, "previous": n}}  rising/spiking TEXT colors
+      usage         -> {(base, template): {"icon"/"font"/"color": {value: count}}}
+                       for the Product Usage report, keyed off product metafields.
     Trend windows: recent = orders in the last `trend_days`; previous = the
     `trend_days` before that (so both fit inside the ~60-day order window we can
     currently read, and give a real rise/spike signal today).
@@ -388,6 +472,8 @@ def aggregate(order_lines, matcher, catalog, trend_days=TREND_DAYS_DEFAULT):
     composite = {w: {} for w in WINDOWS}
     icon_trends = {}
     color_trends = {}
+    usage = {}
+    product_map = product_map or {}
     now = datetime.now(timezone.utc)
 
     def trend_bucket(created_at_iso):
@@ -405,13 +491,19 @@ def aggregate(order_lines, matcher, catalog, trend_days=TREND_DAYS_DEFAULT):
 
     for created_at, li in order_lines:
         sku = li.get("sku")
-        handle = (li.get("variant") or {}).get("product", {}).get("handle") if li.get("variant") else None
+        variant = li.get("variant") or {}
+        product = variant.get("product") or {}
+        handle = product.get("handle")
         if line_is_noise(sku, handle):
             continue
         attrs = {a["key"]: a["value"] for a in (li.get("customAttributes") or [])}
         croc = is_croc(sku, handle)
         wins = windows_for(created_at, now)
         tb = trend_bucket(created_at)
+
+        # Usage cell for this line, if its product is a mapped template product.
+        cell = product_map.get(product.get("id"))
+        line_icons = set()
 
         # text thread color (once per line)
         tslot = parse_color_slot(attrs.get("color-text-one") or attrs.get("font_color"), croc)
@@ -431,6 +523,7 @@ def aggregate(order_lines, matcher, catalog, trend_days=TREND_DAYS_DEFAULT):
             if not canon:
                 continue
             counts[canon] = counts.get(canon, 0) + 1
+            line_icons.add(canon)
             if tb:
                 icon_trends.setdefault(canon, {"recent": 0, "previous": 0})[tb] += 1
             slots, _cat = catalog_slots_for(canon, catalog)
@@ -438,7 +531,19 @@ def aggregate(order_lines, matcher, catalog, trend_days=TREND_DAYS_DEFAULT):
                 for w in wins:
                     d = composite[w].setdefault(s, {"icons": 0, "text": 0})
                     d["icons"] += 1
-    return counts, composite, icon_trends, color_trends
+
+        # Product Usage report: tally icons/fonts/text colors into this line's
+        # (base product, template) cell — once each per line.
+        if cell is not None:
+            u = usage.setdefault(cell, {"icon": {}, "font": {}, "color": {}})
+            for c in line_icons:
+                u["icon"][c] = u["icon"].get(c, 0) + 1
+            for f in fonts_from_attrs(attrs):
+                u["font"][f] = u["font"].get(f, 0) + 1
+            for col in colors_from_attrs(attrs):
+                u["color"][col] = u["color"].get(col, 0) + 1
+
+    return counts, composite, icon_trends, color_trends, usage
 
 
 def catalog_slots_for(canon, catalog):
@@ -547,6 +652,19 @@ def write_color_trends(sheets, sheet_id, color_trends, window_label, today):
     return _ensure_clear_update(sheets, sheet_id, COLOR_TRENDS_TAB, rows, clear_range="A1:Z200")
 
 
+def write_usage(sheets, sheet_id, usage, window_label, today):
+    """One row per (base product, template, type, value). Type in icon/font/color,
+    ordered base -> template -> type -> count desc, so the page can pivot freely."""
+    header = ["Base Product", "Template", "Type", "Value", "Count", "Window", "Updated"]
+    rows = [header]
+    for (base, template) in sorted(usage.keys()):
+        cell = usage[(base, template)]
+        for typ in ("icon", "font", "color"):
+            for value, cnt in sorted(cell[typ].items(), key=lambda x: (-x[1], x[0])):
+                rows.append([base, template, typ, value, cnt, window_label, today])
+    return _ensure_clear_update(sheets, sheet_id, USAGE_TAB, rows, clear_range="A1:Z50000")
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--sheet-id", default=os.environ.get("GOOGLE_SHEET_ID"))
@@ -579,11 +697,16 @@ def main():
     print(f"Getting a Shopify access token for {shop}.myshopify.com ...")
     token = get_access_token(shop, args.client_id, args.client_secret)
 
+    print("Mapping products to base/template (for the usage report)...")
+    product_map = fetch_product_map(shop, token)
+    print(f"  {len(product_map)} customizable products mapped.")
+
     matcher = Matcher(catalog, aliases)
     print(f"Scanning Shopify orders (up to {args.months:g} months, gross)...")
     state = {"seen": 0, "yielded": False, "capped": False}
-    counts, composite, icon_trends, color_trends = aggregate(
-        scan_orders(shop, token, args.months, state, args.limit), matcher, catalog, args.trend_days)
+    counts, composite, icon_trends, color_trends, usage = aggregate(
+        scan_orders(shop, token, args.months, state, args.limit),
+        matcher, catalog, args.trend_days, product_map)
 
     coverage = ("Last ~60 days (read_all_orders pending)" if state["capped"]
                 else f"Rolling {args.months:g} months")
@@ -625,14 +748,24 @@ def main():
                               key=lambda x: -(x[1]["recent"] - x[1]["previous"]))[:12]:
             print(f"  {slot:>2} {PALETTE.get(slot, '?'):16} now={d['recent']:>4} "
                   f"prev={d['previous']:>4} rise={d['recent'] - d['previous']:>+4}")
+        print(f"\nProduct Usage — {len(usage)} (base x template) cells. Sample:")
+        for cell in sorted(usage.keys())[:8]:
+            u = usage[cell]
+            ti = max(u["icon"].items(), key=lambda x: x[1], default=("\u2014", 0))
+            tf = max(u["font"].items(), key=lambda x: x[1], default=("\u2014", 0))
+            tc = max(u["color"].items(), key=lambda x: x[1], default=("\u2014", 0))
+            print(f"  {cell[0]} / {cell[1]}: icon={ti[0]}({ti[1]}) "
+                  f"font={tf[0]}({tf[1]}) color={tc[0]}({tc[1]})")
         return
 
     n1 = write_stats(sheets, args.sheet_id, counts, catalog, coverage)
     n2 = write_composite(sheets, args.sheet_id, composite, coverage, today)
     n3 = write_icon_trends(sheets, args.sheet_id, icon_trends, catalog, trend_label, today)
     n4 = write_color_trends(sheets, args.sheet_id, color_trends, trend_label, today)
+    n5 = write_usage(sheets, args.sheet_id, usage, coverage, today)
     print(f"\nWrote {n1} rows to {OUT_TAB}, {n2} to {COMPOSITE_TAB}, "
-          f"{n3} to {ICON_TRENDS_TAB}, {n4} to {COLOR_TRENDS_TAB}. "
+          f"{n3} to {ICON_TRENDS_TAB}, {n4} to {COLOR_TRENDS_TAB}, "
+          f"{n5} to {USAGE_TAB}. "
           "The app will show them within ~60s.")
 
 

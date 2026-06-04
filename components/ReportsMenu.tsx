@@ -24,6 +24,11 @@ const links: { href: string; label: string; blurb: string }[] = [
     label: "Trends",
     blurb: "What's rising and falling lately",
   },
+  {
+    href: "/reports/usage",
+    label: "Product Usage",
+    blurb: "Top icons, fonts & colors by product or template",
+  },
 ];
 
 export default function ReportsMenu() {
