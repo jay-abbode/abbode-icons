@@ -59,6 +59,8 @@ COLOR_TRENDS_TAB = "COLOR_TRENDS"   # rising/spiking TEXT colors
 USAGE_TAB = "PRODUCT_USAGE"         # most-common icons/fonts/colors per product & template
 WINDOWS = (3, 6, 12)  # rolling-month buckets for the composite
 TREND_DAYS_DEFAULT = 30  # trend = last N days vs the N days before that
+USAGE_WINDOWS = ("3mo", "6mo", "all")  # windows offered on the Product Usage report
+_COLOR_NUM = "\x00#"  # internal sentinel: a color given only as a number (name resolved later)
 
 # 24-spool palette (slot -> name). Mirror of lib/threadPalette.ts.
 PALETTE = {0:"Burgundy",1:"Dark Red",4:"Rust Orange",5:"Orange",6:"Peach",7:"Dark Yellow",
@@ -408,17 +410,20 @@ def adjust_slots(slots, croc):
     return out
 
 
-def parse_color_label(raw):
-    """'35 — White' -> 'White'. Falls back to the trimmed string if there's no
-    'NN — Name' shape. Returns None for blanks. We report the customer-facing
-    color NAME here (not a palette slot), since the customizer's color list has
-    options beyond the 24 production spools."""
+def split_color(raw):
+    """Parse a customizer color value into (number, name). Handles 'NN — Name',
+    'NN-Name', a bare 'NN', or a bare name. Either part may be None. We report
+    the customer-facing NAME (the customizer's color list runs beyond the 24
+    production spools), resolving bare numbers to names after the full scan."""
     s = (raw or "").strip()
     if not s:
-        return None
-    m = re.match(r"\s*\d+\s*[\u2014\u2013-]\s*(.+)$", s)
-    name = (m.group(1) if m else s).strip()
-    return name or None
+        return (None, None)
+    m = re.match(r"\s*(\d+)\s*[\u2014\u2013-]\s*(.+)$", s)
+    if m:
+        return (m.group(1), " ".join(m.group(2).split()))
+    if re.fullmatch(r"\d+", s):
+        return (s, None)
+    return (None, " ".join(s.split()))
 
 
 def fonts_from_attrs(attrs):
@@ -431,13 +436,13 @@ def fonts_from_attrs(attrs):
     return out
 
 
-def colors_from_attrs(attrs):
-    """Distinct text-color labels on a line (current + legacy customizer keys)."""
+def color_values_from_attrs(attrs):
+    """Raw text-color values on a line (current + legacy keys), de-duplicated."""
     out = []
     for k in ("color-text-one", "color-text-two", "font_color"):
-        name = parse_color_label(attrs.get(k))
-        if name and name not in out:
-            out.append(name)
+        v = (attrs.get(k) or "").strip()
+        if v and v not in out:
+            out.append(v)
     return out
 
 
@@ -449,6 +454,22 @@ def windows_for(created_at_iso, now):
     except Exception:
         return WINDOWS  # unparseable date -> count everywhere, conservatively
     return tuple(w for w in WINDOWS if age <= w * 30.5)
+
+
+def usage_windows_for(created_at_iso, now):
+    """Which Product Usage windows a line falls into: 'all' always, plus '6mo'
+    (<=183 days) and '3mo' (<=91 days) by order age."""
+    wins = ["all"]
+    try:
+        dt = datetime.fromisoformat((created_at_iso or "").replace("Z", "+00:00"))
+        age = (now - dt).days
+    except Exception:
+        return wins
+    if age <= 183:
+        wins.append("6mo")
+    if age <= 91:
+        wins.append("3mo")
+    return wins
 
 
 # --------------------------------------------------------------------------
@@ -472,7 +493,8 @@ def aggregate(order_lines, matcher, catalog, trend_days=TREND_DAYS_DEFAULT, prod
     composite = {w: {} for w in WINDOWS}
     icon_trends = {}
     color_trends = {}
-    usage = {}
+    usage = {w: {} for w in USAGE_WINDOWS}
+    color_num_names = {}  # number -> {name: count}, to resolve bare-number colors
     product_map = product_map or {}
     now = datetime.now(timezone.utc)
 
@@ -533,15 +555,56 @@ def aggregate(order_lines, matcher, catalog, trend_days=TREND_DAYS_DEFAULT, prod
                     d["icons"] += 1
 
         # Product Usage report: tally icons/fonts/text colors into this line's
-        # (base product, template) cell — once each per line.
+        # (base product, template) cell — once each per line, in each window the
+        # order falls into. Colors are captured as names; bare numbers are kept
+        # as a sentinel and resolved to names after the scan.
         if cell is not None:
-            u = usage.setdefault(cell, {"icon": {}, "font": {}, "color": {}})
-            for c in line_icons:
-                u["icon"][c] = u["icon"].get(c, 0) + 1
-            for f in fonts_from_attrs(attrs):
-                u["font"][f] = u["font"].get(f, 0) + 1
-            for col in colors_from_attrs(attrs):
-                u["color"][col] = u["color"].get(col, 0) + 1
+            fonts = fonts_from_attrs(attrs)
+            color_tokens = []
+            for raw in color_values_from_attrs(attrs):
+                num, name = split_color(raw)
+                if name:
+                    if num:
+                        color_num_names.setdefault(num, {})
+                        color_num_names[num][name] = color_num_names[num].get(name, 0) + 1
+                    token = name
+                elif num:
+                    token = _COLOR_NUM + num
+                else:
+                    continue
+                if token not in color_tokens:
+                    color_tokens.append(token)
+            for w in usage_windows_for(created_at, now):
+                u = usage[w].setdefault(cell, {"icon": {}, "font": {}, "color": {}})
+                for c in line_icons:
+                    u["icon"][c] = u["icon"].get(c, 0) + 1
+                for f in fonts:
+                    u["font"][f] = u["font"].get(f, 0) + 1
+                for t in color_tokens:
+                    u["color"][t] = u["color"].get(t, 0) + 1
+
+    # Resolve bare-number colors to names (learned from 'NN — Name' labels) and
+    # merge case-insensitive duplicates, so the report shows color NAMES only.
+    num_to_name = {num: max(names.items(), key=lambda kv: kv[1])[0]
+                   for num, names in color_num_names.items()}
+    for w in usage:
+        for types in usage[w].values():
+            merged = {}  # lower(name) -> [display, total, best_casing_count]
+            for key, cnt in types["color"].items():
+                if key.startswith(_COLOR_NUM):
+                    name = num_to_name.get(key[len(_COLOR_NUM):])
+                    if not name:
+                        continue  # number never seen with a name -> drop
+                else:
+                    name = key
+                lk = name.lower()
+                if lk in merged:
+                    merged[lk][1] += cnt
+                    if cnt > merged[lk][2]:
+                        merged[lk][0], merged[lk][2] = name, cnt
+                else:
+                    merged[lk] = [name, cnt, cnt]
+            types["color"] = {v[0]: v[1] for v in merged.values()}
 
     return counts, composite, icon_trends, color_trends, usage
 
@@ -652,17 +715,21 @@ def write_color_trends(sheets, sheet_id, color_trends, window_label, today):
     return _ensure_clear_update(sheets, sheet_id, COLOR_TRENDS_TAB, rows, clear_range="A1:Z200")
 
 
-def write_usage(sheets, sheet_id, usage, window_label, today):
-    """One row per (base product, template, type, value). Type in icon/font/color,
-    ordered base -> template -> type -> count desc, so the page can pivot freely."""
-    header = ["Base Product", "Template", "Type", "Value", "Count", "Window", "Updated"]
+def write_usage(sheets, sheet_id, usage, coverage_label, today):
+    """One row per (base product, template, window, type, value). Window is one of
+    3mo/6mo/all; type is icon/font/color; ordered window -> base -> template ->
+    type -> count desc so the page can pivot freely."""
+    header = ["Base Product", "Template", "Window", "Type", "Value", "Count",
+              "Coverage", "Updated"]
     rows = [header]
-    for (base, template) in sorted(usage.keys()):
-        cell = usage[(base, template)]
-        for typ in ("icon", "font", "color"):
-            for value, cnt in sorted(cell[typ].items(), key=lambda x: (-x[1], x[0])):
-                rows.append([base, template, typ, value, cnt, window_label, today])
-    return _ensure_clear_update(sheets, sheet_id, USAGE_TAB, rows, clear_range="A1:Z50000")
+    for w in USAGE_WINDOWS:
+        cells = usage.get(w, {})
+        for (base, template) in sorted(cells.keys()):
+            cell = cells[(base, template)]
+            for typ in ("icon", "font", "color"):
+                for value, cnt in sorted(cell[typ].items(), key=lambda x: (-x[1], x[0])):
+                    rows.append([base, template, w, typ, value, cnt, coverage_label, today])
+    return _ensure_clear_update(sheets, sheet_id, USAGE_TAB, rows, clear_range="A1:Z100000")
 
 
 def main():
@@ -748,9 +815,10 @@ def main():
                               key=lambda x: -(x[1]["recent"] - x[1]["previous"]))[:12]:
             print(f"  {slot:>2} {PALETTE.get(slot, '?'):16} now={d['recent']:>4} "
                   f"prev={d['previous']:>4} rise={d['recent'] - d['previous']:>+4}")
-        print(f"\nProduct Usage — {len(usage)} (base x template) cells. Sample:")
-        for cell in sorted(usage.keys())[:8]:
-            u = usage[cell]
+        all_cells = usage.get("all", {})
+        print(f"\nProduct Usage — {len(all_cells)} (base x template) cells [all-time]. Sample:")
+        for cell in sorted(all_cells.keys())[:8]:
+            u = all_cells[cell]
             ti = max(u["icon"].items(), key=lambda x: x[1], default=("\u2014", 0))
             tf = max(u["font"].items(), key=lambda x: x[1], default=("\u2014", 0))
             tc = max(u["color"].items(), key=lambda x: x[1], default=("\u2014", 0))

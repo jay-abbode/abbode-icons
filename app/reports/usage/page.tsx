@@ -27,9 +27,9 @@ export default async function UsagePage() {
             by template, drill in, and see the most common icons, fonts, and text
             colors for that selection.
           </p>
-          {snapshot.window && (
+          {snapshot.coverage && (
             <p className="font-ui mt-3 text-xs text-ink-muted">
-              Coverage: {snapshot.window}
+              Coverage: {snapshot.coverage}
               {snapshot.updatedAt ? ` · updated ${snapshot.updatedAt}` : ""}
             </p>
           )}
