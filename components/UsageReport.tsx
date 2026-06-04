@@ -61,7 +61,24 @@ export default function UsageReport({ snapshot }: { snapshot: UsageSnapshot }) {
     return m;
   }, [rows, route]);
 
-  const level1Items = route === "product" ? bases : templates;
+  // Popularity weight per parent = total recorded usage in that node.
+  const parentWeight = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const r of rows) {
+      const p = route === "product" ? r.base : r.template;
+      m.set(p, (m.get(p) || 0) + r.count);
+    }
+    return m;
+  }, [rows, route]);
+
+  const level1Items = useMemo(() => {
+    const items = route === "product" ? bases : templates;
+    return [...items].sort(
+      (a, b) =>
+        (parentWeight.get(b) || 0) - (parentWeight.get(a) || 0) ||
+        a.localeCompare(b)
+    );
+  }, [route, bases, templates, parentWeight]);
 
   function chooseRoute(next: Route) {
     setRoute(next);
@@ -116,8 +133,17 @@ export default function UsageReport({ snapshot }: { snapshot: UsageSnapshot }) {
 
   // ----- level 2 (pick the other dimension, or aggregate) -----
   if (sel1) {
-    const kids = [...(childrenByParent.get(sel1) || [])].sort((a, b) =>
-      a.localeCompare(b)
+    const childWeight = new Map<string, number>();
+    for (const r of rows) {
+      const p = route === "product" ? r.base : r.template;
+      if (p !== sel1) continue;
+      const c = route === "product" ? r.template : r.base;
+      childWeight.set(c, (childWeight.get(c) || 0) + r.count);
+    }
+    const kids = [...(childrenByParent.get(sel1) || [])].sort(
+      (a, b) =>
+        (childWeight.get(b) || 0) - (childWeight.get(a) || 0) ||
+        a.localeCompare(b)
     );
     const allLabel = route === "product" ? "All templates" : "All products";
     const childNoun = route === "product" ? "template" : "product";
