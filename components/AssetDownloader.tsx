@@ -204,10 +204,8 @@ export default function AssetDownloader({ icons, categories }: Props) {
   }
 
   function timestampName(): string {
-    // Eastern time, rounded to the nearest hour. Rounding the epoch to the hour
-    // lands exactly on :00 in ET (its offset is whole hours). Colons are illegal
-    // in filenames, so seconds/minutes render with dashes.
-    const rounded = new Date(Math.round(Date.now() / 3_600_000) * 3_600_000);
+    // Eastern time, full timestamp (no rounding). Colons are illegal in
+    // filenames, so the time renders with dashes: "DD-MM-YYYY HH-MM-SS".
     const parts = Object.fromEntries(
       new Intl.DateTimeFormat("en-GB", {
         timeZone: "America/New_York",
@@ -215,12 +213,14 @@ export default function AssetDownloader({ icons, categories }: Props) {
         month: "2-digit",
         day: "2-digit",
         hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
         hourCycle: "h23",
       })
-        .formatToParts(rounded)
+        .formatToParts(new Date())
         .map((p) => [p.type, p.value] as [string, string])
     );
-    return `${parts.day}-${parts.month}-${parts.year} ${parts.hour}-00-00.zip`;
+    return `${parts.day}-${parts.month}-${parts.year} ${parts.hour}-${parts.minute}-${parts.second}.zip`;
   }
 
   async function handleDownload() {
