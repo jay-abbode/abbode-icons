@@ -97,7 +97,7 @@ const COLOR_WORDS: Record<string, number[]> = {
 };
 
 const STOPWORDS = new Set([
-  "and", "or", "the", "a", "an", "of", "in", "with", "for", "to",
+  "and", "or", "the", "a", "an", "of", "in", "with", "for", "to", "s",
   "icon", "icons", "color", "colors", "colour", "colours",
 ]);
 
@@ -115,6 +115,8 @@ export type ParsedQuery = {
 export function parseSearchQuery(raw: string): ParsedQuery {
   const words = (raw || "")
     .toLowerCase()
+    // Collapse apostrophes so possessives match: "father's day" -> "fathers day".
+    .replace(/['\u2019]/g, "")
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
     .split(/\s+/)
@@ -176,6 +178,8 @@ export type SearchDoc = {
 function splitWords(s: string | null | undefined): string[] {
   return (s || "")
     .toLowerCase()
+    // Match parseSearchQuery: "Ralph's" indexes as "ralphs".
+    .replace(/['\u2019]/g, "")
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
     .split(/\s+/)
