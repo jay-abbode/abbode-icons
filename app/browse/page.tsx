@@ -2,6 +2,13 @@ import Link from "next/link";
 import { getIconCatalog, type Icon } from "@/lib/sheets";
 import { getCommentCounts } from "@/lib/comments";
 import { getThreadBySlot, rgbToHex } from "@/lib/threadPalette";
+import {
+  parseSearchQuery,
+  familiesMatch,
+  buildSearchDoc,
+  scoreDoc,
+  nameScore,
+} from "@/lib/searchLang";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
 import FiltersMenu from "@/components/FiltersMenu";
@@ -47,6 +54,8 @@ export default async function BrowsePage({
   }
 
   const query = (searchParams.q || "").trim().toLowerCase();
+  // Color families parsed out of the search box (for the chips under the heading).
+  const queryFamilies = query ? parseSearchQuery(query).families : [];
   const category = searchParams.category || "";
   const colorVarOnly = searchParams.colorVar === "1";
   const colorSlots = (searchParams.colors || "")
@@ -177,6 +186,35 @@ export default async function BrowsePage({
                 })}
               </div>
             )}
+            {queryFamilies.length > 0 && (
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <span className="font-ui text-[11px] text-ink-muted">
+                  Including colors:
+                </span>
+                {queryFamilies.map((f) => (
+                  <span
+                    key={f.word}
+                    className="font-ui inline-flex items-center gap-1.5 rounded-full border border-parchment bg-white px-2 py-0.5 text-[11px] text-ink-soft"
+                  >
+                    <span className="flex -space-x-0.5">
+                      {f.slots.slice(0, 3).map((slot) => {
+                        const t = getThreadBySlot(slot);
+                        if (!t) return null;
+                        return (
+                          <span
+                            key={slot}
+                            className="h-2.5 w-2.5 rounded-full ring-1 ring-black/10"
+                            style={{ backgroundColor: rgbToHex(t.rgb) }}
+                            aria-hidden
+                          />
+                        );
+                      })}
+                    </span>
+                    {f.word.replace(/\b\w/g, (c) => c.toUpperCase())}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex w-full flex-col gap-3 md:w-auto md:items-end">
@@ -248,14 +286,37 @@ function applyFilters(
     );
   }
 
+  // Search: the query is parsed into color FAMILIES (e.g. "green" → Olive /
+  // Dark Green / Matcha) and text TOKENS (fuzzy-matched against names,
+  // categories, old names, and theme tags from the sheet's Tags column).
   if (opts.query) {
-    const q = opts.query;
-    result = result.filter(
-      (i) =>
-        i.name.toLowerCase().includes(q) ||
-        i.category.toLowerCase().includes(q) ||
-        (i.oldName && i.oldName.toLowerCase().includes(q))
-    );
+    const { families, tokens } = parseSearchQuery(opts.query);
+
+    // Color part: design must use at least one slot from EVERY named family
+    // (same AND semantics as the Filters button).
+    if (families.length > 0 && tokens.length > 0) {
+      result = result.filter((i) => familiesMatch(i.threadSlots, families));
+    } else if (families.length > 0) {
+      // Pure color query ("olive", "red, green and blue"): also surface icons
+      // NAMED after those colors (the Olive icon for "olive"), ranked first.
+      const colorWords = families.flatMap((f) => f.word.split(" "));
+      return result
+        .map((i) => ({ i, n: nameScore(buildSearchDoc(i), colorWords) }))
+        .filter((x) => x.n > 0 || familiesMatch(x.i.threadSlots, families))
+        .sort((a, b) => b.n - a.n || a.i.name.localeCompare(b.i.name))
+        .map((x) => x.i);
+    }
+
+    // Text part: every token must match somewhere; rank by relevance
+    // (name matches first, then tags, category, old name).
+    if (tokens.length > 0) {
+      return result
+        .map((i) => ({ i, s: scoreDoc(buildSearchDoc(i), tokens) }))
+        .filter((x) => x.s > 0)
+        .sort((a, b) => b.s - a.s || a.i.name.localeCompare(b.i.name))
+        .map((x) => x.i);
+    }
+    // Query was only stopwords — fall through to the default sort.
   }
 
   return result.slice().sort((a, b) => a.name.localeCompare(b.name));

@@ -40,7 +40,7 @@ export default function SearchBar({
         value={value}
         onChange={(e) => setValue(e.target.value)}
         autoFocus={autoFocus}
-        placeholder={compact ? "Search icons…" : "Search 700+ icons by name…"}
+        placeholder={compact ? "Search name, theme, color…" : "Search 700+ icons by name, theme, or color…"}
         className={`font-ui w-full rounded-full border border-parchment bg-white pl-11 pr-4 text-espresso placeholder:text-ink-muted shadow-sm transition-all focus:border-berry focus:outline-none focus:ring-2 focus:ring-berry/20 ${
           compact ? "py-2 text-sm" : "py-3.5 text-base"
         }`}

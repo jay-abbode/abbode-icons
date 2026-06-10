@@ -40,6 +40,14 @@ export default function FilterControls({
 
   function setParam(key: string, value: string | null) {
     const params = new URLSearchParams(searchParams?.toString());
+    // Clicking into a category starts fresh: drop the search text, color
+    // filters, and the color-variations toggle (the Draft/Archived view is a
+    // view mode, not a filter, so it stays).
+    if (key === "category") {
+      params.delete("q");
+      params.delete("colors");
+      params.delete("colorVar");
+    }
     if (value === null || value === "") params.delete(key);
     else params.set(key, value);
     startTransition(() => {

@@ -35,6 +35,12 @@ export interface Icon {
   /** Drive file ID for the PNG, or null. */
   pngFileId: string | null;
   /**
+   * Theme/search tags from the optional "Tags" column (comma-separated in the
+   * sheet), lowercased. Used by the browse search for thematic queries like
+   * "summer" or "new england". Empty array when the column is absent or blank.
+   */
+  tags: string[];
+  /**
    * Machine slot numbers for the Madeira spools used in this design,
    * in the order entered in the sheet (typically most-prominent first).
    * Empty array if the "Thread Colors" cell is blank for this row.
@@ -146,6 +152,7 @@ async function fetchCatalogFromSheet(): Promise<IconCatalog> {
       notes: getCellText(row, col.notes) || null,
       oldName: getCellText(row, col.oldName) || null,
       pngFileId: extractDriveFileId(getCellHyperlink(row, col.png)),
+      tags: parseTags(getCellText(row, col.tags)),
       threadSlots: parseThreadSlots(getCellText(row, col.threadColors)),
       sizes: {
         small: {
@@ -201,6 +208,7 @@ interface ColumnIndex {
   smallDst: number;
   mediumDst: number;
   largeDst: number;
+  tags: number;
 }
 
 function buildColumnIndex(headers: string[]): ColumnIndex {
@@ -249,7 +257,20 @@ function buildColumnIndex(headers: string[]): ColumnIndex {
     smallDst: findHeader(["SMALL DST", "Small DST"]),
     mediumDst: findHeader(["MEDIUM DST", "Medium DST"]),
     largeDst: findHeader(["LARGE DST", "Large DST"]),
+    // Optional — added for thematic search. Missing column just means no tags.
+    tags: findHeader(["Tags", "TAGS", "Search Tags", "Theme Tags"]),
   };
+}
+
+/** "summer, beach; coastal" -> ["summer", "beach", "coastal"] (lowercase, deduped). */
+function parseTags(raw: string): string[] {
+  if (!raw) return [];
+  const out: string[] = [];
+  for (const part of raw.split(/[,;]/)) {
+    const t = part.trim().toLowerCase();
+    if (t && !out.includes(t)) out.push(t);
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------------------
