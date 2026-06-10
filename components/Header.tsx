@@ -60,11 +60,11 @@ export default async function Header({
 
   return (
     <header className="sticky top-0 z-30 border-b border-parchment bg-porcelain/85 backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl items-center gap-5 px-6 py-4 lg:px-10">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-3 px-6 py-4 md:py-5 lg:px-10">
         <Link
           href="/"
           aria-label="Abbode Icons — home"
-          className="group flex cursor-pointer items-end gap-2.5 rounded-md focus-ring"
+          className="group flex flex-none cursor-pointer items-end gap-2.5 rounded-md focus-ring"
         >
           <AbbodeLogo className="h-7 w-auto text-sage transition-colors duration-200 group-hover:text-olive md:h-8" />
           <span className="font-display text-[28px] leading-none text-plum transition-colors duration-200 group-hover:text-cherry md:text-[32px]">
@@ -72,8 +72,10 @@ export default async function Header({
           </span>
         </Link>
 
+        {/* Search + Filters: below xl they take a clean second line so the
+            top row isn't crowded; at xl+ they sit inline with room to breathe. */}
         {showSearch && (
-          <div className="hidden flex-1 max-w-md items-center gap-2 md:flex">
+          <div className="order-last hidden w-full max-w-md items-center gap-2 md:flex xl:order-none xl:w-auto xl:flex-1 xl:min-w-[200px]">
             <div className="flex-1">
               <SearchBar initialQuery={initialQuery} compact />
             </div>
@@ -81,9 +83,9 @@ export default async function Header({
           </div>
         )}
 
-        <nav className="ml-auto flex items-center gap-4 text-sm font-medium text-ink-soft">
+        <nav className="ml-auto flex items-center gap-4 text-sm font-medium text-ink-soft lg:gap-5">
           {/* Primary navigation — collapses first on narrower screens. */}
-          <div className="hidden items-center gap-5 lg:flex">
+          <div className="hidden items-center gap-5 lg:flex xl:gap-6">
             <Link
               href="/"
               className="hover:text-espresso transition-colors focus-ring"
@@ -116,17 +118,19 @@ export default async function Header({
               {/* Divider between the primary links and the analytics tools. */}
               <span
                 aria-hidden="true"
-                className="hidden h-5 w-px bg-parchment lg:block"
+                className="mx-1 hidden h-5 w-px bg-parchment lg:block"
               />
 
               {/* Analytics cluster — the matching set of data controls. */}
-              <div className="hidden items-center gap-2 md:flex">
+              <div className="hidden items-center gap-2.5 md:flex">
                 <ColorDataMenu stats={colorStats} />
                 <LiveOrderDataMenu snapshot={orderStats} />
                 <ReportsMenu />
               </div>
 
-              <UserMenu name={user.name} email={user.email} image={user.image} />
+              <div className="ml-1">
+                <UserMenu name={user.name} email={user.email} image={user.image} />
+              </div>
             </>
           )}
         </nav>
