@@ -109,6 +109,16 @@ export default async function BrowsePage({
     orderCounts,
   });
 
+  // When sorting by popularity, surface each visible icon's order count on its
+  // card. Keyed by slug so IconGrid can look it up directly.
+  const showOrderCounts = sort === "popular";
+  const orderCountBySlug: Record<string, number> = {};
+  if (showOrderCounts) {
+    for (const i of filtered) {
+      orderCountBySlug[i.slug] = orderCounts[normIconName(i.name)] ?? 0;
+    }
+  }
+
   // Catalog-wide counts for the Draft and Archived links in the sidebar.
   // These don't change as the user navigates between views — they always
   // reflect the totals across the whole catalog.
@@ -273,7 +283,12 @@ export default async function BrowsePage({
             {filtered.length === 0 ? (
               <EmptyState query={query} category={category} />
             ) : (
-              <IconGrid icons={filtered} commentCounts={commentCounts} />
+              <IconGrid
+                icons={filtered}
+                commentCounts={commentCounts}
+                orderCounts={orderCountBySlug}
+                showOrderCounts={showOrderCounts}
+              />
             )}
           </section>
         </div>

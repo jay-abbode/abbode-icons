@@ -8,10 +8,16 @@ import CommentDialog from "./CommentDialog";
 export default function IconGrid({
   icons,
   commentCounts = {},
+  orderCounts = {},
+  showOrderCounts = false,
 }: {
   icons: Icon[];
   /** Map of icon slug → number of notes left on that icon. */
   commentCounts?: Record<string, number>;
+  /** Map of icon slug → order count (rolling 12 months). */
+  orderCounts?: Record<string, number>;
+  /** When true, show each card's order count (used by the "Most popular" sort). */
+  showOrderCounts?: boolean;
 }) {
   const [selected, setSelected] = useState<Icon | null>(null);
   const [commentingOn, setCommentingOn] = useState<Icon | null>(null);
@@ -76,7 +82,11 @@ export default function IconGrid({
       <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
         {icons.map((icon) => (
           <li key={icon.slug} className="relative">
-            <IconCard icon={icon} onClick={() => setSelected(icon)} />
+            <IconCard
+              icon={icon}
+              onClick={() => setSelected(icon)}
+              orderCount={showOrderCounts ? (orderCounts[icon.slug] ?? 0) : undefined}
+            />
             <CommentButton
               icon={icon}
               count={commentCounts[icon.slug] || 0}
@@ -110,9 +120,12 @@ export default function IconGrid({
 function IconCard({
   icon,
   onClick,
+  orderCount,
 }: {
   icon: Icon;
   onClick: () => void;
+  /** Order count to show as a badge; undefined hides it. */
+  orderCount?: number;
 }) {
   return (
     <button
@@ -139,6 +152,19 @@ function IconCard({
             className="font-ui absolute right-2 top-2 inline-flex h-5 items-center gap-1 rounded-full bg-pink px-1.5 text-[9px] font-semibold uppercase tracking-wider text-espresso shadow-sm"
           >
             <ColorDot /> Var
+          </span>
+        )}
+
+        {orderCount !== undefined && (
+          <span
+            title={`${orderCount.toLocaleString()} ${orderCount === 1 ? "order" : "orders"} · last 12 months`}
+            className={`font-ui absolute left-2 top-2 inline-flex h-5 items-center gap-1 rounded-full px-1.5 text-[10px] font-semibold tabular-nums shadow-sm ${
+              orderCount > 0 ? "bg-cherry text-porcelain" : "bg-white/90 text-ink-muted"
+            }`}
+          >
+            <BagIcon className="h-2.5 w-2.5" />
+            {orderCount.toLocaleString()}
+            <span className="sr-only"> orders</span>
           </span>
         )}
       </div>
@@ -222,5 +248,23 @@ function ColorDot() {
           "conic-gradient(from 0deg, #BB3767, #D1C68F, #C398B5, #E7E57E, #BB3767)",
       }}
     />
+  );
+}
+
+function BagIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M4 5h8l-.6 8.6a1 1 0 0 1-1 .9H5.6a1 1 0 0 1-1-.9L4 5Z" />
+      <path d="M6 5V3.6a2 2 0 0 1 4 0V5" />
+    </svg>
   );
 }
