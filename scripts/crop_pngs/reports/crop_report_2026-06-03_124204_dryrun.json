@@ -1,0 +1,87 @@
+[
+  {
+    "slug": "8-ball",
+    "name": "8 Ball",
+    "category": "Hobby",
+    "file_id": "1mA1UmcgL5dIP2EBbqYTFNtHyBrR9SejL",
+    "status": "cropped",
+    "original_size": [
+      435,
+      425
+    ],
+    "new_size": [
+      391,
+      379
+    ],
+    "saved_bytes": 12313,
+    "error": null
+  },
+  {
+    "slug": "bikini",
+    "name": "Bikini",
+    "category": "Beach",
+    "file_id": "1GGYYhIlygOjdNTLTCxaX5T3f4waCnzkx",
+    "status": "cropped",
+    "original_size": [
+      299,
+      509
+    ],
+    "new_size": [
+      254,
+      464
+    ],
+    "saved_bytes": 4145,
+    "error": null
+  },
+  {
+    "slug": "ace-of-hearts",
+    "name": "Ace of Hearts",
+    "category": "Hobby",
+    "file_id": "19UzwoaPjKh1sWKgRfag6CH6PHvB-4Hyr",
+    "status": "cropped",
+    "original_size": [
+      361,
+      509
+    ],
+    "new_size": [
+      318,
+      462
+    ],
+    "saved_bytes": 2871,
+    "error": null
+  },
+  {
+    "slug": "adderall",
+    "name": "Adderall",
+    "category": "Apothecary",
+    "file_id": "1hK8vVmC3xrixUbIlsaC4FKCPyR3kpHy0",
+    "status": "cropped",
+    "original_size": [
+      435,
+      430
+    ],
+    "new_size": [
+      391,
+      383
+    ],
+    "saved_bytes": 42558,
+    "error": null
+  },
+  {
+    "slug": "airplane",
+    "name": "Airplane",
+    "category": "Travel",
+    "file_id": "172wiX9tTtoTU-1CEoctho6hqe9JI3rY4",
+    "status": "cropped",
+    "original_size": [
+      510,
+      437
+    ],
+    "new_size": [
+      466,
+      392
+    ],
+    "saved_bytes": -13421,
+    "error": null
+  }
+]

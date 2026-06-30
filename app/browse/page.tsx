@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getIconCatalog, type Icon } from "@/lib/sheets";
 import { getCommentCounts } from "@/lib/comments";
+import { getIconOrderCounts, normIconName } from "@/lib/orderStats";
 import { getThreadBySlot, rgbToHex } from "@/lib/threadPalette";
 import {
   parseSearchQuery,
@@ -23,6 +24,8 @@ interface SearchParams {
   colorVar?: string;
   status?: string;
   colors?: string;
+  /** "popular" | "az" — controls the sort order of the results. */
+  sort?: string;
 }
 
 export default async function BrowsePage({
@@ -32,13 +35,16 @@ export default async function BrowsePage({
 }) {
   let catalog;
   let commentCounts: Record<string, number> = {};
+  let orderCounts: Record<string, number> = {};
   try {
-    const [c, countsResult] = await Promise.all([
+    const [c, countsResult, orders] = await Promise.all([
       getIconCatalog(),
       getCommentCounts().catch(() => ({ counts: {} as Record<string, number>, total: 0 })),
+      getIconOrderCounts().catch(() => ({} as Record<string, number>)),
     ]);
     catalog = c;
     commentCounts = countsResult.counts;
+    orderCounts = orders;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return (
@@ -62,6 +68,15 @@ export default async function BrowsePage({
     .split(",")
     .map((s) => parseInt(s, 10))
     .filter((n) => !Number.isNaN(n));
+
+  // Sort mode. Absent => default ordering (relevance while searching,
+  // alphabetical otherwise). "az" forces alphabetical even within a search.
+  const sort: "popular" | "az" | null =
+    searchParams.sort === "popular"
+      ? "popular"
+      : searchParams.sort === "az"
+        ? "az"
+        : null;
 
   // Status now works as a view mode rather than a filter:
   //   - default (no ?status)  → "Active": every icon that isn't DRAFT or ARCHIVED
@@ -90,6 +105,8 @@ export default async function BrowsePage({
     category,
     colorVarOnly,
     colorSlots,
+    sort,
+    orderCounts,
   });
 
   // Catalog-wide counts for the Draft and Archived links in the sidebar.
@@ -248,6 +265,7 @@ export default async function BrowsePage({
               currentStatusView={statusView}
               draftCount={draftCount}
               archivedCount={archivedCount}
+              currentSort={sort}
             />
           </aside>
 
@@ -264,6 +282,8 @@ export default async function BrowsePage({
   );
 }
 
+type SortMode = "popular" | "az" | null;
+
 function applyFilters(
   icons: Icon[],
   opts: {
@@ -271,6 +291,8 @@ function applyFilters(
     category: string;
     colorVarOnly: boolean;
     colorSlots: number[];
+    sort: SortMode;
+    orderCounts: Record<string, number>;
   }
 ): Icon[] {
   let result = icons;
@@ -286,40 +308,66 @@ function applyFilters(
     );
   }
 
-  // Search: the query is parsed into color FAMILIES (e.g. "green" → Olive /
-  // Dark Green / Matcha) and text TOKENS (fuzzy-matched against names,
-  // categories, old names, and theme tags from the sheet's Tags column).
+  // Search narrows `result` to the matching icons and attaches a relevance
+  // score (rel) to each. With no query, everything matches with rel 0, so the
+  // relevance branch below collapses to the chosen default ordering.
+  //
+  // The query is parsed into color FAMILIES (e.g. "green" → Olive / Dark Green
+  // / Matcha) and text TOKENS (fuzzy-matched against names, categories, old
+  // names, and theme tags from the sheet's Tags column).
+  let scored: { i: Icon; rel: number }[];
+
   if (opts.query) {
     const { families, tokens } = parseSearchQuery(opts.query);
 
-    // Color part: design must use at least one slot from EVERY named family
-    // (same AND semantics as the Filters button).
     if (families.length > 0 && tokens.length > 0) {
-      result = result.filter((i) => familiesMatch(i.threadSlots, families));
+      // Color + text: design must use a slot from EVERY named family (AND),
+      // then rank by how well the text tokens match.
+      scored = result
+        .filter((i) => familiesMatch(i.threadSlots, families))
+        .map((i) => ({ i, rel: scoreDoc(buildSearchDoc(i), tokens) }))
+        .filter((x) => x.rel > 0);
     } else if (families.length > 0) {
       // Pure color query ("olive", "red, green and blue"): also surface icons
-      // NAMED after those colors (the Olive icon for "olive"), ranked first.
+      // NAMED after those colors (the Olive icon for "olive").
       const colorWords = families.flatMap((f) => f.word.split(" "));
-      return result
-        .map((i) => ({ i, n: nameScore(buildSearchDoc(i), colorWords) }))
-        .filter((x) => x.n > 0 || familiesMatch(x.i.threadSlots, families))
-        .sort((a, b) => b.n - a.n || a.i.name.localeCompare(b.i.name))
-        .map((x) => x.i);
+      scored = result
+        .map((i) => ({ i, rel: nameScore(buildSearchDoc(i), colorWords) }))
+        .filter((x) => x.rel > 0 || familiesMatch(x.i.threadSlots, families));
+    } else if (tokens.length > 0) {
+      // Text-only query: every token must match somewhere.
+      scored = result
+        .map((i) => ({ i, rel: scoreDoc(buildSearchDoc(i), tokens) }))
+        .filter((x) => x.rel > 0);
+    } else {
+      // Query was only stopwords — keep everything, no relevance signal.
+      scored = result.map((i) => ({ i, rel: 0 }));
     }
-
-    // Text part: every token must match somewhere; rank by relevance
-    // (name matches first, then tags, category, old name).
-    if (tokens.length > 0) {
-      return result
-        .map((i) => ({ i, s: scoreDoc(buildSearchDoc(i), tokens) }))
-        .filter((x) => x.s > 0)
-        .sort((a, b) => b.s - a.s || a.i.name.localeCompare(b.i.name))
-        .map((x) => x.i);
-    }
-    // Query was only stopwords — fall through to the default sort.
+  } else {
+    scored = result.map((i) => ({ i, rel: 0 }));
   }
 
-  return result.slice().sort((a, b) => a.name.localeCompare(b.name));
+  const byName = (a: Icon, b: Icon) => a.name.localeCompare(b.name);
+  const ordersOf = (i: Icon) => opts.orderCounts[normIconName(i.name)] ?? 0;
+
+  // An explicit sort choice wins in every context, including active searches.
+  if (opts.sort === "popular") {
+    return scored
+      .sort((a, b) => ordersOf(b.i) - ordersOf(a.i) || byName(a.i, b.i))
+      .map((x) => x.i);
+  }
+  if (opts.sort === "az") {
+    return scored.sort((a, b) => byName(a.i, b.i)).map((x) => x.i);
+  }
+
+  // No explicit sort: rank by search relevance when there's a query (the
+  // original behavior), otherwise fall back to alphabetical.
+  if (opts.query) {
+    return scored
+      .sort((a, b) => b.rel - a.rel || byName(a.i, b.i))
+      .map((x) => x.i);
+  }
+  return scored.sort((a, b) => byName(a.i, b.i)).map((x) => x.i);
 }
 
 function CloseIcon({ className }: { className?: string }) {

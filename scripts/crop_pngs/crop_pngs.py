@@ -61,6 +61,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent.parent
 DEFAULT_CREDS = PROJECT_ROOT / "google-credentials.json"
 DEFAULT_REPORT_DIR = SCRIPT_DIR / "reports"
+DEFAULT_BACKUP_ROOT = SCRIPT_DIR / "backups"
 
 SHEET_TAB = os.environ.get("GOOGLE_SHEET_TAB", "MASTER")
 
@@ -213,37 +214,6 @@ def download_png(drive, file_id: str) -> bytes:
     return buffer.getvalue()
 
 
-def get_parent_folder(drive, file_id: str) -> Optional[str]:
-    """Return first parent folder ID of a file, or None."""
-    try:
-        meta = drive.files().get(fileId=file_id, fields="parents").execute()
-        parents = meta.get("parents", [])
-        return parents[0] if parents else None
-    except HttpError:
-        return None
-
-
-def ensure_backup_folder(drive, parent_id: str) -> str:
-    """Create a timestamped backup folder under the given parent. Returns its file ID."""
-    stamp = _dt.datetime.now().strftime("%Y-%m-%d_%H%M%S")
-    folder_name = f"PNG_BACKUP_{stamp}"
-    metadata = {
-        "name": folder_name,
-        "parents": [parent_id],
-        "mimeType": "application/vnd.google-apps.folder",
-    }
-    folder = drive.files().create(body=metadata, fields="id,name").execute()
-    print(f"  Created backup folder: {folder['name']} (id={folder['id']})")
-    return folder["id"]
-
-
-def backup_file(drive, file_id: str, backup_folder_id: str) -> None:
-    """Copy the original file into the backup folder, preserving filename."""
-    meta = drive.files().get(fileId=file_id, fields="name").execute()
-    body = {"name": meta["name"], "parents": [backup_folder_id]}
-    drive.files().copy(fileId=file_id, body=body).execute()
-
-
 def overwrite_png(drive, file_id: str, new_bytes: bytes) -> None:
     """Replace the file's content with new_bytes, preserving file ID and name."""
     media = MediaIoBaseUpload(BytesIO(new_bytes), mimetype="image/png", resumable=False)
@@ -358,7 +328,7 @@ def process_one(
     drive,
     *,
     apply: bool,
-    backup_folder_id: Optional[str],
+    backup_dir: Optional[Path],
     padding: int,
 ) -> CropResult:
     if not icon.png_file_id:
@@ -383,8 +353,17 @@ def process_one(
 
     if apply:
         try:
-            if backup_folder_id:
-                backup_file(drive, icon.png_file_id, backup_folder_id)
+            if backup_dir is not None:
+                # Local backup of the ORIGINAL bytes we already downloaded above.
+                # We deliberately do NOT copy the file within Drive: a Drive-side
+                # copy creates a new file owned by the service account, and
+                # service accounts have no Drive storage quota of their own, so
+                # that copy fails. Writing the original to disk sidesteps the
+                # quota issue entirely and is just as safe for restoring later.
+                (backup_dir / f"{icon.slug}.png").write_bytes(png_bytes)
+            # Overwriting an existing file's content (vs. creating a new one)
+            # is charged to the file owner's quota, not the service account's,
+            # so this succeeds without any service-account storage.
             overwrite_png(drive, icon.png_file_id, new_bytes)
         except Exception as e:
             return CropResult(
@@ -437,7 +416,11 @@ def main():
     )
     parser.add_argument(
         "--no-backup", action="store_true",
-        help="Skip creating a backup folder. Not recommended.",
+        help="Skip saving local backups of originals. Not recommended.",
+    )
+    parser.add_argument(
+        "--backup-root", type=Path, default=DEFAULT_BACKUP_ROOT,
+        help=f"Local folder to store original backups in (default {DEFAULT_BACKUP_ROOT}).",
     )
     parser.add_argument(
         "--padding", type=int, default=DEFAULT_PADDING_PX,
@@ -489,17 +472,15 @@ def main():
 
     drive = build("drive", "v3", credentials=creds)
 
-    # Create backup folder once, if applying with backups enabled.
-    backup_folder_id: Optional[str] = None
+    # Create a LOCAL backup folder once, if applying with backups enabled.
+    # Each original is saved to disk here right before its Drive file is
+    # overwritten, so nothing is created inside Drive (no service-account quota).
+    backup_dir: Optional[Path] = None
     if args.apply and not args.no_backup and icons_with_png:
-        first_id = icons_with_png[0].png_file_id
-        parent = get_parent_folder(drive, first_id)
-        if not parent:
-            sys.exit(
-                "ERROR: Could not determine parent folder of first PNG. "
-                "Make sure the service account has access to the PNG folder."
-            )
-        backup_folder_id = ensure_backup_folder(drive, parent)
+        stamp = _dt.datetime.now().strftime("%Y-%m-%d_%H%M%S")
+        backup_dir = args.backup_root / stamp
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        print(f"  Backing up originals locally to: {backup_dir}")
         print()
 
     results: list[CropResult] = []
@@ -508,7 +489,7 @@ def main():
             process_one(
                 icon, drive,
                 apply=args.apply,
-                backup_folder_id=backup_folder_id,
+                backup_dir=backup_dir,
                 padding=args.padding,
             )
         )

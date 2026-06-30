@@ -1,0 +1,72 @@
+[
+  {
+    "slug": "adderall",
+    "name": "Adderall",
+    "category": "Apothecary",
+    "file_id": "1hK8vVmC3xrixUbIlsaC4FKCPyR3kpHy0",
+    "status": "already_tight",
+    "original_size": [
+      385,
+      377
+    ],
+    "new_size": null,
+    "saved_bytes": null,
+    "error": null
+  },
+  {
+    "slug": "blush",
+    "name": "Blush",
+    "category": "Apothecary",
+    "file_id": "1P7kJTzZEE8-qu5OVHy4hLBJkSGFeTLy9",
+    "status": "already_tight",
+    "original_size": [
+      453,
+      325
+    ],
+    "new_size": null,
+    "saved_bytes": null,
+    "error": null
+  },
+  {
+    "slug": "comb",
+    "name": "Comb",
+    "category": "Apothecary",
+    "file_id": "1t-lbkgZZnRnpgG6VMdBf4dHbI8GVkVYt",
+    "status": "already_tight",
+    "original_size": [
+      463,
+      281
+    ],
+    "new_size": null,
+    "saved_bytes": null,
+    "error": null
+  },
+  {
+    "slug": "hair-brush",
+    "name": "Hair Brush",
+    "category": "Apothecary",
+    "file_id": "1KepztmBXHbJvbed9ZDC_qoMZVJd4hWt-",
+    "status": "already_tight",
+    "original_size": [
+      468,
+      472
+    ],
+    "new_size": null,
+    "saved_bytes": null,
+    "error": null
+  },
+  {
+    "slug": "lip-balms",
+    "name": "Lip Balms",
+    "category": "Apothecary",
+    "file_id": "1d3kGYG35p6tfFbQXHk-icgSMdBISFRQP",
+    "status": "already_tight",
+    "original_size": [
+      371,
+      458
+    ],
+    "new_size": null,
+    "saved_bytes": null,
+    "error": null
+  }
+]

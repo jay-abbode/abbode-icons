@@ -21,6 +21,8 @@ interface Props {
   /** Catalog-wide draft/archived counts shown on the view links. */
   draftCount: number;
   archivedCount: number;
+  /** Current sort mode: "popular", "az", or null for the default ordering. */
+  currentSort: "popular" | "az" | null;
 }
 
 export default function FilterControls({
@@ -33,6 +35,7 @@ export default function FilterControls({
   currentStatusView,
   draftCount,
   archivedCount,
+  currentSort,
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -63,6 +66,21 @@ export default function FilterControls({
 
   return (
     <div className={`space-y-7 transition-opacity ${isPending ? "opacity-50" : ""}`}>
+      <FilterGroup label="Sort">
+        <div className="space-y-0.5">
+          <RadioRow
+            label="A–Z"
+            checked={currentSort !== "popular"}
+            onSelect={() => setParam("sort", "az")}
+          />
+          <RadioRow
+            label="Most popular"
+            checked={currentSort === "popular"}
+            onSelect={() => setParam("sort", "popular")}
+          />
+        </div>
+      </FilterGroup>
+
       <FilterGroup label="Category">
         <div className="space-y-0.5">
           <RadioRow

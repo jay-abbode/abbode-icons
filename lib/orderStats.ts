@@ -1,114 +1,76 @@
+import { getSheetsClient } from "./google";
+
 /**
- * Live order stats for the header "Live Order Data" dropdown.
- *
- * Reads a precomputed `ORDER_STATS` tab in the Icon List sheet — written by
- * scripts/icon_order_stats/icon_order_stats.py, which scans the Shopify Admin
- * API and joins each ordered icon to its catalog thread colors. The app just
- * reads that tab (same pattern as colorStats reads MASTER), so page loads stay
- * fast and no Shopify token lives in the web app.
- *
- * "Live" = as fresh as the last run of the stats script. Schedule that script
- * (cron / Vercel cron) for continuously fresh numbers.
+ * Normalizes an icon name for joining the catalog (MASTER) to the ORDER_STATS
+ * tab: lowercased, with runs of whitespace collapsed. Both sides are generated
+ * from the same source names, so this is just defensive against stray spacing.
+ */
+export function normIconName(name: string): string {
+  return (name || "").toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+// 60s cache, same TTL as the catalog — sheet edits feel near-instant without
+// hammering Google's API on every request.
+const CACHE_TTL_MS = 60 * 1000;
+let cache: { counts: Record<string, number>; expiresAt: number } | null = null;
+
+/**
+ * Reads the precomputed ORDER_STATS tab (written by scripts/icon_order_stats)
+ * and returns a map of normalized icon name -> order count over the rolling
+ * window. Used by the browse page's "Most popular" sort.
  *
  * Expected tab layout (row 1 = headers, case-insensitive):
  *   Icon | Category | Orders | Thread Slots | Window | Updated
+ *
+ * Returns {} if the tab is missing or malformed, so the popularity sort simply
+ * degrades to alphabetical rather than erroring the page.
  */
+export async function getIconOrderCounts(): Promise<Record<string, number>> {
+  if (cache && cache.expiresAt > Date.now()) return cache.counts;
 
-import { getSheetsClient } from "./google";
-import { THREAD_PALETTE, rgbToHex, parseThreadSlots } from "./threadPalette";
-
-export type OrderStat = {
-  icon: string;
-  category: string;
-  /** Times this icon was ordered within the window. */
-  count: number;
-  /** Madeira slot numbers making up the icon's design. */
-  slots: number[];
-  /** Hex strings for each slot, for swatch rendering. */
-  hexes: string[];
-};
-
-export type OrderStatsSnapshot = {
-  stats: OrderStat[];
-  totalOrders: number;
-  /** e.g. "Rolling 12 months". */
-  window: string;
-  /** ISO date the stats tab was last written, or null. */
-  updatedAt: string | null;
-};
-
-const CACHE_TTL_MS = 60 * 1000;
-let cache: { snap: OrderStatsSnapshot; expiresAt: number } | null = null;
-
-const HEX_BY_SLOT = new Map(THREAD_PALETTE.map((t) => [t.slot, rgbToHex(t.rgb)]));
-
-export async function getOrderStats(
-  options: { forceRefresh?: boolean } = {}
-): Promise<OrderStatsSnapshot> {
-  if (!options.forceRefresh && cache && cache.expiresAt > Date.now()) {
-    return cache.snap;
-  }
-  const snap = await fetchOrderStats();
-  cache = { snap, expiresAt: Date.now() + CACHE_TTL_MS };
-  return snap;
-}
-
-const EMPTY: OrderStatsSnapshot = {
-  stats: [],
-  totalOrders: 0,
-  window: "",
-  updatedAt: null,
-};
-
-async function fetchOrderStats(): Promise<OrderStatsSnapshot> {
   const spreadsheetId = process.env.GOOGLE_SHEET_ID;
+  if (!spreadsheetId) return {};
   const tab = process.env.GOOGLE_ORDER_STATS_TAB || "ORDER_STATS";
-  if (!spreadsheetId) throw new Error("GOOGLE_SHEET_ID is not set in .env.local");
 
-  const sheets = getSheetsClient();
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId,
-    range: `${tab}!A1:F5000`,
-  });
-
-  const rows = res.data.values;
-  if (!rows || rows.length < 2) return EMPTY;
-
-  const header = rows[0].map((h) => String(h ?? "").trim().toLowerCase());
-  const ci = (name: string) => header.indexOf(name);
-  const iIcon = ci("icon");
-  const iCat = ci("category");
-  const iCount = ci("orders");
-  const iSlots = ci("thread slots");
-  const iWin = ci("window");
-  const iUpd = ci("updated");
-  if (iIcon < 0 || iCount < 0) return EMPTY;
-
-  const stats: OrderStat[] = [];
-  let window = "";
-  let updatedAt: string | null = null;
-
-  for (let r = 1; r < rows.length; r++) {
-    const row = rows[r] || [];
-    const icon = String(row[iIcon] ?? "").trim();
-    if (!icon) continue;
-
-    const count =
-      parseInt(String(row[iCount] ?? "0").replace(/[^0-9-]/g, ""), 10) || 0;
-    const slots = iSlots >= 0 ? parseThreadSlots(String(row[iSlots] ?? "")) : [];
-    if (iWin >= 0 && row[iWin]) window = String(row[iWin]).trim();
-    if (iUpd >= 0 && row[iUpd]) updatedAt = String(row[iUpd]).trim();
-
-    stats.push({
-      icon,
-      category: iCat >= 0 ? String(row[iCat] ?? "").trim() : "",
-      count,
-      slots,
-      hexes: slots.map((s) => HEX_BY_SLOT.get(s) ?? "#CCCCCC"),
+  try {
+    const sheets = getSheetsClient();
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `${tab}!A1:Z100000`,
     });
-  }
 
-  stats.sort((a, b) => b.count - a.count);
-  const totalOrders = stats.reduce((sum, s) => sum + s.count, 0);
-  return { stats, totalOrders, window, updatedAt };
+    const rows = res.data.values || [];
+    if (rows.length < 2) return {};
+
+    const header = rows[0].map((h) => (h || "").toString().trim().toLowerCase());
+    const iconCol = header.findIndex((h) => h === "icon");
+    const ordersCol = header.findIndex((h) => h === "orders");
+    if (iconCol === -1 || ordersCol === -1) return {};
+
+    const counts: Record<string, number> = {};
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row) continue;
+      const name = (row[iconCol] || "").toString().trim();
+      if (!name) continue;
+
+      const raw = (row[ordersCol] || "").toString().replace(/[^0-9.-]/g, "");
+      const n = parseInt(raw, 10);
+      if (Number.isNaN(n)) continue;
+
+      const key = normIconName(name);
+      // If a name appears more than once (e.g. multiple time windows in the
+      // tab), keep the largest — that's the broadest "popularity" figure.
+      counts[key] = Math.max(counts[key] ?? 0, n);
+    }
+
+    cache = { counts, expiresAt: Date.now() + CACHE_TTL_MS };
+    return counts;
+  } catch (err) {
+    console.warn(
+      "Could not read ORDER_STATS tab; popularity sort will fall back to alphabetical:",
+      err instanceof Error ? err.message : err
+    );
+    return {};
+  }
 }

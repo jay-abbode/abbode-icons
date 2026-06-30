@@ -13,9 +13,11 @@ For each PNG in your `MASTER` sheet:
 2. Detects the bounding box of non-background pixels (handles both transparent
    and white-background PNGs automatically).
 3. Crops to that bounding box plus a small padding (default 5px).
-4. If `--apply` is passed: copies the original to a backup folder, then
-   overwrites the file in place. **The file ID stays the same**, so every
-   hyperlink in your sheet keeps working.
+4. If `--apply` is passed: saves the original to a local `backups/` folder on
+   your computer, then overwrites the file in place. **The file ID stays the
+   same**, so every hyperlink in your sheet keeps working. (We back up locally
+   rather than copying within Drive because the service account has no Drive
+   storage quota of its own, so a Drive-side copy fails.)
 5. If `--apply` is NOT passed (the default): does everything except the upload.
    This is dry-run mode.
 
@@ -82,10 +84,9 @@ python crop_pngs.py --apply
 
 The script will:
 1. Ask you to type `yes` to confirm.
-2. Create a backup folder in Drive named `PNG_BACKUP_<timestamp>`, alongside
-   your existing PNG folder.
-3. For each icon: copy the original to the backup folder, then overwrite the
-   file in place.
+2. Create a local backup folder `backups/<timestamp>/` inside this script folder.
+3. For each icon: save the original PNG to that local folder, then overwrite
+   the file in Drive in place.
 4. Write a final report to `reports/`.
 
 This takes 30–60 minutes for 700 icons (Drive API rate limits the upload
@@ -93,22 +94,19 @@ speed). Leave it running.
 
 ## Restoring from backup
 
-If something goes wrong, the backup folder contains every original PNG with
-its original filename. To restore:
-
-1. Open the backup folder in Drive.
-2. For each file you want to restore, right-click → "Manage versions" on the
-   *target* file (the one in your normal PNG folder), then upload the backup
-   as a new version.
-
-Or talk to me and I can write a restore script if you need it.
+If something goes wrong, the local `backups/<timestamp>/` folder contains every
+original PNG (named by icon slug), and the report in `reports/` maps each slug
+to its Drive file ID. The easiest way to roll back is to ask me for a one-shot
+restore script that re-uploads those originals over the cropped versions — it
+reuses this script's setup and runs the same way.
 
 ## Flags
 
 | Flag | Default | Meaning |
 | --- | --- | --- |
 | `--apply` | off | Actually overwrite Drive files. Without this it's a dry run. |
-| `--no-backup` | off | Skip the backup folder. Not recommended. |
+| `--no-backup` | off | Skip saving local backups of originals. Not recommended. |
+| `--backup-root DIR` | `backups/` | Local folder to store the original backups in. |
 | `--padding N` | 5 | Pixels of margin to keep around the cropped design. Set to 0 for flush. |
 | `--limit N` | none | Stop after processing N icons. |
 | `--sheet-id` | from .env.local | Override the sheet ID. |
