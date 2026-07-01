@@ -1,12 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
 
 /**
  * Hamburger menu — a slide-in drawer that holds every destination in one place.
  * On small screens it's the primary navigation (the centered desktop nav row is
  * hidden there); on large screens it stays available as an "everything" menu.
+ *
+ * The overlay is rendered through a portal on <body>. That matters: the header
+ * uses backdrop-blur, and a backdrop-filter creates a containing block for
+ * position:fixed descendants — so if the drawer lived inside the header it would
+ * be clipped to the header's height instead of filling the viewport. Portaling
+ * it to <body> lets `fixed inset-0` mean the whole screen again.
  *
  * The account section (name + Sign out) uses a server action passed down from
  * the header, so signing out works the same as the avatar menu.
@@ -24,6 +31,10 @@ export default function MobileNav({
   onSignOut?: () => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Portals need the DOM, so only render the overlay after mount (client-side).
+  useEffect(() => setMounted(true), []);
 
   // Close on Escape and lock body scroll while the drawer is open.
   useEffect(() => {
@@ -56,6 +67,75 @@ export default function MobileNav({
   const rowClass =
     "font-ui flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium text-espresso transition-colors hover:bg-pink-soft";
 
+  const overlay = (
+    <div className={`fixed inset-0 z-50 ${open ? "" : "pointer-events-none"}`} aria-hidden={!open}>
+      <div
+        className={`absolute inset-0 bg-espresso/50 transition-opacity duration-200 ${
+          open ? "opacity-100" : "opacity-0"
+        }`}
+        onClick={() => setOpen(false)}
+      />
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-label="Menu"
+        className={`absolute inset-y-0 left-0 flex h-full w-80 max-w-[85%] flex-col border-r border-cream-200 bg-porcelain shadow-2xl transition-transform duration-200 ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex items-center justify-between border-b border-parchment px-4 py-4">
+          <span className="font-display text-xl text-plum">Menu</span>
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            aria-label="Close menu"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-cream-200 bg-white text-ink-soft transition-colors hover:bg-pink-soft hover:text-cherry focus-ring"
+          >
+            ✕
+          </button>
+        </div>
+
+        <nav className="flex flex-1 flex-col overflow-y-auto p-3">
+          <div className="flex flex-col gap-0.5">
+            {primary.map((it) => (
+              <Link key={it.href} href={it.href} onClick={() => setOpen(false)} className={rowClass}>
+                <span>{it.label}</span>
+                {it.badge ? <Badge value={it.badge} /> : null}
+              </Link>
+            ))}
+          </div>
+
+          <p className="font-ui px-3 pb-1 pt-5 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+            Data &amp; reports
+          </p>
+          <div className="flex flex-col gap-0.5">
+            {reports.map((it) => (
+              <Link key={it.href} href={it.href} onClick={() => setOpen(false)} className={rowClass}>
+                <span>{it.label}</span>
+              </Link>
+            ))}
+          </div>
+
+          {user ? (
+            <div className="mt-auto border-t border-parchment pt-3">
+              <div className="px-3 pb-1">
+                <p className="truncate text-sm font-semibold text-espresso">{user.name || "Account"}</p>
+                {user.email ? <p className="font-ui truncate text-xs text-ink-muted">{user.email}</p> : null}
+              </div>
+              {onSignOut ? (
+                <form action={onSignOut}>
+                  <button type="submit" className={`${rowClass} w-full text-ink-soft hover:text-cherry`}>
+                    Sign out
+                  </button>
+                </form>
+              ) : null}
+            </div>
+          ) : null}
+        </nav>
+      </aside>
+    </div>
+  );
+
   return (
     <>
       <button
@@ -70,73 +150,7 @@ export default function MobileNav({
         </svg>
       </button>
 
-      {/* Overlay + drawer, kept mounted so it can slide in/out smoothly. */}
-      <div className={`fixed inset-0 z-50 ${open ? "" : "pointer-events-none"}`} aria-hidden={!open}>
-        <div
-          className={`absolute inset-0 bg-espresso/50 transition-opacity duration-200 ${
-            open ? "opacity-100" : "opacity-0"
-          }`}
-          onClick={() => setOpen(false)}
-        />
-        <aside
-          role="dialog"
-          aria-modal="true"
-          aria-label="Menu"
-          className={`absolute left-0 top-0 flex h-full w-80 max-w-[85%] flex-col border-r border-cream-200 bg-porcelain shadow-2xl transition-transform duration-200 ${
-            open ? "translate-x-0" : "-translate-x-full"
-          }`}
-        >
-          <div className="flex items-center justify-between border-b border-parchment px-4 py-4">
-            <span className="font-display text-xl text-plum">Menu</span>
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              aria-label="Close menu"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-cream-200 bg-white text-ink-soft transition-colors hover:bg-pink-soft hover:text-cherry focus-ring"
-            >
-              ✕
-            </button>
-          </div>
-
-          <nav className="flex flex-1 flex-col overflow-y-auto p-3">
-            <div className="flex flex-col gap-0.5">
-              {primary.map((it) => (
-                <Link key={it.href} href={it.href} onClick={() => setOpen(false)} className={rowClass}>
-                  <span>{it.label}</span>
-                  {it.badge ? <Badge value={it.badge} /> : null}
-                </Link>
-              ))}
-            </div>
-
-            <p className="font-ui px-3 pb-1 pt-5 text-xs font-semibold uppercase tracking-wide text-ink-muted">
-              Data &amp; reports
-            </p>
-            <div className="flex flex-col gap-0.5">
-              {reports.map((it) => (
-                <Link key={it.href} href={it.href} onClick={() => setOpen(false)} className={rowClass}>
-                  <span>{it.label}</span>
-                </Link>
-              ))}
-            </div>
-
-            {user ? (
-              <div className="mt-auto border-t border-parchment pt-3">
-                <div className="px-3 pb-1">
-                  <p className="truncate text-sm font-semibold text-espresso">{user.name || "Account"}</p>
-                  {user.email ? <p className="font-ui truncate text-xs text-ink-muted">{user.email}</p> : null}
-                </div>
-                {onSignOut ? (
-                  <form action={onSignOut}>
-                    <button type="submit" className={`${rowClass} w-full text-ink-soft hover:text-cherry`}>
-                      Sign out
-                    </button>
-                  </form>
-                ) : null}
-              </div>
-            ) : null}
-          </nav>
-        </aside>
-      </div>
+      {mounted ? createPortal(overlay, document.body) : null}
     </>
   );
 }
