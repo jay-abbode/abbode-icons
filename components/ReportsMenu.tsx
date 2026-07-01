@@ -29,11 +29,6 @@ const links: { href: string; label: string; blurb: string }[] = [
     label: "Product Usage",
     blurb: "Top icons, fonts & colors by product or template",
   },
-  {
-    href: "/machines",
-    label: "Machines",
-    blurb: "Thread loadout for each embroidery head",
-  },
 ];
 
 export default function ReportsMenu() {
