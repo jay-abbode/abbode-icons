@@ -1,0 +1,28 @@
+ADD ICONS — combine backfill + autocrop + tags into one command
+===============================================================
+
+New:
+  scripts/add_icons/add_icons.py        the one-command runner (see its README)
+  scripts/add_icons/README.md           setup + usage
+  scripts/add_icons/requirements.txt    all deps for the three steps
+
+Modified (small, backward-compatible additions — the scripts still run the same
+on their own):
+  scripts/backfill_blanks/backfill_blanks.py   + --report-json (lists the PNGs it
+                                                 linked, so the runner can crop
+                                                 just those)
+  scripts/crop_pngs/crop_pngs.py               + --only / --only-file (crop only
+                                                 named icons)
+
+Quick start (after unzip):
+  pip install -r scripts/add_icons/requirements.txt
+  # add OFM_FOLDER_ID / DST_FOLDER_ID / PNG_FOLDER_ID to .env.local (one time)
+  cd scripts/add_icons
+  python add_icons.py            # preview
+  python add_icons.py --apply    # do it
+
+Push:
+  cd /d "C:\Users\abbod\Dropbox\File Processing (Don't Open)\ICON APP\abbode-icons"
+  git add -A
+  git commit -m "Add one-command add_icons runner (backfill + autocrop + tags)"
+  git push

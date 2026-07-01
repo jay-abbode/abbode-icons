@@ -190,6 +190,42 @@ def _extract_drive_id(url: Optional[str]) -> Optional[str]:
     return None
 
 
+def _norm_name(name: str) -> str:
+    """Match icon names the same way backfill does: lowercase, non-alnum -> space,
+    collapse whitespace. Lets --only names line up with sheet names regardless of
+    punctuation or spacing."""
+    s = (name or "").lower().strip()
+    s = re.sub(r"[^a-z0-9 ]", " ", s)
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def _load_only_names(only: Optional[str], only_file: Optional[str]) -> Optional[set]:
+    """Build the set of normalized names to keep, or None if no filter given."""
+    names: list[str] = []
+    if only:
+        names += [n for n in only.split(",")]
+    if only_file:
+        p = Path(only_file)
+        if not p.exists():
+            sys.exit(f"ERROR: --only-file not found at {p}")
+        raw = p.read_text(encoding="utf-8").strip()
+        parsed = None
+        if raw:
+            try:
+                parsed = json.loads(raw)
+            except json.JSONDecodeError:
+                parsed = None
+        if isinstance(parsed, dict):
+            parsed = parsed.get("png_icons") or parsed.get("icons") or parsed.get("names") or []
+        if isinstance(parsed, list):
+            names += [str(x) for x in parsed]
+        elif parsed is None and raw:
+            names += [ln for ln in raw.splitlines()]
+    if only is None and only_file is None:
+        return None
+    return {_norm_name(n) for n in names if n and n.strip()}
+
+
 def _make_slug(name: str, seen: set[str]) -> str:
     base = re.sub(r"[^a-z0-9]+", "-", name.lower().replace("&", "and")).strip("-") or "icon"
     if base not in seen:
@@ -430,6 +466,16 @@ def main():
         "--limit", type=int, default=None,
         help="Process at most N icons (use during testing).",
     )
+    parser.add_argument(
+        "--only", default=None,
+        help="Comma-separated icon names — crop only these (matched by name, "
+             "case/spacing-insensitive).",
+    )
+    parser.add_argument(
+        "--only-file", default=None,
+        help="Path to a JSON list (or newline list) of icon names to crop. Used "
+             "by the add_icons runner to crop just the newly-linked icons.",
+    )
     args = parser.parse_args()
 
     if not args.sheet_id:
@@ -461,6 +507,13 @@ def main():
     print(f"Reading sheet {args.sheet_id} (tab: {SHEET_TAB})")
     icons = read_icon_catalog(args.sheet_id, creds)
     print(f"  Found {len(icons)} icons")
+
+    only_names = _load_only_names(args.only, args.only_file)
+    if only_names is not None:
+        before = len(icons)
+        icons = [i for i in icons if _norm_name(i.name) in only_names]
+        print(f"  --only filter: {len(icons)} of {before} icon(s) match "
+              f"({len(only_names)} name(s) requested)")
 
     if args.limit:
         icons = icons[: args.limit]

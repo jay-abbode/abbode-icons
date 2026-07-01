@@ -28,6 +28,7 @@ Needs:
                              - Editor on the sheet
 """
 import argparse
+import json
 import difflib
 import os
 import re
@@ -150,6 +151,8 @@ def main():
     p.add_argument("--tab", default=os.environ.get("GOOGLE_SHEET_TAB", "MASTER"))
     p.add_argument("--creds", default=str(DEFAULT_CREDS))
     p.add_argument("--dry-run", action="store_true", help="preview only; write nothing")
+    p.add_argument("--report-json", default=None,
+                   help="write a JSON summary of what was filled (used by the add_icons runner)")
     args = p.parse_args()
     if not args.sheet_id:
         sys.exit("ERROR: set GOOGLE_SHEET_ID (or pass --sheet-id)")
@@ -181,6 +184,7 @@ def main():
     all_norms = list(row_by_norm.keys())
 
     all_writes = []
+    png_filled = []  # icon names whose PNG cell was filled this run (for the runner)
     for t, folder_id in active.items():
         cfg = TYPES[t]
         cols = {sz: find_col(h) for sz, h in cfg["headers"].items()}
@@ -222,6 +226,8 @@ def main():
             rng = f"{args.tab}!{col_letter(col_idx)}{rownum}"
             fills.append((rng.split('!')[1], fname))
             all_writes.append({"range": rng, "values": [[formula]]})
+            if t == "PNG":
+                png_filled.append(name_by_norm.get(norm(base), base))
 
         # ---- report ----
         print(f"[{t}] {len(fills)} blank cell(s) to fill ({skipped_filled} already linked):")
@@ -249,6 +255,13 @@ def main():
                   + ", ".join(bad_pattern[:10]) + (" ..." if len(bad_pattern) > 10 else ""))
 
     print(f"\n=== total blank cells to fill: {len(all_writes)} ===")
+    if args.report_json:
+        try:
+            with open(args.report_json, "w", encoding="utf-8") as fh:
+                json.dump({"png_icons": sorted(set(png_filled)),
+                           "total_cells": len(all_writes)}, fh, indent=2)
+        except OSError as e:
+            print(f"WARNING: couldn't write --report-json: {e}")
     if not all_writes:
         print("Nothing to fill.")
         return
