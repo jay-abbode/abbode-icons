@@ -8,6 +8,7 @@ import ColorDataMenu from "./ColorDataMenu";
 import LiveOrderDataMenu from "./LiveOrderDataMenu";
 import ReportsMenu from "./ReportsMenu";
 import FiltersMenu from "./FiltersMenu";
+import MobileNav from "./MobileNav";
 
 /**
  * Wrapper around `getColorStats` that swallows sheet-fetch errors so the
@@ -58,24 +59,46 @@ export default async function Header({
     }
   }
 
+  // Server action passed to the mobile menu so it can sign out too.
+  async function handleSignOut() {
+    "use server";
+    await signOut({ redirectTo: "/login" });
+  }
+
   return (
     <header className="sticky top-0 z-30 border-b border-parchment bg-porcelain/85 backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-3 px-6 py-4 md:py-5 lg:px-10">
-        <Link
-          href="/"
-          aria-label="Abbode Icons — home"
-          className="group flex flex-none cursor-pointer items-end gap-2.5 rounded-md focus-ring"
-        >
-          <AbbodeLogo className="h-7 w-auto text-sage transition-colors duration-200 group-hover:text-olive md:h-8" />
-          <span className="font-display text-[28px] leading-none text-plum transition-colors duration-200 group-hover:text-cherry md:text-[32px]">
-            Icons
-          </span>
-        </Link>
+      <div className="mx-auto max-w-7xl px-4 py-3 md:py-3.5 lg:px-8">
+        {/* Row 1 — hamburger (left) · logo (centered) · account (right) */}
+        <div className="relative flex min-h-10 items-center justify-center">
+          <div className="absolute inset-y-0 left-0 flex items-center">
+            <MobileNav
+              commentTotal={commentTotal}
+              user={user ? { name: user.name, email: user.email } : null}
+              onSignOut={handleSignOut}
+            />
+          </div>
 
-        {/* Search + Filters: below xl they take a clean second line so the
-            top row isn't crowded; at xl+ they sit inline with room to breathe. */}
+          <Link
+            href="/"
+            aria-label="Abbode Icons — home"
+            className="group flex cursor-pointer items-end gap-2.5 rounded-md focus-ring"
+          >
+            <AbbodeLogo className="h-7 w-auto text-sage transition-colors duration-200 group-hover:text-olive md:h-[30px]" />
+            <span className="font-display text-[26px] leading-none text-plum transition-colors duration-200 group-hover:text-cherry md:text-[30px]">
+              Icons
+            </span>
+          </Link>
+
+          {user && (
+            <div className="absolute inset-y-0 right-0 flex items-center">
+              <UserMenu name={user.name} email={user.email} image={user.image} />
+            </div>
+          )}
+        </div>
+
+        {/* Row 2 — centered search + filters */}
         {showSearch && (
-          <div className="order-last hidden w-full max-w-md items-center gap-2 md:flex xl:order-none xl:w-auto xl:flex-1 xl:min-w-[200px]">
+          <div className="mx-auto mt-3 flex w-full max-w-xl items-center gap-2">
             <div className="flex-1">
               <SearchBar initialQuery={initialQuery} compact />
             </div>
@@ -83,68 +106,43 @@ export default async function Header({
           </div>
         )}
 
-        <nav className="ml-auto flex items-center gap-4 text-sm font-medium text-ink-soft lg:gap-5">
-          {/* Thread Config — prominent standalone CTA (its own button, not tucked
-              inside the Reports menu). Stays visible at every breakpoint. */}
-          <Link
-            href="/machines"
-            aria-label="Thread Config — machine thread allocation"
-            className="font-ui inline-flex flex-none items-center gap-2 rounded-lg bg-plum px-5 py-2.5 text-[15px] font-semibold text-porcelain shadow-sm transition-colors hover:bg-cherry focus-ring"
-          >
-            <SpoolsIcon className="h-4 w-4" />
-            Thread Config
-          </Link>
-
-          {/* Primary navigation — collapses first on narrower screens. */}
-          <div className="hidden items-center gap-5 lg:flex xl:gap-6">
+        {/* Row 3 — centered nav + data tools (desktop). The hamburger carries the
+            same destinations on smaller screens, so nothing is lost when this hides. */}
+        {user && (
+          <nav className="mt-3 hidden flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-ink-soft lg:flex">
             <Link
-              href="/"
-              className="hover:text-espresso transition-colors focus-ring"
+              href="/machines"
+              aria-label="Thread Config — machine thread allocation"
+              className="font-ui inline-flex items-center gap-1.5 rounded-full bg-cherry px-4 py-2 text-sm font-semibold text-porcelain shadow-sm transition-colors hover:bg-berry focus-ring"
             >
+              <SpoolsIcon className="h-3.5 w-3.5" />
+              Thread Config
+            </Link>
+
+            <Link href="/" className="font-medium transition-colors hover:text-espresso focus-ring">
               Categories
             </Link>
-            <Link
-              href="/browse"
-              className="hover:text-espresso transition-colors focus-ring"
-            >
+            <Link href="/browse" className="font-medium transition-colors hover:text-espresso focus-ring">
               All icons
             </Link>
-            <Link
-              href="/assets"
-              className="hover:text-espresso transition-colors focus-ring"
-            >
+            <Link href="/assets" className="font-medium transition-colors hover:text-espresso focus-ring">
               Downloads
             </Link>
             <Link
               href="/comments"
-              className="inline-flex items-center gap-1.5 hover:text-espresso transition-colors focus-ring"
+              className="inline-flex items-center gap-1.5 font-medium transition-colors hover:text-espresso focus-ring"
             >
               Notes
               {commentTotal > 0 && <CountBadge value={commentTotal} />}
             </Link>
-          </div>
 
-          {user && (
-            <>
-              {/* Divider between the primary links and the analytics tools. */}
-              <span
-                aria-hidden="true"
-                className="mx-1 hidden h-5 w-px bg-parchment lg:block"
-              />
+            <span aria-hidden="true" className="mx-0.5 h-5 w-px bg-parchment" />
 
-              {/* Analytics cluster — the matching set of data controls. */}
-              <div className="hidden items-center gap-2.5 md:flex">
-                <ColorDataMenu stats={colorStats} />
-                <LiveOrderDataMenu snapshot={orderStats} />
-                <ReportsMenu />
-              </div>
-
-              <div className="ml-1">
-                <UserMenu name={user.name} email={user.email} image={user.image} />
-              </div>
-            </>
-          )}
-        </nav>
+            <ColorDataMenu stats={colorStats} />
+            <LiveOrderDataMenu snapshot={orderStats} />
+            <ReportsMenu />
+          </nav>
+        )}
       </div>
     </header>
   );
