@@ -7,6 +7,11 @@ item's icon + thread-color custom attributes, joins every ordered icon to the
 Icon List catalog (its category + thread-color slots), and writes the result
 to an ORDER_STATS tab the web app reads.
 
+It also writes a rolling-3-month THREAD_STATS tab (same columns as ORDER_STATS,
+scoped to the last ~3 months) that feeds the Machines / thread-allocation page.
+The 12-month ORDER_STATS numbers are unchanged; THREAD_STATS is just the recent
+subset in its own tab.
+
 Pipeline rules (locked with the team):
   - Window: rolling 12 months (configurable with --months).
   - Count: all placed orders (gross). No refund/cancel subtraction.
@@ -53,6 +58,7 @@ API_VERSION = "2024-10"
 MASTER_TAB = "MASTER"
 ALIAS_TAB = "ICON_ALIASES"      # optional: columns "Customizer Name", "Catalog Name"
 OUT_TAB = "ORDER_STATS"
+THREAD_STATS_TAB = "THREAD_STATS"   # rolling-3-month per-design jobs for the Machines page
 COMPOSITE_TAB = "COMPOSITE"
 ICON_TRENDS_TAB = "ICON_TRENDS"     # rising/spiking icons (recent vs previous window)
 COLOR_TRENDS_TAB = "COLOR_TRENDS"   # rising/spiking TEXT colors
@@ -490,6 +496,7 @@ def aggregate(order_lines, matcher, catalog, trend_days=TREND_DAYS_DEFAULT, prod
     customizer attribute; both counted once per line, bucketed by order age.
     """
     counts = {}
+    counts_3mo = {}   # rolling-3-month subset, for the Machines page (THREAD_STATS)
     composite = {w: {} for w in WINDOWS}
     icon_trends = {}
     color_trends = {}
@@ -545,6 +552,8 @@ def aggregate(order_lines, matcher, catalog, trend_days=TREND_DAYS_DEFAULT, prod
             if not canon:
                 continue
             counts[canon] = counts.get(canon, 0) + 1
+            if 3 in wins:  # order falls in the rolling-3-month bucket
+                counts_3mo[canon] = counts_3mo.get(canon, 0) + 1
             line_icons.add(canon)
             if tb:
                 icon_trends.setdefault(canon, {"recent": 0, "previous": 0})[tb] += 1
@@ -606,7 +615,7 @@ def aggregate(order_lines, matcher, catalog, trend_days=TREND_DAYS_DEFAULT, prod
                     merged[lk] = [name, cnt, cnt]
             types["color"] = {v[0]: v[1] for v in merged.values()}
 
-    return counts, composite, icon_trends, color_trends, usage
+    return counts, counts_3mo, composite, icon_trends, color_trends, usage
 
 
 def catalog_slots_for(canon, catalog):
@@ -639,6 +648,24 @@ def write_stats(sheets, sheet_id, counts, catalog, window_label):
         spreadsheetId=sheet_id, range=f"{OUT_TAB}!A1",
         valueInputOption="RAW", body={"values": rows}).execute()
     return len(rows) - 1
+
+
+def write_thread_stats(sheets, sheet_id, counts_3mo, catalog, window_label):
+    """Rolling-3-month per-design jobs for the Machines page (thread allocation).
+
+    Same shape as ORDER_STATS (Icon | Category | Orders | Thread Slots | Window |
+    Updated), but scoped to the last ~3 months and written to its own tab so the
+    12-month "Live Order Data" numbers are untouched. lib/threadAllocation.ts
+    reads this tab first (falling back to ORDER_STATS) and treats each row as one
+    design weighted by its order count.
+    """
+    today = datetime.now(timezone.utc).date().isoformat()
+    header = ["Icon", "Category", "Orders", "Thread Slots", "Window", "Updated"]
+    rows = [header]
+    for canon, cnt in sorted(counts_3mo.items(), key=lambda x: -x[1]):
+        slots, category = catalog_slots_for(canon, catalog)
+        rows.append([canon, category, cnt, "; ".join(map(str, slots)), window_label, today])
+    return _ensure_clear_update(sheets, sheet_id, THREAD_STATS_TAB, rows)
 
 
 def write_composite(sheets, sheet_id, composite, coverage, today):
@@ -771,12 +798,15 @@ def main():
     matcher = Matcher(catalog, aliases)
     print(f"Scanning Shopify orders (up to {args.months:g} months, gross)...")
     state = {"seen": 0, "yielded": False, "capped": False}
-    counts, composite, icon_trends, color_trends, usage = aggregate(
+    counts, counts_3mo, composite, icon_trends, color_trends, usage = aggregate(
         scan_orders(shop, token, args.months, state, args.limit),
         matcher, catalog, args.trend_days, product_map)
 
     coverage = ("Last ~60 days (read_all_orders pending)" if state["capped"]
                 else f"Rolling {args.months:g} months")
+    # The 3-month bucket is a real rolling-3-month window unless the scan itself
+    # was capped to ~60 days (read_all_orders pending), in which case say so.
+    thread_window = (coverage if state["capped"] else "Rolling 3 months")
     trend_label = f"Last {args.trend_days}d vs prior {args.trend_days}d"
     today = datetime.now(timezone.utc).date().isoformat()
 
@@ -797,6 +827,11 @@ def main():
         for canon, cnt in sorted(counts.items(), key=lambda x: -x[1])[:15]:
             slots, cat = catalog_slots_for(canon, catalog)
             print(f"  {canon:28} {cat:14} {cnt:>5}  slots={slots}")
+        print(f"\nTHREAD_STATS (rolling-3-month jobs) — {len(counts_3mo)} designs, "
+              f"{sum(counts_3mo.values())} icon-orders. Top 10:")
+        for canon, cnt in sorted(counts_3mo.items(), key=lambda x: -x[1])[:10]:
+            slots, cat = catalog_slots_for(canon, catalog)
+            print(f"  {canon:28} {cnt:>5}  slots={slots}")
         print("\nComposite — top 12 threads (12-month bucket):")
         ranked = sorted(PALETTE.keys(),
                         key=lambda s: -((composite[12].get(s) or {}).get("icons", 0)
@@ -831,9 +866,10 @@ def main():
     n3 = write_icon_trends(sheets, args.sheet_id, icon_trends, catalog, trend_label, today)
     n4 = write_color_trends(sheets, args.sheet_id, color_trends, trend_label, today)
     n5 = write_usage(sheets, args.sheet_id, usage, coverage, today)
+    n6 = write_thread_stats(sheets, args.sheet_id, counts_3mo, catalog, thread_window)
     print(f"\nWrote {n1} rows to {OUT_TAB}, {n2} to {COMPOSITE_TAB}, "
           f"{n3} to {ICON_TRENDS_TAB}, {n4} to {COLOR_TRENDS_TAB}, "
-          f"{n5} to {USAGE_TAB}. "
+          f"{n5} to {USAGE_TAB}, {n6} to {THREAD_STATS_TAB}. "
           "The app will show them within ~60s.")
 
 
