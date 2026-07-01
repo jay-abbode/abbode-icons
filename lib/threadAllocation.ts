@@ -30,7 +30,11 @@ export type FleetBase = {
   label: string;
   brand: string;
   needleCount: number;
-  machineNames: string[];
+  /** Fixed head names, when the fleet size is constant (e.g. Abbode). */
+  machineNames?: string[];
+  /** For fleets whose number of heads in use varies day-to-day (e.g. Webster):
+   * the selectable range + a namer. `machineNames` is ignored when this is set. */
+  countable?: { min: number; max: number; default: number; nameFor: (index: number) => string };
   /** Default number of off-color heads = this many from the end of the list. */
   defaultOffCount: number;
 };
@@ -49,7 +53,8 @@ export const FLEET_BASES: FleetBase[] = [
     label: "Webster",
     brand: "Barudan BEVT-X1501 · 15 needles",
     needleCount: 15,
-    machineNames: Array.from({ length: 16 }, (_, i) => `Pod ${i + 1}`),
+    // Webster's number of running heads changes day-to-day; pick 1–25.
+    countable: { min: 1, max: 25, default: 16, nameFor: (i) => `Machine ${i + 1}` },
     defaultOffCount: 2,
   },
 ];
@@ -57,13 +62,26 @@ export const FLEET_BASES: FleetBase[] = [
 /** Per-fleet indices (into machineNames) of the heads marked off-color. */
 export type OffSelection = Record<FleetKey, number[]>;
 
-/** Default = the last `defaultOffCount` heads of each fleet. */
-export function defaultOffSelection(): OffSelection {
+/** The head names for a fleet, honouring a selected machine count for countable
+ * fleets (Webster). Fixed fleets (Abbode) ignore the count. */
+export function machineNamesFor(base: FleetBase, count?: number): string[] {
+  if (base.countable) {
+    const c = base.countable;
+    const n = Math.min(c.max, Math.max(c.min, Math.round(count ?? c.default)));
+    return Array.from({ length: n }, (_, i) => c.nameFor(i));
+  }
+  return base.machineNames ?? [];
+}
+
+/** Default off-color heads = the last `defaultOffCount` heads, but always leaving
+ * at least one standard head. `machineCounts` sizes countable fleets. */
+export function defaultOffSelection(machineCounts?: Partial<Record<FleetKey, number>>): OffSelection {
   const sel = {} as OffSelection;
   for (const base of FLEET_BASES) {
-    const n = base.machineNames.length;
-    const start = Math.max(0, n - base.defaultOffCount);
-    sel[base.key] = Array.from({ length: n - start }, (_, i) => start + i);
+    const n = machineNamesFor(base, machineCounts?.[base.key]).length;
+    const offN = Math.min(base.defaultOffCount, Math.max(0, n - 1));
+    const start = n - offN;
+    sel[base.key] = Array.from({ length: offN }, (_, i) => start + i);
   }
   return sel;
 }
@@ -217,7 +235,8 @@ function cleanOffIndices(indices: number[] | undefined, machineCount: number): n
 export function computeAllocation(
   jobs: Job[],
   offSelection: OffSelection,
-  meta: MachineJobsMeta = { window: "", updatedAt: null, source: "" }
+  meta: MachineJobsMeta = { window: "", updatedAt: null, source: "" },
+  machineCounts?: Partial<Record<FleetKey, number>>
 ): AllocationResult {
   const { ranked, weightBySlot, totalWeight } = rankColors(jobs);
   const rankpos = new Map<number, number>(ranked.map((s, i) => [s, i]));
@@ -229,7 +248,8 @@ export function computeAllocation(
 
   const fleets: Fleet[] = FLEET_BASES.map((base) => {
     const K = base.needleCount;
-    const offIdx = cleanOffIndices(offSelection?.[base.key], base.machineNames.length);
+    const machineNames = machineNamesFor(base, machineCounts?.[base.key]);
+    const offIdx = cleanOffIndices(offSelection?.[base.key], machineNames.length);
     const offSet = new Set(offIdx);
 
     const standard = ranked.slice(0, K);
@@ -246,7 +266,7 @@ export function computeAllocation(
 
     // Assign loadouts to heads in physical order.
     let k = 0;
-    const machines: Machine[] = base.machineNames.map((name, i) => {
+    const machines: Machine[] = machineNames.map((name, i) => {
       if (offSet.has(i)) {
         const loadout = offs[k] && offs[k].length ? offs[k] : standard;
         k += 1;

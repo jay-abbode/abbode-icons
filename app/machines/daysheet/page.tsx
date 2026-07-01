@@ -1,5 +1,13 @@
 import { getMachineAllocation } from "@/lib/threadAllocationData";
-import { FLEET_BASES, defaultOffSelection, type Fleet, type Machine, type OffSelection } from "@/lib/threadAllocation";
+import {
+  FLEET_BASES,
+  defaultOffSelection,
+  machineNamesFor,
+  type Fleet,
+  type FleetKey,
+  type Machine,
+  type OffSelection,
+} from "@/lib/threadAllocation";
 import { getThreadBySlot, rgbToHex } from "@/lib/threadPalette";
 import DaySheetHeader from "@/components/DaySheetHeader";
 
@@ -105,18 +113,27 @@ function FleetBlock({ fleet }: { fleet: Fleet }) {
 export default async function DaySheetPage({
   searchParams,
 }: {
-  searchParams: { ab?: string | string[]; wb?: string | string[] };
+  searchParams: { ab?: string | string[]; wb?: string | string[]; wbn?: string | string[] };
 }) {
-  const fallback = defaultOffSelection();
   const byKey = Object.fromEntries(FLEET_BASES.map((b) => [b.key, b]));
+
+  // Webster's head count for the day (?wbn=), clamped to its selectable range.
+  const wc = byKey.webster.countable;
+  const wbnRaw = Array.isArray(searchParams.wbn) ? searchParams.wbn[0] : searchParams.wbn;
+  const wbnParsed = parseInt((wbnRaw ?? "").trim(), 10);
+  const websterCount =
+    wc && Number.isInteger(wbnParsed) ? Math.min(wc.max, Math.max(wc.min, wbnParsed)) : wc?.default;
+  const machineCounts: Partial<Record<FleetKey, number>> = { webster: websterCount };
+
+  const fallback = defaultOffSelection(machineCounts);
   const offSel: OffSelection = {
-    abbode: parseOff(searchParams.ab, byKey.abbode.machineNames.length, fallback.abbode),
-    webster: parseOff(searchParams.wb, byKey.webster.machineNames.length, fallback.webster),
+    abbode: parseOff(searchParams.ab, machineNamesFor(byKey.abbode).length, fallback.abbode),
+    webster: parseOff(searchParams.wb, machineNamesFor(byKey.webster, websterCount).length, fallback.webster),
   };
 
   let data;
   try {
-    data = await getMachineAllocation(offSel);
+    data = await getMachineAllocation(offSel, machineCounts);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return (

@@ -5,7 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 import {
   computeAllocation,
   defaultOffSelection,
+  FLEET_BASES,
   type Fleet,
+  type FleetKey,
   type Job,
   type Machine,
   type MachineJobsMeta,
@@ -249,14 +251,59 @@ function OffColorControl({
   );
 }
 
+function MachineCountControl({
+  countable,
+  value,
+  onChange,
+  fleetLabel,
+}: {
+  countable: { min: number; max: number; default: number };
+  value: number;
+  onChange: (count: number) => void;
+  fleetLabel: string;
+}) {
+  const options: number[] = [];
+  for (let n = countable.min; n <= countable.max; n++) options.push(n);
+  return (
+    <div className="mb-5 rounded-2xl border border-cream-200 bg-white px-4 py-3.5 md:px-5">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <label htmlFor="machines-in-use" className="font-ui text-sm font-semibold text-espresso">
+          Machines in use:
+        </label>
+        <select
+          id="machines-in-use"
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="font-ui rounded-lg border border-cream-200 bg-white px-3 py-1.5 text-sm font-semibold text-espresso focus-ring"
+        >
+          {options.map((n) => (
+            <option key={n} value={n}>
+              {n}
+            </option>
+          ))}
+        </select>
+      </div>
+      <p className="font-ui mt-2 text-xs text-ink-muted">
+        Set how many {fleetLabel} heads are running today — the layout and change-free math update to match.
+      </p>
+    </div>
+  );
+}
+
 function FleetSection({
   fleet,
   defaultCount,
+  countable,
+  machineCount,
+  onCountChange,
   onToggleOff,
   onOpenMachine,
 }: {
   fleet: Fleet;
   defaultCount: number;
+  countable: { min: number; max: number; default: number } | null;
+  machineCount: number | undefined;
+  onCountChange: (count: number) => void;
   onToggleOff: (index: number) => void;
   onOpenMachine: (index: number) => void;
 }) {
@@ -282,6 +329,15 @@ function FleetSection({
         </p>
       </div>
 
+      {countable ? (
+        <MachineCountControl
+          countable={countable}
+          value={machineCount ?? countable.default}
+          onChange={onCountChange}
+          fleetLabel={fleet.label}
+        />
+      ) : null}
+
       <OffColorControl fleet={fleet} onToggle={onToggleOff} defaultCount={defaultCount} />
 
       <div className="grid gap-5 lg:grid-cols-2 2xl:grid-cols-3">
@@ -293,14 +349,26 @@ function FleetSection({
   );
 }
 
+// Initial machine counts for countable fleets (Webster). Abbode is fixed.
+const INITIAL_COUNTS: Partial<Record<FleetKey, number>> = Object.fromEntries(
+  FLEET_BASES.filter((b) => b.countable).map((b) => [b.key, b.countable!.default])
+);
+
 export default function MachinesView({ jobs, meta }: { jobs: Job[]; meta: MachineJobsMeta }) {
-  const [offSel, setOffSel] = useState<OffSelection>(() => defaultOffSelection());
+  const [machineCounts, setMachineCounts] = useState<Partial<Record<FleetKey, number>>>(() => ({
+    ...INITIAL_COUNTS,
+  }));
+  const [offSel, setOffSel] = useState<OffSelection>(() => defaultOffSelection(INITIAL_COUNTS));
   const [active, setActive] = useState<Fleet["key"]>("abbode");
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
-  const result = useMemo(() => computeAllocation(jobs, offSel, meta), [jobs, offSel, meta]);
+  const result = useMemo(
+    () => computeAllocation(jobs, offSel, meta, machineCounts),
+    [jobs, offSel, meta, machineCounts]
+  );
   const fleet = result.fleets.find((f) => f.key === active) ?? result.fleets[0];
   const defaultCounts: Record<string, number> = { abbode: 1, webster: 2 };
+  const activeCountable = FLEET_BASES.find((b) => b.key === active)?.countable ?? null;
 
   // Close the modal on Escape; lock body scroll while it's open.
   useEffect(() => {
@@ -331,10 +399,20 @@ export default function MachinesView({ jobs, meta }: { jobs: Job[]; meta: Machin
     setActive(key);
   }
 
+  // Change how many heads a countable fleet (Webster) is running today, and
+  // reset its off-color heads to the sensible default for the new size.
+  function setFleetCount(key: FleetKey, count: number) {
+    setOpenIndex(null);
+    setMachineCounts((prev) => ({ ...prev, [key]: count }));
+    setOffSel((prev) => ({ ...prev, [key]: defaultOffSelection({ [key]: count })[key] ?? [] }));
+  }
+
   const usingFallback = result.source && result.source !== "THREAD_STATS";
   const daysheetHref = `/machines/daysheet?ab=${encodeURIComponent(
     (offSel.abbode ?? []).join(",")
-  )}&wb=${encodeURIComponent((offSel.webster ?? []).join(","))}`;
+  )}&wb=${encodeURIComponent((offSel.webster ?? []).join(","))}&wbn=${encodeURIComponent(
+    String(machineCounts.webster ?? "")
+  )}`;
 
   const openMachine = fleet && openIndex !== null ? fleet.machines[openIndex] : null;
 
@@ -384,6 +462,9 @@ export default function MachinesView({ jobs, meta }: { jobs: Job[]; meta: Machin
         <FleetSection
           fleet={fleet}
           defaultCount={defaultCounts[fleet.key] ?? 1}
+          countable={activeCountable}
+          machineCount={machineCounts[fleet.key] ?? activeCountable?.default}
+          onCountChange={(n) => setFleetCount(fleet.key, n)}
           onToggleOff={toggleOff}
           onOpenMachine={(i) => setOpenIndex(i)}
         />

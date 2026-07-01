@@ -18,6 +18,7 @@ import {
   computeAllocation,
   defaultOffSelection,
   type AllocationResult,
+  type FleetKey,
   type Job,
   type MachineJobsMeta,
   type OffSelection,
@@ -94,9 +95,12 @@ export async function getMachineJobs(options: { forceRefresh?: boolean } = {}): 
   return data;
 }
 
-/** Convenience: jobs + allocation for a given off-color selection (default if omitted).
- * Used by the printable day sheet, which is server-rendered. */
-export async function getMachineAllocation(offSelection?: OffSelection): Promise<AllocationResult> {
+/** Convenience: jobs + allocation for a given off-color selection and machine
+ * counts (defaults if omitted). Used by the printable day sheet. */
+export async function getMachineAllocation(
+  offSelection?: OffSelection,
+  machineCounts?: Partial<Record<FleetKey, number>>
+): Promise<AllocationResult> {
   const { jobs, meta } = await getMachineJobs();
-  return computeAllocation(jobs, offSelection ?? defaultOffSelection(), meta);
+  return computeAllocation(jobs, offSelection ?? defaultOffSelection(machineCounts), meta, machineCounts);
 }
