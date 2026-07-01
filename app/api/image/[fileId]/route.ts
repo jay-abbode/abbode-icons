@@ -26,12 +26,13 @@ export const dynamic = "force-dynamic";
  * each (fileId, params) combo cached after first generation.
  */
 
-type RawCacheEntry = { buffer: Buffer; mimeType: string; expiresAt: number };
+type RawCacheEntry = { buffer: Buffer; mimeType: string; version: string; expiresAt: number };
 
-// One shared cache per server instance. On Vercel each function instance
-// keeps this in memory for a few minutes — long enough to amortize the
-// 24-slot variations page.
-const RAW_CACHE_TTL_MS = 5 * 60 * 1000;
+// One shared cache per server instance. Kept short so that a re-uploaded file
+// (e.g. a freshly cropped PNG, which keeps the same Drive ID) is reflected
+// within about a minute — still long enough to amortize the near-simultaneous
+// 24-slot variations page, which fires all its requests in one render.
+const RAW_CACHE_TTL_MS = 60 * 1000;
 const RAW_CACHE_MAX_ENTRIES = 100;
 const rawCache = new Map<string, RawCacheEntry>();
 
@@ -43,7 +44,7 @@ async function fetchRawPng(fileId: string): Promise<RawCacheEntry> {
 
   const drive = getDriveClient();
   const [metaResp, contentResp] = await Promise.all([
-    drive.files.get({ fileId, fields: "mimeType,name" }),
+    drive.files.get({ fileId, fields: "mimeType,name,md5Checksum,modifiedTime" }),
     drive.files.get(
       { fileId, alt: "media" },
       { responseType: "arraybuffer" }
@@ -53,6 +54,13 @@ async function fetchRawPng(fileId: string): Promise<RawCacheEntry> {
   const entry: RawCacheEntry = {
     buffer: Buffer.from(contentResp.data as ArrayBuffer),
     mimeType: metaResp.data.mimeType || "application/octet-stream",
+    // Content fingerprint: Drive's md5Checksum changes whenever the bytes change
+    // (an auto-crop overwrites the file in place), with modifiedTime as a
+    // fallback. Used as the ETag so caches refetch only when the file changed.
+    version:
+      metaResp.data.md5Checksum ||
+      metaResp.data.modifiedTime ||
+      String(Date.now()),
     expiresAt: Date.now() + RAW_CACHE_TTL_MS,
   };
 
@@ -132,11 +140,36 @@ export async function GET(
   try {
     const raw = await fetchRawPng(fileId);
 
+    // Tie the cache to the file's real content (+ recolor params). A re-uploaded
+    // file (freshly cropped PNG, same Drive ID) gets a new md5 -> new ETag ->
+    // refetch; an unchanged file keeps serving from cache. Dropping "immutable"
+    // is the key change: it lets the browser/CDN re-check after the short
+    // max-age instead of assuming the bytes can never change.
+    const paramsKey =
+      mode === "raw"
+        ? ""
+        : `-${mode}-${slotParam || ""}|${baseParam || ""}|${accentParam || ""}|${anchorParam || ""}`;
+    const etag = `"${raw.version}${paramsKey}"`;
+    const cacheControl =
+      mode === "raw"
+        ? "public, max-age=60, s-maxage=60, stale-while-revalidate=604800"
+        : "public, max-age=300, s-maxage=3600, stale-while-revalidate=604800";
+
+    // Conditional request: unchanged content -> 304, skipping the body (and, for
+    // recolor modes, skipping the expensive re-render entirely).
+    if (request.headers.get("if-none-match") === etag) {
+      return new NextResponse(null, {
+        status: 304,
+        headers: { ETag: etag, "Cache-Control": cacheControl },
+      });
+    }
+
     if (mode === "raw") {
       return new NextResponse(new Uint8Array(raw.buffer), {
         headers: {
           "Content-Type": raw.mimeType,
-          "Cache-Control": "public, max-age=3600, s-maxage=86400, immutable",
+          "Cache-Control": cacheControl,
+          ETag: etag,
         },
       });
     }
@@ -154,9 +187,8 @@ export async function GET(
     return new NextResponse(new Uint8Array(recolored), {
       headers: {
         "Content-Type": "image/png",
-        // Recolored output is deterministic for (fileId, params) — safe to
-        // cache for a year. Browsers redownload only if the URL changes.
-        "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
+        "Cache-Control": cacheControl,
+        ETag: etag,
       },
     });
   } catch (error) {
