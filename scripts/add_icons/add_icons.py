@@ -10,10 +10,13 @@ for you, in the right order, from a single command:
                  (fills only blank cells, matched by icon name).
   2. Auto-crop   trims empty space around the catalog PNGs in Drive
                  (in place; originals backed up locally first).
-  3. Tags        fills the MASTER "Tags" column from tags.csv for search.
+  3. Auto-tag    generates thematic tags for any icon missing from tags.csv
+                 and appends them (so new icons are never left untagged).
+  4. Tags        writes the MASTER "Tags" column from tags.csv for search.
 
-Order matters: backfill runs first so a brand-new PNG is linked in the sheet
-before auto-crop goes looking for it.
+Order matters: backfill runs first so a brand-new PNG is linked before auto-crop
+looks for it, and auto-tag runs before the tags write so new rows get pushed to
+the sheet in the same run.
 
 SAFE BY DEFAULT. With no flags this previews all three (a dry run) and writes
 nothing. Add --apply to actually make changes; you're asked to confirm once.
@@ -59,6 +62,7 @@ ENV_LOCAL = PROJECT_ROOT / ".env.local"
 BACKFILL = PROJECT_ROOT / "scripts" / "backfill_blanks" / "backfill_blanks.py"
 CROP = PROJECT_ROOT / "scripts" / "crop_pngs" / "crop_pngs.py"
 TAGS = PROJECT_ROOT / "scripts" / "icon_tags" / "populate_tags.py"
+AUTOTAG = PROJECT_ROOT / "scripts" / "icon_tags" / "autotag_new.py"
 DEFAULT_CSV = PROJECT_ROOT / "scripts" / "icon_tags" / "tags.csv"
 
 BAR = "=" * 66
@@ -128,6 +132,15 @@ def build_crop(cfg: dict, only_file: str | None) -> list[str]:
     return argv
 
 
+def build_autotag(cfg: dict) -> list[str]:
+    argv = [cfg["python"], str(AUTOTAG),
+            "--sheet-id", cfg["sheet_id"], "--creds", cfg["creds"],
+            "--tab", cfg["tab"], "--csv", cfg["csv"]]
+    if not cfg["apply"]:
+        argv.append("--dry-run")
+    return argv
+
+
 def build_tags(cfg: dict) -> list[str]:
     argv = [cfg["python"], str(TAGS),
             "--sheet-id", cfg["sheet_id"], "--creds", cfg["creds"],
@@ -184,6 +197,8 @@ def main() -> None:
                    help="crop the whole catalog, not just the newly-linked icons")
     p.add_argument("--skip-backfill", action="store_true")
     p.add_argument("--skip-crop", action="store_true")
+    p.add_argument("--skip-autotag", action="store_true",
+                   help="don't auto-generate tags for icons missing from tags.csv")
     p.add_argument("--skip-tags", action="store_true")
     p.add_argument("--print-commands", action="store_true",
                    help="show the sub-commands that would run, then exit")
@@ -223,12 +238,18 @@ def main() -> None:
     elif not CROP.exists():
         do_crop, why_crop = False, f"script missing: {CROP}"
 
+    do_autotag, why_autotag = True, ""
+    if args.skip_autotag:
+        do_autotag, why_autotag = False, "--skip-autotag"
+    elif not AUTOTAG.exists():
+        do_autotag, why_autotag = False, f"script missing: {AUTOTAG}"
+
     do_tags, why_tags = True, ""
     if args.skip_tags:
         do_tags, why_tags = False, "--skip-tags"
     elif not TAGS.exists():
         do_tags, why_tags = False, f"script missing: {TAGS}"
-    elif not Path(cfg["csv"]).exists():
+    elif not do_autotag and not Path(cfg["csv"]).exists():
         do_tags, why_tags = False, f"tags.csv missing: {cfg['csv']}"
 
     crop_scope = "whole catalog" if args.crop_all else "newly-linked PNGs only"
@@ -242,9 +263,11 @@ def main() -> None:
     print(f"  Plan        : "
           f"[{'✓' if do_backfill else '·'}] backfill   "
           f"[{'✓' if do_crop else '·'}] auto-crop ({crop_scope})   "
+          f"[{'✓' if do_autotag else '·'}] auto-tag   "
           f"[{'✓' if do_tags else '·'}] tags")
     for label, ok, why in (("backfill", do_backfill, why_bf),
                            ("auto-crop", do_crop, why_crop),
+                           ("auto-tag", do_autotag, why_autotag),
                            ("tags", do_tags, why_tags)):
         if not ok:
             print(f"     - {label} will be skipped: {why}")
@@ -262,11 +285,13 @@ def main() -> None:
                 print("  2) auto-crop skipped in dry-run (needs links); use --apply, or --crop-all to preview all")
             else:
                 print("  2) " + _fmt(build_crop(cfg, "<newly-linked.json>")) + "   (names from backfill's report)")
+        if do_autotag:
+            print("  3) " + _fmt(build_autotag(cfg)))
         if do_tags:
-            print("  3) " + _fmt(build_tags(cfg)))
+            print("  4) " + _fmt(build_tags(cfg)))
         return
 
-    if not (do_backfill or do_crop or do_tags):
+    if not (do_backfill or do_crop or do_autotag or do_tags):
         sys.exit("Nothing to run.")
 
     # One confirmation for the whole run.
@@ -322,7 +347,14 @@ def main() -> None:
         print(f"\n=== Auto-crop: SKIPPED — {why_crop} ===")
         results.append(("Auto-crop", "skipped"))
 
-    # 3) Tags
+    # 3) Auto-tag: append any icons missing from tags.csv (before the sheet write).
+    if do_autotag:
+        results.append(("Auto-tag", run_step("Auto-tag new icons", build_autotag(cfg), child_env)))
+    else:
+        print(f"\n=== Auto-tag: SKIPPED — {why_autotag} ===")
+        results.append(("Auto-tag", "skipped"))
+
+    # 4) Tags
     if do_tags:
         results.append(("Tags", run_step("Tags", build_tags(cfg), child_env)))
     else:

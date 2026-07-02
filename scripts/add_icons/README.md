@@ -6,10 +6,16 @@ them for you, in the right order, from a single command:
 1. **Backfill** — links the new OFM / DST / PNG files into the MASTER sheet
    (fills only blank cells, matched by icon name).
 2. **Auto-crop** — trims empty space around the catalog PNGs in Drive.
-3. **Tags** — fills the MASTER "Tags" column from `tags.csv`.
+3. **Auto-tag** — for any icon on the sheet that has no row in `tags.csv`, it
+   generates thematic search tags (from the icon's category + name) and appends
+   a row, so new icons are never left untagged. Existing rows are never touched,
+   so your hand-written tags are safe. Edit any auto-generated tags in `tags.csv`
+   whenever you like.
+4. **Tags** — writes the MASTER "Tags" column from `tags.csv`.
 
-Order matters: backfill runs first so a brand-new PNG is linked in the sheet
-before auto-crop looks for it.
+Order matters: backfill runs first so a brand-new PNG is linked before auto-crop
+looks for it, and auto-tag runs before the tags write so new rows reach the sheet
+in the same run.
 
 ## One-time setup
 

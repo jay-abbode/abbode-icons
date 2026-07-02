@@ -1,0 +1,69 @@
+ABBODE ICONS — AUTO-TAG NEW ICONS (Option 1: tags generated for you)
+====================================================================
+
+WHAT THIS ADDS
+  The add_icons runner now has a new step that makes sure every icon has search
+  tags — without you writing them. On each real run it looks for icons on the
+  MASTER sheet that have no row in tags.csv, generates thematic tags from the
+  icon's category + name (in the same style as your existing tags), and appends
+  them. Then the normal Tags step writes them into the sheet.
+
+  It never changes rows that already exist in tags.csv, so your hand-written
+  tags are 100% safe. Anything auto-generated is just a starting point — edit it
+  in tags.csv anytime.
+
+FILES IN THIS ZIP (drop into your repo, same folders)
+  scripts/icon_tags/tag_gen.py       NEW  — the tag generator (the "brain")
+  scripts/icon_tags/autotag_new.py   NEW  — the step that appends missing icons
+  scripts/add_icons/add_icons.py     CHANGED — runs the new step (3rd of 4)
+  scripts/add_icons/README.md        CHANGED — updated notes
+
+  NOT included on purpose: tags.csv (the runner APPENDS to your live one — I’m
+  not overwriting it) and populate_tags.py (unchanged).
+
+HOW YOU USE IT — no change to your routine
+  Preview (writes nothing; now also shows which icons would get tags):
+    python scripts\add_icons\add_icons.py
+  For real:
+    python scripts\add_icons\add_icons.py --apply
+
+  To skip just the auto-tagging on a given run:  --skip-autotag
+
+WHAT IT WILL DO ON YOUR NEXT --apply RUN
+  There are exactly 10 icons on the sheet with no tags yet. It will add these
+  (you can tweak any of them in tags.csv afterward):
+
+  Beamed Sixteenth Note [Hobby]
+     hobby, beamed sixteenth note, beamed, sixteenth, note, music, musician, band, song
+  Canada WC Jersey [World Cup]
+     world cup, soccer, football, sports, game day, canada jersey, canada, jersey, fan
+  USA WC Jersey [World Cup]
+     world cup, soccer, football, sports, game day, usa jersey, usa, jersey, fan
+  Mexico WC Jersey [World Cup]
+     world cup, soccer, football, sports, game day, mexico jersey, mexico, jersey, fan
+  Majong Tiles [Summer]
+     summer, beach, coastal, vacation, preppy, majong tiles, majong, tiles, mahjong, game, games, game night, hobby
+  Nantucket Basket [Summer]
+     summer, beach, coastal, vacation, preppy, nantucket basket, nantucket, basket, new england, cape cod
+  Brussels Griffon [Dogs]
+     dog, puppy, pet, animal, dog mom, dog dad, fur baby, brussels griffon, brussels, griffon
+  Needlepoint [Summer]
+     summer, beach, coastal, vacation, preppy, needlepoint, cross stitch, embroidery, grandmillennial, cottagecore
+  Yellow Betta Fish [Pets]
+     pet, animal, fur baby, yellow betta fish, yellow, betta, fish, aquarium
+  Pink Hydrangea [Nature]
+     nature, outdoors, garden, pink hydrangea, pink, hydrangea, flower, floral, bloom, spring
+
+  Heads-up: the three Summer icons (Majong Tiles, Nantucket Basket, Needlepoint)
+  pick up "summer, beach, coastal, vacation, preppy" from their category — fine,
+  but if any feels off just delete those words in tags.csv. The specific tags
+  (mahjong, nantucket, needlepoint...) are the ones that matter for search.
+
+HOW THE TAGS ARE BUILT (so you can trust/adjust them)
+  1. The icon's Category sets the base (e.g. Dogs -> dog, puppy, pet, animal,
+     dog mom, dog dad, fur baby; Zodiac -> zodiac, astrology, horoscope...).
+  2. The icon's own name is kept intact + split into words.
+  3. Concept rules add synonyms (heart -> love/valentine; hydrangea -> flower/
+     floral/garden; jersey -> soccer/world cup; note -> music; etc.).
+  All 34 of your current categories are mapped. To change how a category or word
+  is tagged, edit the lists near the top of scripts/icon_tags/tag_gen.py.
