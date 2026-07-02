@@ -87,3 +87,33 @@ variable, then `.env.local`. So once the folder IDs are in `.env.local`, the bar
 - Preview can't show the crop step for brand-new icons, because a PNG isn't
   linked until backfill actually writes. Run `--apply` (or use `--crop-all` to
   preview cropping across the existing catalog).
+
+---
+
+## Editing an icon — the PORTAL flow
+
+For changing an icon that already exists (or sending any single change), use
+**PORTAL** instead of digging through the launchpad folders:
+
+1. Edit the icon and drop its files (PNG / OFM / DST) into the **PORTAL** folder
+   inside ICON LAUNCHPAD.
+2. Run `python scripts\add_icons\add_icons.py --portal --apply`
+   (or double-click the **PORTAL – SEND** launcher).
+
+It force-pushes everything in PORTAL through the whole pipeline — overwrites the
+files in Drive **in place** (same file IDs, so the sheet links keep working),
+backfills, re-crops the PNG, and updates tags — then **files the files back**
+into the launchpad (PNGs + OFMs → `NEW OFM`, DSTs → `NEW DST`, overwriting the
+old versions) and leaves PORTAL empty.
+
+Preview first with `--portal` (no `--apply`) or the **PORTAL – PREVIEW**
+launcher: it shows exactly what it would push and file away, and changes
+nothing. If PORTAL is empty it just tells you so.
+
+PORTAL shares the launchpad's `.upload_manifest.json`, so after a change is sent
+and filed away, a normal run won't try to re-upload it. The normal run also
+ignores the PORTAL folder entirely — PORTAL is only handled by `--portal`.
+
+Folder locations are taken from the launchpad by default (`ICON
+LAUNCHPAD\PORTAL`, `\NEW OFM`, `\NEW DST`). Override in `.env.local` with
+`PORTAL_DIR`, `LOCAL_PNG_OFM_DIR`, `LOCAL_DST_DIR` if yours differ.

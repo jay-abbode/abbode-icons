@@ -1,0 +1,52 @@
+ABBODE ICONS — UPLOAD FIX (replaces one file)
+=============================================
+
+WHAT WAS WRONG
+  1. A bug in upload_icons.py crashed it ('Resource' object has no attribute
+     'files'). Fixed.
+  2. Your run showed the launchpad holds your whole archive (5,162 files). As
+     first written, the uploader would try to re-push all of them every run —
+     and because auto-crop rewrites PNGs *in Drive*, every PNG would look
+     "changed" forever and re-upload + re-crop endlessly. Fixed.
+
+WHAT IT DOES NOW (only new / re-exported files upload)
+  It keeps a tiny fingerprint file, .upload_manifest.json, inside your ICON
+  LAUNCHPAD folder, recording each file's contents the last time it was
+  uploaded. From then on a file only uploads when YOU actually re-export it —
+  it never fights with the cropped copies in Drive.
+
+  * FIRST run: it "adopts" everything already in Drive (records fingerprints,
+    uploads nothing for them) and uploads only files that are missing from
+    Drive. So the first run is quick — it will NOT re-upload your 5,000 files.
+  * AFTER that: only files you re-export (new fingerprint) or brand-new icons
+    get uploaded. A re-exported file overwrites its Drive copy in place (same
+    file ID, so the sheet link keeps working). Everything else is skipped.
+
+  Leave .upload_manifest.json where it is — that's how it tracks changes. (It's
+  hidden and ignored by the uploader. Deleting it just makes the next run
+  re-adopt, which is harmless.)
+
+INSTALL — replace ONE file
+  From the zip, copy:
+      scripts/upload_icons/upload_icons.py
+  over the one in your repo (overwrite). Nothing else changed.
+
+THEN
+  Push (or double-click push_to_git.bat):
+      cd /d "C:\Users\abbod\Dropbox\File Processing (Don't Open)\ICON APP\abbode-icons"
+      git add -A
+      git commit -m "upload_icons: fix Resource.files() crash; manifest-based change detection"
+      git push
+
+  Then double-click PREVIEW (dry run) again. This time it will:
+    - print the per-folder write-access check it never reached before:
+          Folder write access (service account):
+            [OK ] New OFMs 2026   (or [NO ] ...)
+    - fingerprint your files (takes a minute for 5,162 — normal, one time)
+    - show a summary like "X new, 0 changed, ~5158 unchanged (skipped)"
+
+  If any folder shows [NO], share it with the service account's client_email
+  (in google-credentials.json) as Content Manager, then re-run PREVIEW.
+
+  When the plan looks right, run RUN (apply). First apply adopts the archive +
+  uploads anything missing; every run after only moves what you actually change.

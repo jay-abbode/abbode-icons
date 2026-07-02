@@ -35,6 +35,7 @@ Needs
      OFM_FOLDER_ID, DST_FOLDER_ID, PNG_FOLDER_ID, LAUNCHPAD_DIR
 """
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -91,10 +92,24 @@ def is_junk(name):
             or name.startswith(".") or name.endswith(".tmp") or name.startswith("$"))
 
 
-def scan_local(root):
-    """Return {ext: [Path, ...]} for the file types we upload."""
+def file_md5(path):
+    h = hashlib.md5()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def scan_local(root, skip_dirs=("portal",)):
+    """Return {ext: [Path, ...]} for the file types we upload.
+
+    Any subfolder named in skip_dirs (default: PORTAL) is skipped, so a normal
+    launchpad scan ignores the PORTAL outbox — PORTAL is handled only by the
+    edit flow, which points directly at it.
+    """
     found = defaultdict(list)
-    for dirpath, _dirs, files in os.walk(root):
+    for dirpath, dirs, files in os.walk(root):
+        dirs[:] = [d for d in dirs if d.lower() not in skip_dirs]
         for fn in files:
             if is_junk(fn):
                 continue
@@ -105,8 +120,8 @@ def scan_local(root):
 
 
 def list_folder_by_name(drive, folder_id):
-    """Walk folder + subfolders. Returns (by_name_lower -> id, dupes set(lower))."""
-    name_to_ids = defaultdict(set)
+    """Walk folder + subfolders. Returns (by_name_lower -> (id, md5), dupes set)."""
+    name_to = defaultdict(list)
     stack, seen = [folder_id], set()
     while stack:
         fid = stack.pop()
@@ -117,7 +132,7 @@ def list_folder_by_name(drive, folder_id):
         while True:
             resp = drive.files().list(
                 q=f"'{fid}' in parents and trashed = false",
-                fields="nextPageToken, files(id, name, mimeType)",
+                fields="nextPageToken, files(id, name, mimeType, md5Checksum)",
                 pageSize=1000, pageToken=token,
                 supportsAllDrives=True, includeItemsFromAllDrives=True,
             ).execute()
@@ -125,12 +140,12 @@ def list_folder_by_name(drive, folder_id):
                 if f["mimeType"] == FOLDER_MIME:
                     stack.append(f["id"])
                 else:
-                    name_to_ids[f["name"].lower()].add(f["id"])
+                    name_to[f["name"].lower()].append((f["id"], f.get("md5Checksum")))
             token = resp.get("nextPageToken")
             if not token:
                 break
-    by_name = {n: next(iter(ids)) for n, ids in name_to_ids.items() if len(ids) == 1}
-    dupes = {n for n, ids in name_to_ids.items() if len(ids) > 1}
+    by_name = {n: v[0] for n, v in name_to.items() if len(v) == 1}
+    dupes = {n for n, v in name_to.items() if len(v) > 1}
     return by_name, dupes
 
 
@@ -154,6 +169,9 @@ def main():
     p.add_argument("--dst-folder", default=os.environ.get("DST_FOLDER_ID") or env.get("DST_FOLDER_ID"))
     p.add_argument("--png-folder", default=os.environ.get("PNG_FOLDER_ID") or env.get("PNG_FOLDER_ID"))
     p.add_argument("--creds", default=str(DEFAULT_CREDS))
+    p.add_argument("--manifest", help="path to the upload manifest (default: <launchpad>/.upload_manifest.json)")
+    p.add_argument("--force", action="store_true",
+                   help="push every file regardless of the manifest (used by the PORTAL edit flow)")
     p.add_argument("--report-json", help="write a JSON summary of what was uploaded")
     p.add_argument("--dry-run", action="store_true", help="preview only; upload nothing")
     args = p.parse_args()
@@ -180,9 +198,26 @@ def main():
                   cache_discovery=False)
     svc = drive.files()
 
+    # Change detection uses a local manifest of each file's last-uploaded md5,
+    # NOT Drive's copy — because auto-crop rewrites PNGs in Drive, so the Drive
+    # bytes never match the local bytes. Comparing local-to-manifest means a file
+    # only counts as "changed" when YOU re-export it.
+    manifest_path = Path(args.manifest) if args.manifest else (root / ".upload_manifest.json")
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else {}
+    except Exception:
+        manifest = {}
+    first_run = not manifest
+    if first_run and not args.force:
+        print("\nFirst run: adopting the files already in Drive (they won't be re-uploaded);")
+        print("only files missing from Drive get uploaded. After this, only files you")
+        print("actually re-export will upload.")
+    new_manifest = dict(manifest)  # updated as we go; written on apply
+
     # Plan per type.
-    plan = {"new": [], "replace": [], "skip_dup": [], "no_folder": []}
+    plan = {"new": [], "replace": [], "unchanged": [], "skip_dup": [], "no_folder": []}
     caps = {}
+    print("\nChecking which files are new or changed (this can take a moment)...")
     for ext, paths in sorted(local.items()):
         key, mime = ROUTING[ext]
         folder_id = folders.get(key)
@@ -190,17 +225,30 @@ def main():
             plan["no_folder"] += [(pp, key) for pp in paths]
             continue
         if folder_id not in caps:
-            ok, fname = can_write(svc, folder_id)
+            ok, fname = can_write(drive, folder_id)
             caps[folder_id] = (ok, fname)
-        by_name, dupes = list_folder_by_name(svc, folder_id)
+        by_name, dupes = list_folder_by_name(drive, folder_id)
         for pp in paths:
             low = pp.name.lower()
+            m = file_md5(pp)
             if low in dupes:
                 plan["skip_dup"].append((pp, key, folder_id))
+            elif args.force:
+                # PORTAL flow: push it no matter what (still overwrite in place if it exists).
+                if low in by_name:
+                    plan["replace"].append((pp, key, folder_id, by_name[low][0], mime, m))
+                else:
+                    plan["new"].append((pp, key, folder_id, mime, m))
+            elif manifest.get(low) == m:
+                plan["unchanged"].append((pp, key, folder_id))              # already uploaded, unchanged
             elif low in by_name:
-                plan["replace"].append((pp, key, folder_id, by_name[low], mime))
+                if first_run and low not in manifest:
+                    plan["unchanged"].append((pp, key, folder_id))          # first run: adopt existing Drive file
+                    new_manifest[low] = m
+                else:
+                    plan["replace"].append((pp, key, folder_id, by_name[low][0], mime, m))  # re-exported -> overwrite
             else:
-                plan["new"].append((pp, key, folder_id, mime))
+                plan["new"].append((pp, key, folder_id, mime, m))           # not in Drive -> upload
 
     # Report write-permission up front.
     print("\nFolder write access (service account):")
@@ -211,21 +259,26 @@ def main():
     def line(pp, folder_id):
         return f"{pp.name}  ->  {caps.get(folder_id, (None, folder_id))[1]}"
 
-    if plan["new"]:
-        print(f"\nNEW ({len(plan['new'])}):")
-        for pp, _k, fid, _m in plan["new"]:
-            print("  + " + line(pp, fid))
-    if plan["replace"]:
-        print(f"\nREPLACE in place ({len(plan['replace'])}):")
-        for pp, _k, fid, _id, _m in plan["replace"]:
-            print("  ~ " + line(pp, fid))
-    if plan["skip_dup"]:
-        print(f"\nSKIP — already duplicated in Drive ({len(plan['skip_dup'])}), clean up first:")
-        for pp, _k, fid in plan["skip_dup"]:
-            print("  ! " + line(pp, fid))
+    print(f"\nSummary: {len(plan['new'])} new, {len(plan['replace'])} changed, "
+          f"{len(plan['unchanged'])} unchanged (skipped), "
+          f"{len(plan['skip_dup'])} duplicate-name (skipped).")
+
+    def show(items, label, marker, fmt):
+        if not items:
+            return
+        print(f"\n{label} ({len(items)}):")
+        for it in items[:60]:
+            print(f"  {marker} " + fmt(it))
+        if len(items) > 60:
+            print(f"  ... and {len(items) - 60} more")
+
+    show(plan["new"], "NEW", "+", lambda it: line(it[0], it[2]))
+    show(plan["replace"], "CHANGED — overwrite in place", "~", lambda it: line(it[0], it[2]))
+    show(plan["skip_dup"], "SKIP — already duplicated in Drive, clean up first", "!",
+         lambda it: line(it[0], it[2]))
     if plan["no_folder"]:
-        print(f"\nSKIP — no folder ID configured for these ({len(plan['no_folder'])}):")
-        for pp, key in plan["no_folder"]:
+        print(f"\nSKIP — no folder ID configured ({len(plan['no_folder'])}):")
+        for pp, key in plan["no_folder"][:20]:
             print(f"  ? {pp.name}  ({key} folder not set)")
 
     if blocked:
@@ -241,30 +294,39 @@ def main():
 
     # Apply.
     uploaded, replaced, failed = [], [], []
-    for pp, _k, folder_id, mime in plan["new"]:
+    for pp, _k, folder_id, mime, m in plan["new"]:
         try:
             media = MediaFileUpload(str(pp), mimetype=mime, resumable=True)
             svc.create(body={"name": pp.name, "parents": [folder_id]},
                        media_body=media, fields="id",
                        supportsAllDrives=True).execute()
             uploaded.append(pp.name)
+            new_manifest[pp.name.lower()] = m
             print(f"  uploaded  {pp.name}")
         except Exception as e:  # noqa: BLE001
             failed.append((pp.name, str(e)))
             print(f"  FAILED    {pp.name}: {e}")
-    for pp, _k, folder_id, file_id, mime in plan["replace"]:
+    for pp, _k, folder_id, file_id, mime, m in plan["replace"]:
         try:
             media = MediaFileUpload(str(pp), mimetype=mime, resumable=True)
             svc.update(fileId=file_id, media_body=media, fields="id",
                        supportsAllDrives=True).execute()
             replaced.append(pp.name)
+            new_manifest[pp.name.lower()] = m
             print(f"  replaced  {pp.name}")
         except Exception as e:  # noqa: BLE001
             failed.append((pp.name, str(e)))
             print(f"  FAILED    {pp.name}: {e}")
 
+    # Save the manifest (adopted first-run files + everything we just uploaded).
+    try:
+        manifest_path.write_text(json.dumps(new_manifest), encoding="utf-8")
+    except Exception as e:  # noqa: BLE001
+        print(f"  (warning: couldn't write manifest {manifest_path}: {e})")
+
     print(f"\nDone — {len(uploaded)} uploaded, {len(replaced)} replaced, "
-          f"{len(plan['skip_dup'])} skipped (dupes), {len(failed)} failed.")
+          f"{len(plan['unchanged'])} unchanged, {len(plan['skip_dup'])} skipped (dupes), "
+          f"{len(failed)} failed.")
 
     if args.report_json:
         # icon names (no extension) of PNGs that changed — so the runner can crop them.

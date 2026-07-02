@@ -67,6 +67,11 @@ TAGS = PROJECT_ROOT / "scripts" / "icon_tags" / "populate_tags.py"
 AUTOTAG = PROJECT_ROOT / "scripts" / "icon_tags" / "autotag_new.py"
 UPLOAD = PROJECT_ROOT / "scripts" / "upload_icons" / "upload_icons.py"
 DEFAULT_LAUNCHPAD = r"C:\Users\abbod\Dropbox\File Processing (Don't Open)\ICON LAUNCHPAD"
+# Subfolders of the launchpad, used by the PORTAL edit flow.
+PORTAL_SUBDIR = "PORTAL"          # the edit outbox (empty until you send a change)
+LOCAL_PNG_OFM_SUBDIR = "NEW OFM"  # where PNGs + OFMs are filed after sending
+LOCAL_DST_SUBDIR = "NEW DST"      # where DSTs are filed after sending
+UPLOAD_EXTS = {".ofm", ".dst", ".png"}
 DEFAULT_CSV = PROJECT_ROOT / "scripts" / "icon_tags" / "tags.csv"
 
 BAR = "=" * 66
@@ -136,15 +141,21 @@ def build_crop(cfg: dict, only_file: str | None) -> list[str]:
     return argv
 
 
-def build_upload(cfg: dict, report_path: str | None) -> list[str]:
+def build_upload(cfg: dict, report_path: str | None,
+                 launchpad: str | None = None, force: bool = False,
+                 manifest: str | None = None) -> list[str]:
     argv = [cfg["python"], str(UPLOAD),
-            "--launchpad", cfg["launchpad"], "--creds", cfg["creds"]]
+            "--launchpad", launchpad or cfg["launchpad"], "--creds", cfg["creds"]]
     if cfg["ofm"]:
         argv += ["--ofm-folder", cfg["ofm"]]
     if cfg["dst"]:
         argv += ["--dst-folder", cfg["dst"]]
     if cfg["png"]:
         argv += ["--png-folder", cfg["png"]]
+    if manifest:
+        argv += ["--manifest", manifest]
+    if force:
+        argv.append("--force")
     if report_path:
         argv += ["--report-json", report_path]
     if not cfg["apply"]:
@@ -170,6 +181,43 @@ def build_tags(cfg: dict) -> list[str]:
     if not cfg["apply"]:
         argv.append("--dry-run")
     return argv
+
+
+def portal_files(portal_dir: Path) -> list[Path]:
+    """Uploadable files sitting in PORTAL (top level + subfolders)."""
+    out = []
+    if not portal_dir.exists():
+        return out
+    for dp, _dirs, files in os.walk(portal_dir):
+        for fn in files:
+            if fn.startswith(("~$", ".")) or fn.lower() in ("thumbs.db", "desktop.ini"):
+                continue
+            if os.path.splitext(fn)[1].lower() in UPLOAD_EXTS:
+                out.append(Path(dp) / fn)
+    return out
+
+
+def file_away(files: list[Path], png_ofm_dir: Path, dst_dir: Path) -> None:
+    """Move each PORTAL file into its launchpad folder, overwriting the old one.
+    PNGs + OFMs -> NEW OFM, DSTs -> NEW DST. Leaves PORTAL empty."""
+    import shutil
+    png_ofm_dir.mkdir(parents=True, exist_ok=True)
+    dst_dir.mkdir(parents=True, exist_ok=True)
+    moved, failed = 0, 0
+    for pp in files:
+        ext = pp.suffix.lower()
+        dest_dir = dst_dir if ext == ".dst" else png_ofm_dir
+        dest = dest_dir / pp.name
+        try:
+            if dest.exists():
+                dest.unlink()
+            shutil.move(str(pp), str(dest))
+            moved += 1
+        except Exception as e:  # noqa: BLE001
+            failed += 1
+            print(f"  couldn't file away {pp.name}: {e}")
+    print(f"  Filed away {moved} file(s) into the launchpad; PORTAL is clear."
+          + (f" ({failed} couldn't be moved.)" if failed else ""))
 
 
 def read_png_icons(path: str) -> list[str]:
@@ -216,6 +264,9 @@ def main() -> None:
     p.add_argument("--crop-all", action="store_true",
                    help="crop the whole catalog, not just the newly-linked icons")
     p.add_argument("--launchpad-dir", help="local ICON LAUNCHPAD folder to upload from")
+    p.add_argument("--portal", action="store_true",
+                   help="edit flow: force-push everything in PORTAL through the pipeline, "
+                        "then file the files back into the launchpad")
     p.add_argument("--skip-upload", action="store_true",
                    help="don't upload local files to Drive first")
     p.add_argument("--skip-backfill", action="store_true")
@@ -239,6 +290,9 @@ def main() -> None:
         "png": resolve("PNG_FOLDER_ID", args.png_folder, env_local),
         "csv": args.csv or str(DEFAULT_CSV),
         "launchpad": resolve("LAUNCHPAD_DIR", args.launchpad_dir, env_local, DEFAULT_LAUNCHPAD),
+        "portal_dir": resolve("PORTAL_DIR", None, env_local, None),
+        "local_png_ofm": resolve("LOCAL_PNG_OFM_DIR", None, env_local, None),
+        "local_dst": resolve("LOCAL_DST_DIR", None, env_local, None),
         "overwrite": args.overwrite, "padding": args.padding, "limit": args.limit,
         "no_backup": args.no_backup, "backup_root": args.backup_root,
     }
@@ -246,6 +300,20 @@ def main() -> None:
         sys.exit("ERROR: no sheet id. Set GOOGLE_SHEET_ID in .env.local or pass --sheet-id.")
 
     has_folders = bool(cfg["ofm"] or cfg["dst"] or cfg["png"])
+
+    # PORTAL edit flow: derive the outbox + filing folders from the launchpad
+    # (all live inside it) unless overridden in .env.local.
+    lp = Path(cfg["launchpad"])
+    portal_dir = Path(cfg["portal_dir"]) if cfg["portal_dir"] else lp / PORTAL_SUBDIR
+    local_png_ofm = Path(cfg["local_png_ofm"]) if cfg["local_png_ofm"] else lp / LOCAL_PNG_OFM_SUBDIR
+    local_dst = Path(cfg["local_dst"]) if cfg["local_dst"] else lp / LOCAL_DST_SUBDIR
+    shared_manifest = str(lp / ".upload_manifest.json")  # PORTAL shares the launchpad's manifest
+
+    if args.portal:
+        pf = portal_files(portal_dir)
+        if not pf:
+            sys.exit(f"PORTAL is empty ({portal_dir}) — drop the edited icon's files in first.")
+        print(f"PORTAL edit flow: {len(pf)} file(s) in {portal_dir}")
 
     # Decide whether each step runs, with a reason when it doesn't.
     do_upload, why_upload = True, ""
@@ -287,7 +355,8 @@ def main() -> None:
     crop_scope = "whole catalog" if args.crop_all else "newly-linked PNGs only"
 
     # Banner
-    print(f"\n{BAR}\n  ADD ICONS — {'APPLY (writes changes)' if args.apply else 'DRY RUN (preview only)'}\n{BAR}")
+    mode = "PORTAL EDIT — " if args.portal else ""
+    print(f"\n{BAR}\n  {mode}ADD ICONS — {'APPLY (writes changes)' if args.apply else 'DRY RUN (preview only)'}\n{BAR}")
     print(f"  Sheet tab   : {cfg['tab']}")
     print(f"  Credentials : {cfg['creds']}")
     print(f"  Folders     : OFM={'set' if cfg['ofm'] else '—'}  "
@@ -311,7 +380,12 @@ def main() -> None:
         show_report = do_backfill and do_crop and not args.crop_all and args.apply
         print(f"\n{BAR}\n  COMMANDS\n{BAR}")
         if do_upload:
-            print("  1) " + _fmt(build_upload(cfg, "<uploaded.json>" if args.apply else None)))
+            if args.portal:
+                print("  1) " + _fmt(build_upload(cfg, "<uploaded.json>" if args.apply else None,
+                                                  launchpad=str(portal_dir), force=True,
+                                                  manifest=shared_manifest)))
+            else:
+                print("  1) " + _fmt(build_upload(cfg, "<uploaded.json>" if args.apply else None)))
         if do_backfill:
             print("  2) " + _fmt(build_backfill(cfg, "<report.json>" if show_report else None)))
         if do_crop:
@@ -325,6 +399,8 @@ def main() -> None:
             print("  4) " + _fmt(build_autotag(cfg)))
         if do_tags:
             print("  5) " + _fmt(build_tags(cfg)))
+        if args.portal:
+            print(f"  6) file PORTAL files -> {LOCAL_PNG_OFM_SUBDIR} (png/ofm) + {LOCAL_DST_SUBDIR} (dst); clear PORTAL")
         return
 
     if not (do_upload or do_backfill or do_crop or do_autotag or do_tags):
@@ -348,10 +424,15 @@ def main() -> None:
     want_report = do_crop and not args.crop_all and args.apply
 
     # 1) Upload local files to Drive
+    upload_status = "skipped"
     if do_upload:
-        results.append(("Upload", run_step(
-            "Upload to Drive",
-            build_upload(cfg, upload_report_path if want_report else None), child_env)))
+        if args.portal:
+            upload_argv = build_upload(cfg, upload_report_path if want_report else None,
+                                       launchpad=str(portal_dir), force=True, manifest=shared_manifest)
+        else:
+            upload_argv = build_upload(cfg, upload_report_path if want_report else None)
+        upload_status = run_step("Upload to Drive", upload_argv, child_env)
+        results.append(("Upload", upload_status))
     else:
         print(f"\n=== Upload: SKIPPED — {why_upload} ===")
         results.append(("Upload", "skipped"))
@@ -402,6 +483,17 @@ def main() -> None:
     else:
         print(f"\n=== Tags: SKIPPED — {why_tags} ===")
         results.append(("Tags", "skipped"))
+
+    # PORTAL: file the sent files back into the launchpad (only after a real,
+    # successful upload — so nothing is moved if the push failed).
+    if args.portal and args.apply:
+        if upload_status == "ok":
+            print(f"\n{BAR}\n  FILING PORTAL FILES BACK INTO THE LAUNCHPAD\n{BAR}")
+            file_away(portal_files(portal_dir), local_png_ofm, local_dst)
+            results.append(("File away", "ok"))
+        else:
+            print("\n=== File away: SKIPPED — upload didn't succeed, leaving PORTAL as-is ===")
+            results.append(("File away", "skipped"))
 
     # Summary
     print(f"\n{BAR}\n  SUMMARY — {'APPLIED' if args.apply else 'DRY RUN'}\n{BAR}")

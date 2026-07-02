@@ -1,0 +1,52 @@
+ABBODE ICONS — PORTAL EDIT FLOW
+===============================
+
+WHAT THIS ADDS
+  A one-click way to send ANY change to an icon (edit or new) through the whole
+  pipeline, using a clean "outbox" folder so you never dig through the archive.
+
+YOUR NEW WORKFLOW FOR EDITS
+  1. Edit the icon, drop its files (PNG / OFM / DST) into:
+       ...\ICON LAUNCHPAD\PORTAL
+  2. Double-click  "Icon Edit - PORTAL PREVIEW"  to see what it will do.
+  3. Double-click  "Icon Edit - PORTAL SEND",  type  yes.
+  4. Hard-refresh the app (Ctrl + Shift + R).
+
+  PORTAL is empty again afterward — ready for the next change.
+
+WHAT "SEND" DOES (in order)
+  1. Force-pushes everything in PORTAL to Drive — overwrites the existing files
+     IN PLACE (same Drive file IDs, so the sheet links keep working).
+  2. Backfills the sheet (links anything not yet linked — e.g. if it's actually
+     a brand-new icon).
+  3. Re-crops the changed PNG.
+  4. Updates tags.
+  5. Files the files back into the launchpad:
+       PNGs + OFMs  ->  NEW OFM
+       DSTs         ->  NEW DST
+     (overwriting the old versions), and clears PORTAL.
+
+WHY IT'S SAFE / CLEAN
+  * Overwrite-in-place = no duplicates and the sheet link never breaks.
+  * If the upload doesn't succeed, it does NOT file anything away — your files
+    stay in PORTAL so you can retry.
+  * PORTAL shares the launchpad's fingerprint file, so once a change is sent and
+    filed away, a normal run won't re-upload it.
+  * A normal run ignores the PORTAL folder entirely — PORTAL is only touched by
+    the PORTAL launchers.
+
+FILES IN THIS ZIP (drop into your repo, same folders — overwrite)
+  scripts/upload_icons/upload_icons.py   CHANGED — adds a --force push + skips PORTAL on normal runs
+  scripts/add_icons/add_icons.py         CHANGED — adds the --portal flow + file-away
+  scripts/add_icons/README.md            CHANGED — PORTAL notes
+  Icon Edit - PORTAL PREVIEW.bat         NEW — double-click preview
+  Icon Edit - PORTAL SEND.bat            NEW — double-click send
+
+  Put the two .bat files wherever you like (repo root or desktop). Your existing
+  PREVIEW / RUN launchers (for adding brand-new icons in bulk) are unchanged and
+  still work.
+
+NOTE
+  Folder locations default to  ICON LAUNCHPAD\PORTAL , \NEW OFM , \NEW DST  —
+  which match how you set things up, so no config needed. If you ever move them,
+  set PORTAL_DIR / LOCAL_PNG_OFM_DIR / LOCAL_DST_DIR in .env.local.
