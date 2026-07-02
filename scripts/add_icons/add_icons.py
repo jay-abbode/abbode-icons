@@ -6,17 +6,19 @@ Abbode Icon Library — Add Icons (one command runs all three steps)
 Every time you add new icons you normally run three scripts. This runs them
 for you, in the right order, from a single command:
 
-  1. Backfill    links the new OFM / DST / PNG files into the MASTER sheet
+  1. Upload     sends your locally-processed files from ICON LAUNCHPAD to the
+                right Drive folders (overwrites in place, never duplicates).
+  2. Backfill    links the new OFM / DST / PNG files into the MASTER sheet
                  (fills only blank cells, matched by icon name).
-  2. Auto-crop   trims empty space around the catalog PNGs in Drive
+  3. Auto-crop   trims empty space around the catalog PNGs in Drive
                  (in place; originals backed up locally first).
-  3. Auto-tag    generates thematic tags for any icon missing from tags.csv
+  4. Auto-tag    generates thematic tags for any icon missing from tags.csv
                  and appends them (so new icons are never left untagged).
-  4. Tags        writes the MASTER "Tags" column from tags.csv for search.
+  5. Tags        writes the MASTER "Tags" column from tags.csv for search.
 
-Order matters: backfill runs first so a brand-new PNG is linked before auto-crop
-looks for it, and auto-tag runs before the tags write so new rows get pushed to
-the sheet in the same run.
+Order matters: upload runs first so the files exist in Drive, then backfill
+links them, auto-crop trims the new/changed PNGs, and auto-tag runs before the
+tags write so new rows reach the sheet in the same run.
 
 SAFE BY DEFAULT. With no flags this previews all three (a dry run) and writes
 nothing. Add --apply to actually make changes; you're asked to confirm once.
@@ -63,6 +65,8 @@ BACKFILL = PROJECT_ROOT / "scripts" / "backfill_blanks" / "backfill_blanks.py"
 CROP = PROJECT_ROOT / "scripts" / "crop_pngs" / "crop_pngs.py"
 TAGS = PROJECT_ROOT / "scripts" / "icon_tags" / "populate_tags.py"
 AUTOTAG = PROJECT_ROOT / "scripts" / "icon_tags" / "autotag_new.py"
+UPLOAD = PROJECT_ROOT / "scripts" / "upload_icons" / "upload_icons.py"
+DEFAULT_LAUNCHPAD = r"C:\Users\abbod\Dropbox\File Processing (Don't Open)\ICON LAUNCHPAD"
 DEFAULT_CSV = PROJECT_ROOT / "scripts" / "icon_tags" / "tags.csv"
 
 BAR = "=" * 66
@@ -132,6 +136,22 @@ def build_crop(cfg: dict, only_file: str | None) -> list[str]:
     return argv
 
 
+def build_upload(cfg: dict, report_path: str | None) -> list[str]:
+    argv = [cfg["python"], str(UPLOAD),
+            "--launchpad", cfg["launchpad"], "--creds", cfg["creds"]]
+    if cfg["ofm"]:
+        argv += ["--ofm-folder", cfg["ofm"]]
+    if cfg["dst"]:
+        argv += ["--dst-folder", cfg["dst"]]
+    if cfg["png"]:
+        argv += ["--png-folder", cfg["png"]]
+    if report_path:
+        argv += ["--report-json", report_path]
+    if not cfg["apply"]:
+        argv.append("--dry-run")
+    return argv
+
+
 def build_autotag(cfg: dict) -> list[str]:
     argv = [cfg["python"], str(AUTOTAG),
             "--sheet-id", cfg["sheet_id"], "--creds", cfg["creds"],
@@ -195,6 +215,9 @@ def main() -> None:
     p.add_argument("--backup-root", help="crop: local folder for original backups")
     p.add_argument("--crop-all", action="store_true",
                    help="crop the whole catalog, not just the newly-linked icons")
+    p.add_argument("--launchpad-dir", help="local ICON LAUNCHPAD folder to upload from")
+    p.add_argument("--skip-upload", action="store_true",
+                   help="don't upload local files to Drive first")
     p.add_argument("--skip-backfill", action="store_true")
     p.add_argument("--skip-crop", action="store_true")
     p.add_argument("--skip-autotag", action="store_true",
@@ -215,6 +238,7 @@ def main() -> None:
         "dst": resolve("DST_FOLDER_ID", args.dst_folder, env_local),
         "png": resolve("PNG_FOLDER_ID", args.png_folder, env_local),
         "csv": args.csv or str(DEFAULT_CSV),
+        "launchpad": resolve("LAUNCHPAD_DIR", args.launchpad_dir, env_local, DEFAULT_LAUNCHPAD),
         "overwrite": args.overwrite, "padding": args.padding, "limit": args.limit,
         "no_backup": args.no_backup, "backup_root": args.backup_root,
     }
@@ -224,6 +248,14 @@ def main() -> None:
     has_folders = bool(cfg["ofm"] or cfg["dst"] or cfg["png"])
 
     # Decide whether each step runs, with a reason when it doesn't.
+    do_upload, why_upload = True, ""
+    if args.skip_upload:
+        do_upload, why_upload = False, "--skip-upload"
+    elif not UPLOAD.exists():
+        do_upload, why_upload = False, f"script missing: {UPLOAD}"
+    elif not has_folders:
+        do_upload, why_upload = False, "no OFM/DST/PNG folder IDs (set them in .env.local)"
+
     do_backfill, why_bf = True, ""
     if args.skip_backfill:
         do_backfill, why_bf = False, "--skip-backfill"
@@ -261,11 +293,13 @@ def main() -> None:
     print(f"  Folders     : OFM={'set' if cfg['ofm'] else '—'}  "
           f"DST={'set' if cfg['dst'] else '—'}  PNG={'set' if cfg['png'] else '—'}")
     print(f"  Plan        : "
+          f"[{'✓' if do_upload else '·'}] upload   "
           f"[{'✓' if do_backfill else '·'}] backfill   "
           f"[{'✓' if do_crop else '·'}] auto-crop ({crop_scope})   "
           f"[{'✓' if do_autotag else '·'}] auto-tag   "
           f"[{'✓' if do_tags else '·'}] tags")
-    for label, ok, why in (("backfill", do_backfill, why_bf),
+    for label, ok, why in (("upload", do_upload, why_upload),
+                           ("backfill", do_backfill, why_bf),
                            ("auto-crop", do_crop, why_crop),
                            ("auto-tag", do_autotag, why_autotag),
                            ("tags", do_tags, why_tags)):
@@ -276,27 +310,29 @@ def main() -> None:
     if args.print_commands:
         show_report = do_backfill and do_crop and not args.crop_all and args.apply
         print(f"\n{BAR}\n  COMMANDS\n{BAR}")
+        if do_upload:
+            print("  1) " + _fmt(build_upload(cfg, "<uploaded.json>" if args.apply else None)))
         if do_backfill:
-            print("  1) " + _fmt(build_backfill(cfg, "<report.json>" if show_report else None)))
+            print("  2) " + _fmt(build_backfill(cfg, "<report.json>" if show_report else None)))
         if do_crop:
             if args.crop_all:
-                print("  2) " + _fmt(build_crop(cfg, None)))
+                print("  3) " + _fmt(build_crop(cfg, None)))
             elif not args.apply:
-                print("  2) auto-crop skipped in dry-run (needs links); use --apply, or --crop-all to preview all")
+                print("  3) auto-crop skipped in dry-run (needs links); use --apply, or --crop-all to preview all")
             else:
-                print("  2) " + _fmt(build_crop(cfg, "<newly-linked.json>")) + "   (names from backfill's report)")
+                print("  3) " + _fmt(build_crop(cfg, "<newly-linked.json>")) + "   (names from upload + backfill reports)")
         if do_autotag:
-            print("  3) " + _fmt(build_autotag(cfg)))
+            print("  4) " + _fmt(build_autotag(cfg)))
         if do_tags:
-            print("  4) " + _fmt(build_tags(cfg)))
+            print("  5) " + _fmt(build_tags(cfg)))
         return
 
-    if not (do_backfill or do_crop or do_autotag or do_tags):
+    if not (do_upload or do_backfill or do_crop or do_autotag or do_tags):
         sys.exit("Nothing to run.")
 
     # One confirmation for the whole run.
     if args.apply:
-        print("\nAPPLY MODE — this will write to the sheet and OVERWRITE PNGs in Drive.")
+        print("\nAPPLY MODE — this uploads to Drive, and writes to the sheet + PNGs in Drive.")
         if input("Type 'yes' to run all steps for real: ").strip().lower() != "yes":
             sys.exit("Aborted — nothing changed.")
 
@@ -307,10 +343,20 @@ def main() -> None:
     results: list[tuple[str, str]] = []
     tmpdir = tempfile.mkdtemp(prefix="add_icons_")
     report_path = os.path.join(tmpdir, "backfill_report.json")
-    # Only ask backfill for a report when auto-crop needs the "new" set.
-    want_report = do_backfill and do_crop and not args.crop_all and args.apply
+    upload_report_path = os.path.join(tmpdir, "upload_report.json")
+    # Auto-crop's "new" set = newly-linked PNGs (backfill) + changed PNGs (upload).
+    want_report = do_crop and not args.crop_all and args.apply
 
-    # 1) Backfill
+    # 1) Upload local files to Drive
+    if do_upload:
+        results.append(("Upload", run_step(
+            "Upload to Drive",
+            build_upload(cfg, upload_report_path if want_report else None), child_env)))
+    else:
+        print(f"\n=== Upload: SKIPPED — {why_upload} ===")
+        results.append(("Upload", "skipped"))
+
+    # 2) Backfill
     if do_backfill:
         results.append(("Backfill", run_step(
             "Backfill", build_backfill(cfg, report_path if want_report else None), child_env)))
@@ -318,43 +364,39 @@ def main() -> None:
         print(f"\n=== Backfill: SKIPPED — {why_bf} ===")
         results.append(("Backfill", "skipped"))
 
-    # 2) Auto-crop
+    # 3) Auto-crop
     if do_crop:
         if args.crop_all:
             results.append(("Auto-crop", run_step("Auto-crop (all)", build_crop(cfg, None), child_env)))
         elif not args.apply:
             print("\n=== Auto-crop: SKIPPED in dry-run ===")
-            print("   New PNGs aren't linked until backfill actually writes, so there's nothing")
+            print("   New PNGs aren't linked/uploaded until we actually write, so there's nothing")
             print("   to preview here. Run with --apply, or use --crop-all to preview the whole catalog.")
             results.append(("Auto-crop", "skipped (dry-run)"))
-        elif not do_backfill:
-            print("\n=== Auto-crop: SKIPPED — backfill didn't run, so there's no 'new' set ===")
-            print("   Use --crop-all to re-crop the whole catalog.")
-            results.append(("Auto-crop", "skipped"))
         else:
-            new_names = read_png_icons(report_path)
+            new_names = sorted(set(read_png_icons(report_path)) | set(read_png_icons(upload_report_path)))
             if not new_names:
-                print("\n=== Auto-crop: nothing to do — no newly-linked PNGs this run ===")
+                print("\n=== Auto-crop: nothing to do — no new or changed PNGs this run ===")
                 print("   (Use --crop-all to re-crop the whole catalog.)")
                 results.append(("Auto-crop", "ok (nothing new)"))
             else:
                 only_file = os.path.join(tmpdir, "new_pngs.json")
                 Path(only_file).write_text(json.dumps(new_names), encoding="utf-8")
-                print(f"\n  Auto-crop will process {len(new_names)} newly-linked icon(s).")
+                print(f"\n  Auto-crop will process {len(new_names)} new/changed icon(s).")
                 results.append(("Auto-crop", run_step(
                     "Auto-crop (new icons)", build_crop(cfg, only_file), child_env)))
     else:
         print(f"\n=== Auto-crop: SKIPPED — {why_crop} ===")
         results.append(("Auto-crop", "skipped"))
 
-    # 3) Auto-tag: append any icons missing from tags.csv (before the sheet write).
+    # 4) Auto-tag: append any icons missing from tags.csv (before the sheet write).
     if do_autotag:
         results.append(("Auto-tag", run_step("Auto-tag new icons", build_autotag(cfg), child_env)))
     else:
         print(f"\n=== Auto-tag: SKIPPED — {why_autotag} ===")
         results.append(("Auto-tag", "skipped"))
 
-    # 4) Tags
+    # 5) Tags
     if do_tags:
         results.append(("Tags", run_step("Tags", build_tags(cfg), child_env)))
     else:

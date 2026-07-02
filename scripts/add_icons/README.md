@@ -3,19 +3,34 @@
 Every time you add new icons you used to run three scripts. `add_icons.py` runs
 them for you, in the right order, from a single command:
 
-1. **Backfill** — links the new OFM / DST / PNG files into the MASTER sheet
+1. **Upload** — sends your locally-processed files from the **ICON LAUNCHPAD**
+   folder to the right Drive folders (`.ofm`/`.dst`/`.png` routed by type). If a
+   file with that name already exists it's **overwritten in place** (same Drive
+   ID, so the sheet link keeps working) — so it never makes duplicates. A name
+   that's already duplicated in Drive is skipped with a warning.
+2. **Backfill** — links the new OFM / DST / PNG files into the MASTER sheet
    (fills only blank cells, matched by icon name).
-2. **Auto-crop** — trims empty space around the catalog PNGs in Drive.
-3. **Auto-tag** — for any icon on the sheet that has no row in `tags.csv`, it
-   generates thematic search tags (from the icon's category + name) and appends
-   a row, so new icons are never left untagged. Existing rows are never touched,
-   so your hand-written tags are safe. Edit any auto-generated tags in `tags.csv`
-   whenever you like.
-4. **Tags** — writes the MASTER "Tags" column from `tags.csv`.
+3. **Auto-crop** — trims empty space around the new/changed PNGs in Drive.
+4. **Auto-tag** — for any icon on the sheet that has no row in `tags.csv`, it
+   generates thematic search tags and appends a row. Existing rows are never
+   touched. Edit any auto-generated tags in `tags.csv` whenever you like.
+5. **Tags** — writes the MASTER "Tags" column from `tags.csv`.
 
-Order matters: backfill runs first so a brand-new PNG is linked before auto-crop
-looks for it, and auto-tag runs before the tags write so new rows reach the sheet
-in the same run.
+Order matters: upload puts the files in Drive, backfill links them, auto-crop
+trims the new/changed PNGs, and auto-tag runs before the tags write so new rows
+reach the sheet in the same run.
+
+**Launchpad path:** by default it uploads from
+`C:\Users\abbod\Dropbox\File Processing (Don't Open)\ICON LAUNCHPAD`. If your
+folder is named/placed differently, add `LAUNCHPAD_DIR=<full path>` to
+`.env.local`. The uploader walks that folder *and its subfolders*, so PNGs+OFMs
+in one subfolder and DSTs in another both work with no extra setup.
+
+**Drive write access:** uploading needs the service account (in
+`google-credentials.json`) to have **Content Manager** access to the three Drive
+folders — more than the read access backfill needs. The preview run tells you
+per-folder whether it can write; if not, share those folders with the service
+account's `client_email` and re-run.
 
 ## One-time setup
 

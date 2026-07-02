@@ -1,0 +1,70 @@
+ABBODE ICONS — AUTO-UPLOAD TO DRIVE  (last bit of friction, gone)
+================================================================
+
+WHAT'S NEW
+  The add_icons pipeline now has a first step that uploads your locally-processed
+  files to Google Drive for you. Full pipeline is now 5 steps:
+
+    1. Upload    ICON LAUNCHPAD  ->  Drive (routes .ofm/.dst/.png by type)
+    2. Backfill  links them into the MASTER sheet
+    3. Auto-crop trims the new/changed PNGs
+    4. Auto-tag  writes tags for any icon missing from tags.csv
+    5. Tags      pushes tags to the sheet
+
+  So your routine becomes: process files locally -> drop them in ICON LAUNCHPAD
+  -> double-click "RUN (apply)" -> hard-refresh. That's the whole thing.
+
+NO DUPLICATES (this is the important part)
+  For each local file, the uploader checks the target Drive folder:
+    - name not there yet          -> uploaded fresh
+    - one file with that name      -> that SAME Drive file is overwritten in place
+                                      (its file ID doesn't change, so the sheet
+                                      link keeps working and the app just shows
+                                      the new image)
+    - name already duplicated      -> skipped with a warning (so it never makes
+                                      an existing mess worse)
+  Matching is case-insensitive on the full filename. This is what structurally
+  prevents the Needlepoint-style duplicate problem from ever happening again:
+  replacing an icon = overwrite in place, not a second copy.
+
+SET UP THE LAUNCHPAD (one time)
+  Create the folder and drop your two existing subfolders inside it:
+    C:\Users\abbod\Dropbox\File Processing (Don't Open)\ICON LAUNCHPAD\
+        (PNGs + OFMs subfolder)
+        (DSTs subfolder)
+  The uploader walks the whole LAUNCHPAD tree, so the subfolder names don't
+  matter — it sorts files by extension, not by folder. If you name the parent
+  folder EXACTLY "ICON LAUNCHPAD" in that location, no config is needed. If you
+  put it elsewhere, add one line to .env.local:
+    LAUNCHPAD_DIR=C:\full\path\to\your\launchpad
+
+ONE THING TO CHECK ON YOUR FIRST PREVIEW  (Drive write access)
+  Uploading needs MORE access than the other steps: the service account in
+  google-credentials.json must have "Content Manager" rights on the OFM, DST,
+  and PNG folders (backfill only needed read access). The preview run prints,
+  per folder:
+      Folder write access (service account):
+        [OK ] New OFMs 2026
+        [NO ] ...
+  If any show [NO], open that folder in Drive > Share, add the service account's
+  client_email (found inside google-credentials.json) as Content Manager, and
+  re-run. Until then the uploader refuses to write (safe by default).
+
+FILES IN THIS ZIP (drop into your repo, same folders)
+  scripts/upload_icons/upload_icons.py   NEW  — the uploader
+  scripts/add_icons/add_icons.py         CHANGED — runs upload as step 1 of 5
+  scripts/add_icons/README.md            CHANGED — updated notes
+
+  Not included on purpose: your tags.csv, and the unchanged scripts
+  (backfill_blanks.py, crop_pngs.py, populate_tags.py).
+
+YOUR DOUBLE-CLICK LAUNCHERS ALREADY COVER THIS
+  The "PREVIEW (dry run)" and "RUN (apply)" .bat files call this same pipeline,
+  so they now include the upload step automatically — no change needed to them.
+  Preview first (it uploads nothing, just shows the plan + write-access check),
+  then RUN.
+
+HOW TO USE (same as before)
+  Preview (uploads nothing):   python scripts\add_icons\add_icons.py
+  For real:                    python scripts\add_icons\add_icons.py --apply
+  Skip just the upload:        add  --skip-upload
