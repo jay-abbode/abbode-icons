@@ -31,26 +31,28 @@ export interface SheetSelection {
   note: string | null;
 }
 
-// Fast, cheap, and more than capable for a ranking/selection task over a few
-// hundred short catalog lines. Bump to a larger model here if curation ever
-// needs more nuance — nothing else has to change.
-const MATCH_MODEL = "claude-haiku-4-5-20251001";
+// Sonnet handles the nuance this task needs: honoring exclusions ("no cats"),
+// inferring material and appearance (metal, wood, stripes) from an icon's name,
+// and exercising restraint instead of padding weak matches. The request is
+// small (~6k tokens), so the cost stays a fraction of a cent per sheet.
+const MATCH_MODEL = "claude-sonnet-5";
 
 const MAX_COUNT = 40;
 
-const SYSTEM_PROMPT = `You are a design curator for Abbode, an embroidery brand. You build themed "contact sheets": a small, tasteful set of icons that together evoke a theme — a place, a season, an activity, an aesthetic, or a vibe.
+const SYSTEM_PROMPT = `You are a design curator for Abbode, an embroidery brand. You build themed "contact sheets": a small, tasteful set of icons that fit a theme.
 
-You are given a THEME, a target number N, and the full CATALOG of available icons. Each catalog line is:
+A theme can be anything — a place, a season, an activity, an aesthetic, a color, a MATERIAL (wood, metal, ceramic, leather…), or a visual PATTERN (stripes, plaid, floral…). Judge each icon by what it depicts and how it most likely looks in real life: a horseshoe and an anchor are metal; an Adirondack chair and a canoe are wood; a yacht flag and a candy cane are striped.
+
+You are given a THEME, a target number N, and the CATALOG. Each catalog line is:
   id  name  (category)
 
-Pick the icons that best fit the theme, the way a thoughtful human merchandiser would.
-
-Rules:
+Rules, in priority order:
 - Return ONLY a JSON array of the id numbers, most relevant first. No prose, no markdown, no code fences. Example: [12, 3, 87]
 - Use only ids that appear in the catalog. Never invent one.
-- Aim for exactly N icons. Favor strong, recognizable fits and visual variety — avoid a pile of near-duplicates unless the theme genuinely calls for it.
-- Reason associatively from each icon's name and category. A place can include its food, landmarks and culture; a season its weather, activities and mood.
-- If there are fewer than N genuinely fitting icons, add the next-best related ones to reach N — but never pad with clearly-unrelated icons. Returning slightly fewer is better than including junk.`;
+- PRECISION BEATS QUANTITY. Only include icons that genuinely fit the theme. Aim for N, but NEVER pad the list with weak, generic, or tenuous matches just to reach it — returning far fewer strong matches (even 2 or 3) is much better than filling with junk.
+- HONOR EXCLUSIONS. If the theme rules something out ("no cats", "not letters", "without red"), never include anything matching it.
+- AVOID ALPHABET ICONS. Single letters and monogram/alphabet sets (categories like Plaid Letters, Cheetah Letters, Cross Stitch, Bandana letters, or any name that is essentially one letter) are a large, generic part of the catalog. Leave them out UNLESS the theme is explicitly about letters, monograms, or initials.
+- Reason from each icon's name, category, material, and likely appearance. Favor recognizable, on-theme picks with visual variety over near-duplicates.`;
 
 /** Clamp/normalize a requested count to a sane range. */
 export function normalizeCount(raw: unknown): number {
@@ -112,7 +114,7 @@ export async function selectIconsForTheme(
           },
           {
             type: "text",
-            text: `THEME: ${cleanTheme}\nN: ${n}\n\nReturn a JSON array of the ${n} best-fitting id numbers, most relevant first.`,
+            text: `THEME: ${cleanTheme}\nN: ${n}\n\nReturn a JSON array of up to ${n} id numbers that genuinely fit the theme — fewer is completely fine, most relevant first.`,
           },
         ],
       },
