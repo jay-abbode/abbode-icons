@@ -52,8 +52,11 @@ function computeLayout(
   renderCategory: boolean
 ): Layout {
   const n = dims.length;
-  const topM = renderLogo ? 150 : 90;
-  const botM = renderCategory ? 120 : 70;
+  // Always reserve the logo (top) and label (bottom) bands, even when they're
+  // toggled off. The grid geometry stays fixed, so the icons never move — the
+  // logo and label just appear or disappear inside their reserved space.
+  const topM = 150;
+  const botM = 120;
   const sideM = 120;
   const availW = SHEET_W - 2 * sideM;
   const availH = SHEET_H - topM - botM;
@@ -156,8 +159,8 @@ export default function ContactSheetGenerator({ loadId }: { loadId?: string }) {
   const [note, setNote] = useState<string | null>(null);
 
   const [icons, setIcons] = useState<SheetIconLite[]>([]);
-  const [renderLogo, setRenderLogo] = useState(true);
-  const [renderCategory, setRenderCategory] = useState(true);
+  const [renderLogo, setRenderLogo] = useState(false);
+  const [renderCategory, setRenderCategory] = useState(false);
   const [categoryLabel, setCategoryLabel] = useState("");
   const [labelTouched, setLabelTouched] = useState(false);
 
