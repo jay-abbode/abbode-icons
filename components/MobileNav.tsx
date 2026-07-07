@@ -56,6 +56,7 @@ export default function MobileNav({
     { href: "/", label: "Categories" },
     { href: "/browse", label: "All icons" },
     { href: "/assets", label: "Downloads" },
+    { href: "/contact-sheet", label: "Generate Contact Sheet" },
     { href: "/comments", label: "Notes", badge: commentTotal },
   ];
   const reports: Item[] = [
