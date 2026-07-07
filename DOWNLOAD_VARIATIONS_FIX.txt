@@ -1,0 +1,30 @@
+ABBODE ICONS — DOWNLOAD COUNT FIX (2,854 -> ~783)
+=================================================
+
+WHY IT SAID 2,854
+  It wasn't grabbing extra folders. For every icon flagged with color variation
+  ("Col. Var." = YES), the downloader was also generating a recolored PNG for
+  each of the 24 thread-palette colors. So the count was:
+     base catalog PNGs (one per icon, your column N)  +  all those recolors.
+  The recolors aren't files in column N — the app makes them on the fly.
+
+THE FIX
+  Color variations are now OPT-IN. Added an "Include color variations" checkbox
+  under File types, defaulting OFF. With it off, PNG = just the catalog PNG from
+  column N (one per icon) — which is what you expected. Tick it only when you
+  actually want all the thread-color recolors.
+
+  So a PNG-only, all-categories download now shows ~783 files instead of 2,854.
+
+FILE IN THIS ZIP (overwrite in your repo)
+  components/AssetDownloader.tsx
+
+INSTALL — app code, so it needs a redeploy
+  1. Copy the file into your repo (same path, overwrite).
+  2. Push (or double-click push_to_git.bat):
+       cd /d "C:\Users\abbod\Dropbox\File Processing (Don't Open)\ICON APP\abbode-icons"
+       git add -A
+       git commit -m "AssetDownloader: make color variations opt-in (PNG defaults to column N only)"
+       git push
+  3. Wait ~1 min for Vercel, then reload the downloads page. The count should
+     drop, and you'll see the new checkbox (off by default).

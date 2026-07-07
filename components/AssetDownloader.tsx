@@ -46,6 +46,9 @@ export default function AssetDownloader({ icons, categories }: Props) {
   const [selCats, setSelCats] = useState<Set<string>>(new Set());
   const [types, setTypes] = useState({ ofm: false, dst: false, png: true });
   const [sizes, setSizes] = useState({ small: true, medium: true, large: true });
+  // Color variations are opt-in: by default PNG means just the catalog PNG
+  // (the file in column N), not a recolor for every thread color.
+  const [inclVariations, setInclVariations] = useState(false);
 
   const [status, setStatus] = useState<"idle" | "running" | "done" | "error">(
     "idle"
@@ -92,7 +95,8 @@ export default function AssetDownloader({ icons, categories }: Props) {
     let n = 0;
     for (const cat of selCats) {
       for (const icon of iconsByCategory.get(cat) || []) {
-        if (types.png && icon.pngFileId) n += 1 + (variantCount.get(icon.slug) || 0);
+        if (types.png && icon.pngFileId)
+          n += 1 + (inclVariations ? variantCount.get(icon.slug) || 0 : 0);
         if (types.ofm) {
           for (const s of sizesSelected) if (icon.sizes[s].ofmFileId) n++;
         }
@@ -102,7 +106,7 @@ export default function AssetDownloader({ icons, categories }: Props) {
       }
     }
     return n;
-  }, [selCats, types, sizesSelected, iconsByCategory, variantCount]);
+  }, [selCats, types, sizesSelected, iconsByCategory, variantCount, inclVariations]);
 
   // ---- selection helpers ----
   const allSelected = selCats.size === categories.length && categories.length > 0;
@@ -124,9 +128,9 @@ export default function AssetDownloader({ icons, categories }: Props) {
     for (const cat of selCats) {
       const CAT = cat.toUpperCase();
       for (const icon of iconsByCategory.get(cat) || []) {
-        // PNG (+ variations, only for flagged icons)
+        // PNG (+ variations, only for flagged icons when opted in)
         if (types.png && icon.pngFileId) {
-          const variants = buildExportVariants(icon);
+          const variants = inclVariations ? buildExportVariants(icon) : [];
           if (variants.length > 0) {
             const folder = fileSafe(iconFileLabel(icon.name)) || "icon";
             const dir = `ICON PNG/${CAT} PNG/${folder}`;
@@ -327,6 +331,27 @@ export default function AssetDownloader({ icons, categories }: Props) {
               </label>
             ))}
           </div>
+
+          <label
+            className={`font-ui mt-3 flex items-start gap-2 border-t border-parchment pt-3 text-sm text-espresso ${
+              types.png ? "cursor-pointer" : "cursor-not-allowed opacity-50"
+            }`}
+          >
+            <input
+              type="checkbox"
+              checked={inclVariations}
+              onChange={() => setInclVariations((v) => !v)}
+              disabled={running || !types.png}
+              className="mt-0.5 h-4 w-4 accent-berry"
+            />
+            <span>
+              Include color variations
+              <span className="mt-0.5 block text-xs text-ink-muted">
+                Adds a recolored PNG per thread color for icons with color
+                variation. Leave off for just the catalog PNG (column N).
+              </span>
+            </span>
+          </label>
         </div>
 
         <div
