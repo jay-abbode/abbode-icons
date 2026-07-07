@@ -148,7 +148,7 @@ function dataUrlToBytes(dataUrl: string): Uint8Array {
   return bytes;
 }
 
-export default function ContactSheetGenerator() {
+export default function ContactSheetGenerator({ loadId }: { loadId?: string }) {
   const [theme, setTheme] = useState("");
   const [count, setCount] = useState(12);
   const [status, setStatus] = useState<"idle" | "matching" | "ready">("idle");
@@ -163,6 +163,7 @@ export default function ContactSheetGenerator() {
 
   const [pool, setPool] = useState<PoolIcon[]>([]);
   const [exporting, setExporting] = useState<string | null>(null);
+  const [saving, setSaving] = useState<"idle" | "saving" | "saved">("idle");
 
   const [loadTick, setLoadTick] = useState(0);
   const [logoReady, setLogoReady] = useState(false);
@@ -214,6 +215,44 @@ export default function ContactSheetGenerator() {
       cancelled = true;
     };
   }, []);
+
+  // --- Hydrate from a saved sheet when opened via ?load=<id> ---
+  useEffect(() => {
+    if (!loadId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/contact-sheet/library?id=${encodeURIComponent(loadId)}`
+        );
+        if (!res.ok || cancelled) return;
+        const s = (await res.json()) as {
+          theme: string;
+          label: string;
+          count: number;
+          renderLogo: boolean;
+          renderCategory: boolean;
+          icons: SheetIconLite[];
+        };
+        if (cancelled) return;
+        setTheme(s.theme || "");
+        setCount(s.count || s.icons.length || 12);
+        setRenderLogo(s.renderLogo);
+        setRenderCategory(s.renderCategory);
+        setCategoryLabel(s.label || s.theme || "");
+        setLabelTouched(true);
+        setIcons(
+          s.icons.map((i) => ({ slug: i.slug, name: i.name, pngFileId: i.pngFileId }))
+        );
+        setStatus("ready");
+      } catch {
+        /* ignore — just start blank */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loadId]);
 
   // --- Ensure every active icon's image is loading ---
   useEffect(() => {
@@ -310,6 +349,35 @@ export default function ContactSheetGenerator() {
     setIcons((prev) => (prev.some((i) => i.slug === p.slug) ? prev : [...prev, p]));
     setNote(null);
   }, []);
+
+  const saveToLibrary = useCallback(async () => {
+    if (icons.length === 0) return;
+    setSaving("saving");
+    try {
+      const label = (categoryLabel || theme).trim();
+      const res = await fetch("/api/contact-sheet/library", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          label,
+          theme: theme.trim() || label,
+          count: icons.length,
+          renderLogo,
+          renderCategory,
+          icons,
+        }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error((d as { error?: string }).error || "Save failed.");
+      }
+      setSaving("saved");
+      setTimeout(() => setSaving("idle"), 2500);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Save failed.");
+      setSaving("idle");
+    }
+  }, [icons, categoryLabel, theme, renderLogo, renderCategory]);
 
   // Make sure fonts + all active images are in before rendering an export.
   const ensureReady = useCallback(async () => {
@@ -592,6 +660,24 @@ ${parts.join("\n")}
               </div>
               <AddIcon pool={pool} existing={icons} onAdd={addIcon} />
             </div>
+
+            {/* Save to library */}
+            <button
+              type="button"
+              onClick={saveToLibrary}
+              disabled={saving === "saving" || icons.length === 0}
+              className={`font-ui w-full rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors focus-ring disabled:opacity-50 ${
+                saving === "saved"
+                  ? "border-cherry bg-pink-soft text-cherry"
+                  : "border-parchment bg-white text-espresso hover:border-pink hover:bg-pink-soft"
+              }`}
+            >
+              {saving === "saving"
+                ? "Saving…"
+                : saving === "saved"
+                ? "Saved to library ✓"
+                : "Save to library"}
+            </button>
 
             {/* Export */}
             <div className="rounded-xl border border-parchment bg-white p-4">

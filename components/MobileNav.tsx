@@ -106,6 +106,10 @@ export default function MobileNav({
             ))}
           </div>
 
+          <div className="pt-2">
+            <SavedSheetsSubmenu onNavigate={() => setOpen(false)} />
+          </div>
+
           <p className="font-ui px-3 pb-1 pt-5 text-xs font-semibold uppercase tracking-wide text-ink-muted">
             Data &amp; reports
           </p>
@@ -162,4 +166,139 @@ function Badge({ value }: { value: number }) {
       {value > 99 ? "99+" : value}
     </span>
   );
+}
+
+type SavedSheetSummary = {
+  id: string;
+  label: string;
+  theme: string;
+  createdAt: string;
+  count: number;
+};
+
+/**
+ * Collapsible "Saved sheets" submenu. Lazily loads the library the first time
+ * it's opened; each entry links to /contact-sheet?load=<id> to reopen that
+ * sheet for re-export or tweaking. A small ✕ deletes an entry.
+ */
+function SavedSheetsSubmenu({ onNavigate }: { onNavigate: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [sheets, setSheets] = useState<SavedSheetSummary[]>([]);
+
+  async function load() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/contact-sheet/library");
+      const data = await res.json();
+      setSheets(Array.isArray(data.sheets) ? data.sheets : []);
+    } catch {
+      setSheets([]);
+    } finally {
+      setLoading(false);
+      setLoaded(true);
+    }
+  }
+
+  function toggle() {
+    const next = !open;
+    setOpen(next);
+    if (next && !loaded) load();
+  }
+
+  async function remove(id: string) {
+    setSheets((prev) => prev.filter((s) => s.id !== id));
+    try {
+      await fetch(`/api/contact-sheet/library?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+    } catch {
+      /* best effort */
+    }
+  }
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={toggle}
+        aria-expanded={open}
+        className="font-ui flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium text-espresso transition-colors hover:bg-pink-soft"
+      >
+        <span>Saved sheets</span>
+        <Chevron open={open} />
+      </button>
+
+      {open && (
+        <div className="mb-1 mt-0.5 flex flex-col gap-0.5 pl-3">
+          {loading && (
+            <p className="font-ui px-3 py-1.5 text-xs text-ink-muted">Loading…</p>
+          )}
+          {!loading && sheets.length === 0 && (
+            <p className="font-ui px-3 py-1.5 text-xs text-ink-muted">
+              No saved sheets yet.
+            </p>
+          )}
+          {sheets.map((s) => (
+            <div key={s.id} className="group flex items-center gap-1">
+              <Link
+                href={`/contact-sheet?load=${encodeURIComponent(s.id)}`}
+                onClick={onNavigate}
+                className="flex-1 rounded-lg px-3 py-2 transition-colors hover:bg-pink-soft"
+              >
+                <span className="font-ui block truncate text-sm text-espresso">
+                  {s.label || s.theme || "Untitled"}
+                </span>
+                <span className="font-ui block text-[11px] text-ink-muted">
+                  {formatDate(s.createdAt)}
+                  {s.count ? ` · ${s.count} icons` : ""}
+                </span>
+              </Link>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(s.id);
+                }}
+                aria-label={`Delete ${s.label || "saved sheet"}`}
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] text-ink-muted opacity-0 transition-opacity hover:bg-parchment hover:text-cherry group-hover:opacity-100"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+      fill="none"
+      aria-hidden="true"
+      className={`transition-transform duration-150 ${open ? "rotate-180" : ""}`}
+    >
+      <path
+        d="M3 4.5L6 7.5L9 4.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function formatDate(iso: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }

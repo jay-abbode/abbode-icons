@@ -3,7 +3,11 @@ import ContactSheetGenerator from "@/components/ContactSheetGenerator";
 
 export const dynamic = "force-dynamic";
 
-export default function ContactSheetPage() {
+export default function ContactSheetPage({
+  searchParams,
+}: {
+  searchParams: { load?: string };
+}) {
   return (
     <>
       <Header showSearch={false} />
@@ -22,7 +26,7 @@ export default function ContactSheetPage() {
           </p>
         </div>
 
-        <ContactSheetGenerator />
+        <ContactSheetGenerator loadId={searchParams.load} />
       </main>
     </>
   );
