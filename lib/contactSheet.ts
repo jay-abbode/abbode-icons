@@ -41,15 +41,15 @@ const MAX_COUNT = 40;
 const SYSTEM_PROMPT = `You are a design curator for Abbode, an embroidery brand. You build themed "contact sheets": a small, tasteful set of icons that together evoke a theme — a place, a season, an activity, an aesthetic, or a vibe.
 
 You are given a THEME, a target number N, and the full CATALOG of available icons. Each catalog line is:
-  slug | name | category | tags
+  id  name  (category)
 
 Pick the icons that best fit the theme, the way a thoughtful human merchandiser would.
 
 Rules:
-- Return ONLY a JSON array of slug strings, most relevant first. No prose, no markdown, no code fences.
-- Use only slugs that appear in the catalog. Never invent one.
+- Return ONLY a JSON array of the id numbers, most relevant first. No prose, no markdown, no code fences. Example: [12, 3, 87]
+- Use only ids that appear in the catalog. Never invent one.
 - Aim for exactly N icons. Favor strong, recognizable fits and visual variety — avoid a pile of near-duplicates unless the theme genuinely calls for it.
-- Reason associatively. A place can include its food, landmarks and culture; a season its weather, activities and mood. The tags are hints, not hard filters.
+- Reason associatively from each icon's name and category. A place can include its food, landmarks and culture; a season its weather, activities and mood.
 - If there are fewer than N genuinely fitting icons, add the next-best related ones to reach N — but never pad with clearly-unrelated icons. Returning slightly fewer is better than including junk.`;
 
 /** Clamp/normalize a requested count to a sane range. */
@@ -84,59 +84,56 @@ export async function selectIconsForTheme(
   const pool = catalog.icons.filter(
     (i) => i.status.toUpperCase() === "ACTIVE" && i.pngFileId
   );
-  const bySlug = new Map(pool.map((i) => [i.slug, i]));
 
-  // One compact line per icon. Cap tags so a few very tagged icons don't
-  // dominate the prompt; the first tags are the most salient anyway.
+  // Compact, index-keyed lines: `id  name  (category)`. Tags are intentionally
+  // left out — they were auto-generated FROM name + category to begin with, so
+  // Claude reasons the same associations from those two fields, and dropping
+  // them cuts the request from ~28k tokens to ~6k. That's what keeps a single
+  // request under tight per-minute input-token rate limits.
   const catalogText = pool
-    .map((i) => {
-      const tags = i.tags.slice(0, 12).join(", ");
-      return `${i.slug} | ${i.name} | ${i.category}${tags ? " | " + tags : ""}`;
-    })
+    .map((icon, idx) => `${idx} ${icon.name} (${icon.category})`)
     .join("\n");
 
-  const userMessage = `THEME: ${cleanTheme}\nN: ${n}\n\nCATALOG:\n${catalogText}`;
-
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: MATCH_MODEL,
-      max_tokens: 1024,
-      temperature: 0, // reproducible: same theme + count -> same set
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userMessage }],
-    }),
-  });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(
-      `Claude API error (${res.status}). ${body.slice(0, 300)}`.trim()
-    );
-  }
-
-  const data = (await res.json()) as {
-    content?: Array<{ type: string; text?: string }>;
+  // The catalog is the same on every request, so it's sent as its own cached
+  // block: repeat generations within ~5 minutes reuse it (cheaper + faster).
+  const requestBody = {
+    model: MATCH_MODEL,
+    max_tokens: 1024,
+    temperature: 0, // reproducible: same theme + count -> same set
+    system: SYSTEM_PROMPT,
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: `CATALOG (id  name  (category)):\n${catalogText}`,
+            cache_control: { type: "ephemeral" },
+          },
+          {
+            type: "text",
+            text: `THEME: ${cleanTheme}\nN: ${n}\n\nReturn a JSON array of the ${n} best-fitting id numbers, most relevant first.`,
+          },
+        ],
+      },
+    ],
   };
+
+  const data = await callClaude(apiKey, requestBody);
   const text = (data.content || [])
     .filter((b) => b.type === "text" && typeof b.text === "string")
     .map((b) => b.text as string)
     .join("");
 
-  const slugs = parseSlugArray(text);
+  const ids = parseIndexArray(text);
 
-  // Validate against the catalog, dedupe, and preserve Claude's ordering.
-  const seen = new Set<string>();
+  // Validate ids against the pool, dedupe, and preserve Claude's ordering.
+  const seen = new Set<number>();
   const icons: SheetIcon[] = [];
-  for (const slug of slugs) {
-    const icon = bySlug.get(slug);
-    if (!icon || seen.has(slug)) continue;
-    seen.add(slug);
+  for (const id of ids) {
+    if (!Number.isInteger(id) || id < 0 || id >= pool.length || seen.has(id)) continue;
+    seen.add(id);
+    const icon = pool[id];
     icons.push({
       slug: icon.slug,
       name: icon.name,
@@ -163,17 +160,65 @@ export async function selectIconsForTheme(
 }
 
 /**
- * Pull the JSON slug array out of the model's reply. We ask for a bare array,
- * but this is defensive against stray prose or a code fence sneaking in.
+ * Pull the JSON id-number array out of the model's reply. We ask for a bare
+ * array, but this is defensive against stray prose, a code fence, or ids that
+ * come back as quoted strings.
  */
-function parseSlugArray(text: string): string[] {
+function parseIndexArray(text: string): number[] {
   const match = text.match(/\[[\s\S]*\]/);
   if (!match) return [];
   try {
     const parsed = JSON.parse(match[0]);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter((s): s is string => typeof s === "string");
+    return parsed
+      .map((v) =>
+        typeof v === "number" ? v : typeof v === "string" ? parseInt(v, 10) : NaN
+      )
+      .filter((n) => Number.isInteger(n));
   } catch {
     return [];
   }
+}
+
+/**
+ * POST to Claude's Messages API. On a 429 rate-limit we retry once after a
+ * short wait (honoring Retry-After when it's small); otherwise we surface a
+ * clean, actionable message instead of the raw API error body.
+ */
+async function callClaude(
+  apiKey: string,
+  body: unknown
+): Promise<{ content?: Array<{ type: string; text?: string }> }> {
+  const MAX_ATTEMPTS = 2;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (res.ok) return res.json();
+
+    if (res.status === 429) {
+      const retryAfter = Number(res.headers.get("retry-after"));
+      const waitS = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : 6;
+      if (attempt < MAX_ATTEMPTS && waitS <= 12) {
+        await new Promise((r) => setTimeout(r, waitS * 1000));
+        continue;
+      }
+      throw new Error(
+        `Claude is rate-limited right now. Wait about ${Math.ceil(
+          waitS
+        )}s and hit Generate again. To raise the ceiling, add credits at console.anthropic.com → Billing (that bumps your usage tier and the per-minute limit).`
+      );
+    }
+
+    const errText = await res.text().catch(() => "");
+    throw new Error(`Claude API error (${res.status}). ${errText.slice(0, 200)}`.trim());
+  }
+  throw new Error("Claude request failed."); // unreachable; satisfies the type checker
 }
