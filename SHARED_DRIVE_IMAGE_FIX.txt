@@ -1,0 +1,29 @@
+ABBODE ICONS — IMAGES BROKEN AFTER SHARED-DRIVE MOVE (fix)
+=========================================================
+
+WHAT HAPPENED
+  Nothing was lost — the PNGs are all still there with the same file IDs, and
+  the sheet links still point to them. The problem was in the APP: when Drive
+  files move onto a Shared Drive, the app's API calls that fetch them need a
+  "supportsAllDrives" flag. In a personal My Drive they didn't, so the code
+  never had it. After the move, every image fetch returned 404 -> the broken-
+  image placeholders you saw. (Your backfill script already had this flag, which
+  is why backfill kept working.)
+
+THE FIX
+  Added supportsAllDrives: true to the four Drive fetches in the two app routes:
+    app/api/image/[fileId]/route.ts     (shows the catalog images)
+    app/api/download/[fileId]/route.ts  (the OFM/DST/PNG download buttons — same
+                                         bug, would have failed on downloads too)
+
+INSTALL — this one DOES need a redeploy (it's app code, not a local script)
+  1. Copy both files from this zip into your repo (same paths, overwrite).
+  2. Push (or double-click push_to_git.bat):
+       cd /d "C:\Users\abbod\Dropbox\File Processing (Don't Open)\ICON APP\abbode-icons"
+       git add -A
+       git commit -m "image/download routes: supportsAllDrives so Shared Drive files load"
+       git push
+  3. Wait ~1 min for Vercel to redeploy, then hard-refresh the app (Ctrl+Shift+R).
+
+  The images should come right back. If a few still look stale, the hard-refresh
+  clears the last of the browser cache.

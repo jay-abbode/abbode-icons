@@ -1,0 +1,30 @@
+[
+  {
+    "slug": "boston-adirondack-chair",
+    "name": "Boston Adirondack Chair",
+    "category": "Boston",
+    "file_id": "1_wjqND88OirjG6zelbmEaOLbqZ32zPrC",
+    "status": "already_tight",
+    "original_size": [
+      404,
+      458
+    ],
+    "new_size": null,
+    "saved_bytes": null,
+    "error": null
+  },
+  {
+    "slug": "boston-cannoli",
+    "name": "Boston Cannoli",
+    "category": "Boston",
+    "file_id": "1zz8yw4S-LM51aS1pjpZ6op82m71y_VjF",
+    "status": "already_tight",
+    "original_size": [
+      459,
+      255
+    ],
+    "new_size": null,
+    "saved_bytes": null,
+    "error": null
+  }
+]

@@ -1,0 +1,53 @@
+[
+  {
+    "slug": "chicago-baseball-cap",
+    "name": "Chicago Baseball Cap",
+    "category": "Chicago",
+    "file_id": "1Ngkw6oEs8jpr8ZMKEdK9ubvnzCcV3gCz",
+    "status": "cropped",
+    "original_size": [
+      510,
+      402
+    ],
+    "new_size": [
+      467,
+      356
+    ],
+    "saved_bytes": 13161,
+    "error": null
+  },
+  {
+    "slug": "black-and-white-long-hair-cat",
+    "name": "Black and White Long Hair Cat",
+    "category": "Cats",
+    "file_id": "1cxjqkK6t-2d94uBOt6gfdqqq-cMjS3fE",
+    "status": "cropped",
+    "original_size": [
+      658,
+      517
+    ],
+    "new_size": [
+      614,
+      470
+    ],
+    "saved_bytes": -37694,
+    "error": null
+  },
+  {
+    "slug": "black-long-hair-cat",
+    "name": "Black Long Hair Cat",
+    "category": "Cats",
+    "file_id": "11x1694HrikU9xGaWNiOel6L7SKpi2N4c",
+    "status": "cropped",
+    "original_size": [
+      657,
+      522
+    ],
+    "new_size": [
+      613,
+      473
+    ],
+    "saved_bytes": -5265,
+    "error": null
+  }
+]

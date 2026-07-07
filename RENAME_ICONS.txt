@@ -1,0 +1,46 @@
+ABBODE ICONS — RENAME AN ICON (the 403 fix for renames)
+=======================================================
+
+WHY YOUR PORTAL PUSH 403'd
+  It wasn't backfill. The UPLOAD step failed with "Service Accounts do not have
+  storage quota." Your OFM/DST/PNG folders are in a personal My Drive, and a
+  service account has no storage there, so it CAN'T create new files — only
+  overwrite ones that already exist. Renaming produced new file names, so it
+  tried to create them, and Google refused.
+
+  (This also means brand-new icon uploads will fail until the folders live on a
+  real Shared Drive — see the note at the bottom. That's a separate, Monday fix.)
+
+THE RENAME DOESN'T NEED UPLOADING
+  The files are already in Drive under the OLD spelling. This tool renames them
+  in place to the new spelling — a name change only, which the service account
+  IS allowed to do — keeping the same file IDs. Then a normal backfill re-links
+  the emptied cells.
+
+STEP 1 — install
+  Copy  scripts/rename_icons/rename_icons.py  into your repo (new folder).
+
+STEP 2 — preview the rename (changes nothing)
+  python scripts\rename_icons\rename_icons.py --rename "Boston Adirondak Chair" "Boston Adirondack Chair" --rename "Boston Canolli" "Boston Cannoli"
+
+  Read the list it prints. It should show the .png plus the SMALL/MEDIUM/LARGE
+  .ofm and .dst files for each icon, renamed to the correct spelling.
+
+STEP 3 — do the rename
+  python scripts\rename_icons\rename_icons.py --apply --rename "Boston Adirondak Chair" "Boston Adirondack Chair" --rename "Boston Canolli" "Boston Cannoli"
+
+STEP 4 — re-link the sheet cells (backfill only, no upload)
+  python scripts\add_icons\add_icons.py --skip-upload --apply
+
+  (Make sure the Icon column already has the corrected spelling — you did that.)
+  Then hard-refresh the app.
+
+TIDY UP (optional)
+  In your NEW OFM / NEW DST launchpad folders, delete the two OLD-named files and
+  drop the corrected ones in from PORTAL, so your local folders match Drive. Not
+  required — it won't affect the app.
+
+REUSABLE
+  Any time you rename an icon: change the Icon column, empty its file cells, run
+  this tool with the old/new names, then the --skip-upload backfill. You can pass
+  as many  --rename "OLD" "NEW"  pairs as you like in one go.

@@ -44,9 +44,13 @@ async function fetchRawPng(fileId: string): Promise<RawCacheEntry> {
 
   const drive = getDriveClient();
   const [metaResp, contentResp] = await Promise.all([
-    drive.files.get({ fileId, fields: "mimeType,name,md5Checksum,modifiedTime" }),
+    drive.files.get({
+      fileId,
+      fields: "mimeType,name,md5Checksum,modifiedTime",
+      supportsAllDrives: true,
+    }),
     drive.files.get(
-      { fileId, alt: "media" },
+      { fileId, alt: "media", supportsAllDrives: true },
       { responseType: "arraybuffer" }
     ),
   ]);
