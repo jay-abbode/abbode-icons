@@ -1,4 +1,5 @@
 import { getIconCatalog } from "./sheets";
+import { loadVisualDescriptions } from "./visualIndex";
 
 /**
  * Contact-sheet icon curation.
@@ -41,10 +42,12 @@ const MAX_COUNT = 40;
 
 const SYSTEM_PROMPT = `You are a design curator for Abbode, an embroidery brand. You build themed "contact sheets": a small, tasteful set of icons that fit a theme.
 
-A theme can be anything — a place, a season, an activity, an aesthetic, a color, a MATERIAL (wood, metal, ceramic, leather…), or a visual PATTERN (stripes, plaid, floral…). Judge each icon by what it depicts and how it most likely looks in real life: a horseshoe and an anchor are metal; an Adirondack chair and a canoe are wood; a yacht flag and a candy cane are striped.
+A theme can be anything — a place, a season, an activity, an aesthetic, a color, a MATERIAL (wood, metal, ceramic, leather…), or a visual PATTERN (stripes, plaid, floral, polka-dot…).
 
 You are given a THEME, a target number N, and the CATALOG. Each catalog line is:
-  id  name  (category)
+  id  name  (category) — visual description
+
+The visual description (after the em-dash, when present) is what the icon ACTUALLY looks like: its subject, material, colors, and any surface pattern. TRUST IT — it is the source of truth for material, color, and pattern themes. For example, only icons whose description mentions stripes should match "stripes"; a chair or a swimsuit described as "striped" IS a match, while an icon with no stripes is not. Where a description is missing, fall back to the name and what it most likely looks like (a horseshoe is metal, a canoe is wood).
 
 Rules, in priority order:
 - Return ONLY a JSON array of the id numbers, most relevant first. No prose, no markdown, no code fences. Example: [12, 3, 87]
@@ -52,7 +55,7 @@ Rules, in priority order:
 - PRECISION BEATS QUANTITY. Only include icons that genuinely fit the theme. Aim for N, but NEVER pad the list with weak, generic, or tenuous matches just to reach it — returning far fewer strong matches (even 2 or 3) is much better than filling with junk.
 - HONOR EXCLUSIONS. If the theme rules something out ("no cats", "not letters", "without red"), never include anything matching it.
 - AVOID ALPHABET ICONS. Single letters and monogram/alphabet sets (categories like Plaid Letters, Cheetah Letters, Cross Stitch, Bandana letters, or any name that is essentially one letter) are a large, generic part of the catalog. Leave them out UNLESS the theme is explicitly about letters, monograms, or initials.
-- Reason from each icon's name, category, material, and likely appearance. Favor recognizable, on-theme picks with visual variety over near-duplicates.`;
+- Favor recognizable, on-theme picks with visual variety over near-duplicates.`;
 
 /** Clamp/normalize a requested count to a sane range. */
 export function normalizeCount(raw: unknown): number {
@@ -87,13 +90,20 @@ export async function selectIconsForTheme(
     (i) => i.status.toUpperCase() === "ACTIVE" && i.pngFileId
   );
 
-  // Compact, index-keyed lines: `id  name  (category)`. Tags are intentionally
-  // left out — they were auto-generated FROM name + category to begin with, so
-  // Claude reasons the same associations from those two fields, and dropping
-  // them cuts the request from ~28k tokens to ~6k. That's what keeps a single
-  // request under tight per-minute input-token rate limits.
+  // Per-icon visual descriptions (subject, material, colors, pattern) from the
+  // one-time vision pass in scripts/caption-icons.mjs. Empty until that script
+  // has been run — matching still works on name + category alone in that case.
+  const visual = await loadVisualDescriptions();
+
+  // Compact, index-keyed lines: `id  name  (category) — visual description`.
+  // Tags are intentionally left out (they were derived from name + category);
+  // the visual description is the new signal that makes material / color /
+  // pattern themes actually work.
   const catalogText = pool
-    .map((icon, idx) => `${idx} ${icon.name} (${icon.category})`)
+    .map((icon, idx) => {
+      const desc = icon.pngFileId ? visual.get(icon.pngFileId) : undefined;
+      return `${idx} ${icon.name} (${icon.category})${desc ? " — " + desc : ""}`;
+    })
     .join("\n");
 
   // The catalog is the same on every request, so it's sent as its own cached
