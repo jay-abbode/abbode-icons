@@ -101,7 +101,6 @@ export async function selectIconsForTheme(
   const requestBody = {
     model: MATCH_MODEL,
     max_tokens: 1024,
-    temperature: 0, // reproducible: same theme + count -> same set
     system: SYSTEM_PROMPT,
     messages: [
       {
