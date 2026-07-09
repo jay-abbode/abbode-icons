@@ -1,0 +1,36 @@
+[
+  {
+    "slug": "rain-umbrella",
+    "name": "Rain Umbrella",
+    "category": "Hobby",
+    "file_id": "1hHrMXK_wit03iZFAEJdZlLnmyjEcPAlB",
+    "status": "error",
+    "original_size": [
+      509,
+      500
+    ],
+    "new_size": [
+      458,
+      451
+    ],
+    "saved_bytes": null,
+    "error": "upload: <HttpError 404 when requesting https://www.googleapis.com/upload/drive/v3/files/1hHrMXK_wit03iZFAEJdZlLnmyjEcPAlB?alt=json&uploadType=media returned \"File not found: 1hHrMXK_wit03iZFAEJdZlLnmyjEcPAlB.\". Details: \"[{'message': 'File not found: 1hHrMXK_wit03iZFAEJdZlLnmyjEcPAlB.', 'domain': 'global', 'reason': 'notFound', 'location': 'fileId', 'locationType': 'parameter'}]\">"
+  },
+  {
+    "slug": "dog-paws",
+    "name": "Dog Paws",
+    "category": "Pets",
+    "file_id": "1MgPtB0Wg5nr8YcbkaXU2gaHdgqmEU9l5",
+    "status": "error",
+    "original_size": [
+      469,
+      510
+    ],
+    "new_size": [
+      425,
+      462
+    ],
+    "saved_bytes": null,
+    "error": "upload: <HttpError 404 when requesting https://www.googleapis.com/upload/drive/v3/files/1MgPtB0Wg5nr8YcbkaXU2gaHdgqmEU9l5?alt=json&uploadType=media returned \"File not found: 1MgPtB0Wg5nr8YcbkaXU2gaHdgqmEU9l5.\". Details: \"[{'message': 'File not found: 1MgPtB0Wg5nr8YcbkaXU2gaHdgqmEU9l5.', 'domain': 'global', 'reason': 'notFound', 'location': 'fileId', 'locationType': 'parameter'}]\">"
+  }
+]

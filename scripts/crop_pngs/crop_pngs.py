@@ -241,7 +241,7 @@ def _make_slug(name: str, seen: set[str]) -> str:
 # --------------------------------------------------------------------------
 
 def download_png(drive, file_id: str) -> bytes:
-    request = drive.files().get_media(fileId=file_id)
+    request = drive.files().get_media(fileId=file_id, supportsAllDrives=True)
     buffer = BytesIO()
     downloader = MediaIoBaseDownload(buffer, request)
     done = False
@@ -253,7 +253,9 @@ def download_png(drive, file_id: str) -> bytes:
 def overwrite_png(drive, file_id: str, new_bytes: bytes) -> None:
     """Replace the file's content with new_bytes, preserving file ID and name."""
     media = MediaIoBaseUpload(BytesIO(new_bytes), mimetype="image/png", resumable=False)
-    drive.files().update(fileId=file_id, media_body=media).execute()
+    drive.files().update(
+        fileId=file_id, media_body=media, supportsAllDrives=True
+    ).execute()
 
 
 # --------------------------------------------------------------------------

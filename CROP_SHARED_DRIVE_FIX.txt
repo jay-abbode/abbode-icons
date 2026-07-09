@@ -1,0 +1,38 @@
+ABBODE ICONS — AUTO-CROP FIX (Shared Drive)
+===========================================
+
+WHY AUTO-CROP FAILED
+  Same root cause as the broken images. crop_pngs.py downloads each PNG, crops
+  it, and writes it back to Drive — but its two Drive calls didn't include the
+  "supportsAllDrives" flag. That was fine when the PNGs were in a personal My
+  Drive, but once the PNG folder moved onto the Shared Drive, both the download
+  and the write-back fail. Every other step (upload, backfill, tags) already had
+  the flag, which is why only crop broke.
+
+THE FIX
+  Added supportsAllDrives: true to both Drive calls in:
+     scripts/crop_pngs/crop_pngs.py
+
+INSTALL — local script, NO redeploy needed
+  1. Copy scripts/crop_pngs/crop_pngs.py into your repo (overwrite).
+  2. Push (or double-click push_to_git.bat):
+       cd /d "C:\Users\abbod\Dropbox\File Processing (Don't Open)\ICON APP\abbode-icons"
+       git add -A
+       git commit -m "crop_pngs: supportsAllDrives so it can crop PNGs on the Shared Drive"
+       git push
+  (No Vercel redeploy — this is a local script.)
+
+CROP THE ICON YOU JUST EDITED
+  The icon you pushed through PORTAL uploaded fine but is sitting UNCROPPED,
+  because crop failed. After merging the fix, crop just that icon directly.
+
+  Preview (changes nothing) — replace "Icon Name" with the icon you edited:
+    python scripts\crop_pngs\crop_pngs.py --sheet-id 1zP1wTjPpYxhEQ4GnF8pCLdZj1DiyoGIrwEr3VWrLbqo --only "Icon Name"
+
+  Apply:
+    python scripts\crop_pngs\crop_pngs.py --sheet-id 1zP1wTjPpYxhEQ4GnF8pCLdZj1DiyoGIrwEr3VWrLbqo --only "Icon Name" --apply
+
+  Then hard-refresh the app. (Or, if you prefer, just drop the files back in
+  PORTAL and re-run PORTAL SEND — crop will work as part of the flow now.)
+
+  From here on, PORTAL and the normal pipeline will auto-crop correctly.
