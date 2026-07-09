@@ -1,0 +1,60 @@
+ABBODE ICONS — VISUAL SEARCH INDEX: MENU + SEARCH + SMART BUTTON
+===============================================================
+
+WHAT CHANGED (all four of your asks)
+
+1. SCAN ONLY NEW ICONS
+   Good news — the build was already incremental under the hood. The server
+   tracks which icons already have a description (by PNG file ID), so the first
+   run captions everything and every run after only does newly-added icons. No
+   change was needed there; the new button just drives it.
+
+2. VISUAL DATA NOW FEEDS THE SEARCH BAR
+   The /browse search now folds in each icon's visual description, so a query
+   like "stripes", "wood", or "navy" can find an icon by how it LOOKS even when
+   its name/tags don't say so. It's weighted BELOW name and tags (your call), so
+   a fuzzy visual match never outranks a real name or tag hit — it just surfaces
+   things that would otherwise be invisible, ranked underneath.
+
+3. THE BUTTON MOVED TO THE HAMBURGER MENU
+   Removed the panel from the Contact Sheet page. It now lives in the menu, at
+   the bottom of the "Data & reports" section.
+
+4. SMART LABEL
+   - "Scan New Icons" (with a count badge) when unindexed icons exist — tap to run.
+   - Greyed-out "Nothing to Scan" (with a ✓) when everything is up to date.
+   While running it shows a little progress bar right in the menu; closing the
+   menu doesn't stop the scan, and it's safe to reopen to check progress.
+
+   Bonus on the count check: it only runs when you OPEN the menu (not on every
+   page load), and it's cached for 15s — so it's even cheaper than the
+   "one read per page load" I originally floated.
+
+FILES IN THIS ZIP (all overwrite in place)
+   lib/searchLang.ts            - visual descriptions as a low-weight search field
+   app/browse/page.tsx          - loads descriptions, feeds them into search
+   components/MobileNav.tsx      - the "Scan New Icons" menu item
+   app/contact-sheet/page.tsx   - panel removed from this page
+
+VALIDATED
+   tsc --noEmit ✓   and   next build ✓   (full project, clean)
+
+INSTALL — app code, so it needs a redeploy
+   1. Copy all four files into your repo (same paths, overwrite).
+   2. Push (or double-click push_to_git.bat):
+        cd /d "C:\Users\abbod\Dropbox\File Processing (Don't Open)\ICON APP\abbode-icons"
+        git add -A
+        git commit -m "Visual index: feed search bar, move scan to menu, smart Scan New Icons button"
+        git push
+   3. Wait ~1 min for Vercel, then hard-refresh (Ctrl+Shift+R).
+
+TRY IT
+   - Open the hamburger menu → you'll see "Scan New Icons" or "Nothing to Scan".
+   - After the first full scan, search /browse for a look-based word like
+     "striped" or "wooden" and you should see matches that names alone wouldn't
+     surface, ranked below the exact name/tag hits.
+
+OPTIONAL CLEANUP (not required)
+   components/VisualIndexPanel.tsx is no longer used by anything. It's harmless
+   dead code (nothing imports it, so it isn't even bundled). You can delete that
+   one file whenever you like, or leave it.

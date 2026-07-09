@@ -173,6 +173,8 @@ export type SearchDoc = {
   tagWords: string[];
   categoryWords: string[];
   oldNameWords: string[];
+  /** Words from the icon's visual description (VISUAL_INDEX tab), if any. */
+  visualWords: string[];
 };
 
 function splitWords(s: string | null | undefined): string[] {
@@ -187,7 +189,8 @@ function splitWords(s: string | null | undefined): string[] {
 }
 
 export function buildSearchDoc(
-  icon: Pick<Icon, "name" | "category" | "oldName" | "tags">
+  icon: Pick<Icon, "name" | "category" | "oldName" | "tags">,
+  visualDesc?: string | null
 ): SearchDoc {
   return {
     nameFull: icon.name.toLowerCase(),
@@ -195,6 +198,7 @@ export function buildSearchDoc(
     tagWords: icon.tags.flatMap((t) => splitWords(t)),
     categoryWords: splitWords(icon.category),
     oldNameWords: splitWords(icon.oldName),
+    visualWords: splitWords(visualDesc),
   };
 }
 
@@ -240,6 +244,11 @@ const FIELD_WEIGHTS: Array<[keyof Omit<SearchDoc, "nameFull">, number]> = [
   ["tagWords", 2],
   ["categoryWords", 1.6],
   ["oldNameWords", 1.2],
+  // Visual-description words rank LAST. They let a query like "stripes" or
+  // "wood" find an icon by how it actually looks even when the name, tags, and
+  // category don't say so — but the low weight means a visual-only hit never
+  // outranks a real name or tag match.
+  ["visualWords", 0.8],
 ];
 
 /**

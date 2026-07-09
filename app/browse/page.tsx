@@ -3,6 +3,7 @@ import { getIconCatalog, type Icon } from "@/lib/sheets";
 import { getCommentCounts } from "@/lib/comments";
 import { getIconOrderCounts, normIconName } from "@/lib/orderStats";
 import { getThreadBySlot, rgbToHex } from "@/lib/threadPalette";
+import { loadVisualDescriptions } from "@/lib/visualIndex";
 import {
   parseSearchQuery,
   familiesMatch,
@@ -36,15 +37,18 @@ export default async function BrowsePage({
   let catalog;
   let commentCounts: Record<string, number> = {};
   let orderCounts: Record<string, number> = {};
+  let visualDescriptions: Map<string, string> = new Map();
   try {
-    const [c, countsResult, orders] = await Promise.all([
+    const [c, countsResult, orders, visual] = await Promise.all([
       getIconCatalog(),
       getCommentCounts().catch(() => ({ counts: {} as Record<string, number>, total: 0 })),
       getIconOrderCounts().catch(() => ({} as Record<string, number>)),
+      loadVisualDescriptions().catch(() => new Map<string, string>()),
     ]);
     catalog = c;
     commentCounts = countsResult.counts;
     orderCounts = orders;
+    visualDescriptions = visual;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return (
@@ -107,6 +111,7 @@ export default async function BrowsePage({
     colorSlots,
     sort,
     orderCounts,
+    visualDescriptions,
   });
 
   // When sorting by popularity, surface each visible icon's order count on its
@@ -308,9 +313,15 @@ function applyFilters(
     colorSlots: number[];
     sort: SortMode;
     orderCounts: Record<string, number>;
+    visualDescriptions: Map<string, string>;
   }
 ): Icon[] {
   let result = icons;
+
+  // Visual description for an icon (from the VISUAL_INDEX tab), keyed by PNG
+  // file ID. Folded into the search doc so looks-based queries work.
+  const descOf = (i: Icon) =>
+    i.pngFileId ? opts.visualDescriptions.get(i.pngFileId) : undefined;
 
   if (opts.category) result = result.filter((i) => i.category === opts.category);
   if (opts.colorVarOnly) result = result.filter((i) => i.hasColorVariation);
@@ -340,7 +351,7 @@ function applyFilters(
       // then rank by how well the text tokens match.
       scored = result
         .filter((i) => familiesMatch(i.threadSlots, families))
-        .map((i) => ({ i, rel: scoreDoc(buildSearchDoc(i), tokens) }))
+        .map((i) => ({ i, rel: scoreDoc(buildSearchDoc(i, descOf(i)), tokens) }))
         .filter((x) => x.rel > 0);
     } else if (families.length > 0) {
       // Pure color query ("olive", "red, green and blue"): also surface icons
@@ -352,7 +363,7 @@ function applyFilters(
     } else if (tokens.length > 0) {
       // Text-only query: every token must match somewhere.
       scored = result
-        .map((i) => ({ i, rel: scoreDoc(buildSearchDoc(i), tokens) }))
+        .map((i) => ({ i, rel: scoreDoc(buildSearchDoc(i, descOf(i)), tokens) }))
         .filter((x) => x.rel > 0);
     } else {
       // Query was only stopwords — keep everything, no relevance signal.

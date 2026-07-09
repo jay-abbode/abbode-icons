@@ -1,0 +1,19 @@
+[
+  {
+    "slug": "dog-paws",
+    "name": "Dog Paws",
+    "category": "Pets",
+    "file_id": "1MgPtB0Wg5nr8YcbkaXU2gaHdgqmEU9l5",
+    "status": "cropped",
+    "original_size": [
+      469,
+      510
+    ],
+    "new_size": [
+      425,
+      462
+    ],
+    "saved_bytes": -4144,
+    "error": null
+  }
+]

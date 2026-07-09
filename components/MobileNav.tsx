@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { createPortal } from "react-dom";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
  * Hamburger menu — a slide-in drawer that holds every destination in one place.
@@ -119,6 +121,7 @@ export default function MobileNav({
                 <span>{it.label}</span>
               </Link>
             ))}
+            <ScanNewIconsItem menuOpen={open} />
           </div>
 
           {user ? (
@@ -165,6 +168,199 @@ function Badge({ value }: { value: number }) {
     <span className="font-ui inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-cherry px-1 text-[10px] font-bold leading-none text-porcelain tabular-nums">
       {value > 99 ? "99+" : value}
     </span>
+  );
+}
+
+/**
+ * "Scan New Icons" — the visual search index trigger, living in the menu.
+ *
+ * The index (VISUAL_INDEX tab) gives each icon a short description of how it
+ * looks so the search bar can match on material / color / pattern. This item
+ * only ever scans icons that don't have a description yet — the server tracks
+ * what's done, so the very first run captions everything and every run after
+ * that just picks up newly-added icons.
+ *
+ * Status is fetched when the drawer OPENS (not on page load), so there's no
+ * per-page cost. The label reflects the current state:
+ *   - "Scan New Icons" + a count badge when unindexed icons exist,
+ *   - a greyed-out "Nothing to Scan" when everything is up to date.
+ * The scan runs in resumable batches; closing the menu doesn't stop it.
+ */
+function ScanNewIconsItem({ menuOpen }: { menuOpen: boolean }) {
+  const [phase, setPhase] = useState<
+    "checking" | "ready" | "running" | "done" | "error"
+  >("checking");
+  const [captioned, setCaptioned] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [rateLimited, setRateLimited] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const runningRef = useRef(false);
+  const fetchedAtRef = useRef(0);
+
+  const newCount = Math.max(0, total - captioned);
+  const pct = total > 0 ? Math.round((captioned / total) * 100) : 0;
+
+  const row =
+    "font-ui flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium text-espresso transition-colors";
+
+  const checkStatus = useCallback(async () => {
+    setPhase((p) => (p === "running" ? p : "checking"));
+    try {
+      const res = await fetch("/api/contact-sheet/build-index");
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Couldn't read index status.");
+      setCaptioned(d.captioned);
+      setTotal(d.total);
+      fetchedAtRef.current = Date.now();
+      setError(null);
+      setPhase(d.total > 0 && d.captioned >= d.total ? "done" : "ready");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't read index status.");
+      setPhase("error");
+    }
+  }, []);
+
+  // Refresh status each time the drawer opens (cheap, on demand), skipping if a
+  // scan is running or we just checked. Nothing fires on page load.
+  useEffect(() => {
+    if (!menuOpen || runningRef.current) return;
+    if (phase !== "checking" && Date.now() - fetchedAtRef.current < 15000) return;
+    checkStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [menuOpen]);
+
+  // Stop the loop if this ever unmounts.
+  useEffect(() => () => {
+    runningRef.current = false;
+  }, []);
+
+  const run = useCallback(async () => {
+    setError(null);
+    setPhase("running");
+    runningRef.current = true;
+    let noProgress = 0;
+    try {
+      while (runningRef.current) {
+        const res = await fetch("/api/contact-sheet/build-index", { method: "POST" });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || "Scan failed.");
+        setCaptioned(d.captioned);
+        setTotal(d.total);
+        setRateLimited(!!d.rateLimited);
+        if (d.done) {
+          setPhase("done");
+          runningRef.current = false;
+          break;
+        }
+        if (d.processed === 0 && !d.rateLimited) {
+          noProgress += 1;
+          if (noProgress >= 4) {
+            const left = Math.max(0, d.total - d.captioned);
+            setError(
+              `Couldn't describe ${left} icon${left === 1 ? "" : "s"} (they may be missing an image). Everything else is done.`
+            );
+            setPhase("error");
+            runningRef.current = false;
+            break;
+          }
+        } else {
+          noProgress = 0;
+        }
+        await sleep(d.rateLimited ? 8000 : 400);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Scan failed.");
+      setPhase("error");
+      runningRef.current = false;
+    } finally {
+      setRateLimited(false);
+      fetchedAtRef.current = Date.now();
+    }
+  }, []);
+
+  const stop = useCallback(() => {
+    runningRef.current = false;
+    setPhase(total > 0 && captioned >= total ? "done" : "ready");
+  }, [total, captioned]);
+
+  if (phase === "running") {
+    return (
+      <div className="rounded-lg px-3 py-2.5">
+        <div className="flex items-center justify-between gap-3">
+          <span className="font-ui text-[15px] font-medium text-espresso">
+            Scanning new icons…
+          </span>
+          <button
+            type="button"
+            onClick={stop}
+            className="font-ui rounded-full border border-cream-200 bg-white px-3 py-1 text-xs font-semibold text-espresso transition-colors hover:border-pink focus-ring"
+          >
+            Stop
+          </button>
+        </div>
+        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-parchment">
+          <div
+            className="h-full rounded-full bg-cherry transition-[width] duration-500"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <p className="font-ui mt-1.5 text-[11px] text-ink-muted">
+          {captioned} of {total} described ({pct}%)
+          {rateLimited ? " · pausing for rate limit…" : ""}
+        </p>
+      </div>
+    );
+  }
+
+  if (phase === "checking") {
+    return (
+      <div className={`${row} cursor-default opacity-60`}>
+        <span>Search index</span>
+        <span className="font-ui text-xs text-ink-muted">Checking…</span>
+      </div>
+    );
+  }
+
+  if (phase === "error") {
+    return (
+      <div className="rounded-lg px-3 py-2">
+        <button
+          type="button"
+          onClick={checkStatus}
+          className="font-ui flex w-full items-center justify-between gap-3 text-[15px] font-medium text-espresso"
+        >
+          <span>Search index</span>
+          <span className="font-ui text-xs font-semibold text-cherry">Retry</span>
+        </button>
+        {error && (
+          <p className="font-ui mt-1 text-[11px] leading-snug text-berry">{error}</p>
+        )}
+      </div>
+    );
+  }
+
+  if (newCount === 0) {
+    // Everything indexed — greyed out, nothing to do.
+    return (
+      <div className={`${row} cursor-default opacity-45`} aria-disabled="true">
+        <span>Nothing to Scan</span>
+        <span className="font-ui text-sm text-sage" aria-hidden>
+          ✓
+        </span>
+      </div>
+    );
+  }
+
+  // New icons are waiting to be described.
+  return (
+    <button
+      type="button"
+      onClick={run}
+      className={`${row} text-cherry hover:bg-pink-soft`}
+    >
+      <span>Scan New Icons</span>
+      <Badge value={newCount} />
+    </button>
   );
 }
 

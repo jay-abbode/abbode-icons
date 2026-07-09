@@ -1,6 +1,5 @@
 import Header from "@/components/Header";
 import ContactSheetGenerator from "@/components/ContactSheetGenerator";
-import VisualIndexPanel from "@/components/VisualIndexPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +27,6 @@ export default function ContactSheetPage({
         </div>
 
         <ContactSheetGenerator loadId={searchParams.load} />
-        <VisualIndexPanel />
       </main>
     </>
   );
