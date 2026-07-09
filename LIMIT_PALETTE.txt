@@ -1,0 +1,46 @@
+ABBODE ICONS — CONTACT SHEET: LIMIT PALETTE
+===========================================
+
+Builds on the two-cap update you already committed — these files contain that
+work plus the new palette pane, so they overwrite cleanly.
+
+WHAT'S NEW
+  A "Limit palette" button sits next to the color-cap dropdowns. Click it to
+  open a grid of the thread colors; pick the specific colors the sheet may use.
+  When a palette is set, only icons that use NOTHING outside those colors are
+  shown (i.e. the whole sheet can be stitched with just the chosen threads).
+
+HOW IT RELATES TO THE CAPS
+  - How many colors you can pick is capped by "Max colors / sheet" — the pane
+    shows "X / N selected" and stops you at N. If that dropdown is on "Any",
+    the palette selection is unlimited.
+  - If you later lower "Max colors / sheet" below the number already picked, the
+    palette trims itself to fit.
+  - The palette composes with the caps: the per-sheet cap still applies on top,
+    so a large palette plus a small per-sheet number still yields a sheet within
+    that number of colors.
+
+NOTES
+  - Palette matching uses the "Thread Colors" column. Icons with a blank cell
+    are skipped while a palette is set (their colors can't be confirmed).
+  - The "Add an icon by name" box still ignores the palette — it's your override.
+  - Layout follows the existing Filters color picker: a color dot + name per
+    swatch, selected ones ringed and checked; the grid is responsive (2/3/4
+    columns) and collapses when the button is toggled off.
+
+FILES IN THIS ZIP (all overwrite in place)
+  components/ContactSheetGenerator.tsx      - Limit palette button + swatch pane
+  app/api/contact-sheet/match/route.ts      - passes the palette through
+  lib/contactSheet.ts                       - filters the pool to palette colors
+
+VALIDATED
+  tsc --noEmit ✓ , next build ✓ , and a palette-subset logic test ✓
+
+INSTALL — app code, needs a redeploy
+  1. Copy all three files into your repo (same paths, overwrite).
+  2. Push (or double-click push_to_git.bat):
+       cd /d "C:\Users\abbod\Dropbox\File Processing (Don't Open)\ICON APP\abbode-icons"
+       git add -A
+       git commit -m "Contact sheet: add Limit palette color selector"
+       git push
+  3. Wait ~1 min for Vercel, then hard-refresh (Ctrl+Shift+R).

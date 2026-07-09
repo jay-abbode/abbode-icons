@@ -64,13 +64,32 @@ export function normalizeCount(raw: unknown): number {
   return Math.max(1, Math.min(MAX_COUNT, n));
 }
 
+/** Normalize an optional positive-integer color cap; anything else → null. */
+function normalizeCap(raw: number | null | undefined): number | null {
+  return typeof raw === "number" && Number.isFinite(raw) && raw > 0
+    ? Math.floor(raw)
+    : null;
+}
+
 /**
  * Curate `count` icons for `theme` from the live catalog.
  * Throws with a clear message if the API key is missing or the model errors.
  */
+/** The optional color constraints a sheet can be generated under. */
+export interface ColorCaps {
+  /** Most thread SLOTS any single icon may use (its own color count). */
+  maxPerIcon?: number | null;
+  /** Most DISTINCT colors the whole sheet may use — the union of all picks. */
+  maxPerSheet?: number | null;
+  /** Fixed set of thread slots the sheet may draw from; an icon qualifies only
+   *  if every color it uses is in this set. Empty/undefined = no palette limit. */
+  palette?: number[] | null;
+}
+
 export async function selectIconsForTheme(
   theme: string,
-  count: number
+  count: number,
+  caps: ColorCaps = {}
 ): Promise<SheetSelection> {
   const cleanTheme = theme.trim();
   if (!cleanTheme) throw new Error("Please enter a theme.");
@@ -86,9 +105,53 @@ export async function selectIconsForTheme(
   const catalog = await getIconCatalog();
 
   // Only active designs that actually have a rendered PNG can go on a sheet.
-  const pool = catalog.icons.filter(
+  let pool = catalog.icons.filter(
     (i) => i.status.toUpperCase() === "ACTIVE" && i.pngFileId
   );
+
+  // Two independent color caps (both optional):
+  //   • maxPerIcon  — the most thread SLOTS any single icon may use.
+  //   • maxPerSheet — the most DISTINCT colors the whole sheet may use, i.e.
+  //                   the size of the union of every pick's thread slots.
+  // `threadSlots` is a design's DISTINCT Madeira spools (parseThreadSlots
+  // dedupes), so its length is that icon's color count. Icons with no recorded
+  // thread colors can't be confirmed against either cap, so they're excluded
+  // while a cap is active.
+  const perIcon = normalizeCap(caps.maxPerIcon);
+  const perSheet = normalizeCap(caps.maxPerSheet);
+  // Optional fixed palette: the specific thread slots the sheet may draw from.
+  const paletteSet =
+    Array.isArray(caps.palette) && caps.palette.length
+      ? new Set(caps.palette.filter((s) => Number.isInteger(s)))
+      : null;
+
+  if (perIcon != null || perSheet != null || paletteSet != null) {
+    // Every constraint needs a known color count — drop icons with a blank cell.
+    pool = pool.filter((i) => i.threadSlots.length > 0);
+
+    // Fixed palette: an icon qualifies only if EVERY color it uses is in the
+    // palette (i.e. it can be stitched with just those threads).
+    if (paletteSet != null) {
+      pool = pool.filter((i) => i.threadSlots.every((s) => paletteSet.has(s)));
+    }
+
+    // Per-icon cap — and the per-sheet cap's single-icon floor — bound how many
+    // slots one design may use. The effective ceiling is the smaller of the two.
+    const limit = Math.min(perIcon ?? Infinity, perSheet ?? Infinity);
+    if (limit !== Infinity) {
+      pool = pool.filter((i) => i.threadSlots.length <= limit);
+    }
+
+    if (pool.length === 0) {
+      const reason =
+        paletteSet != null
+          ? "use only the selected palette colors"
+          : `use ${limit} color${limit === 1 ? "" : "s"} or fewer`;
+      throw new Error(
+        `No active icons ${reason} (with recorded thread colors). Adjust the color limits or palette, or set them to Any.`
+      );
+    }
+  }
 
   // Per-icon visual descriptions (subject, material, colors, pattern) from the
   // one-time vision pass in scripts/caption-icons.mjs. Empty until that script
@@ -105,6 +168,12 @@ export async function selectIconsForTheme(
       return `${idx} ${icon.name} (${icon.category})${desc ? " — " + desc : ""}`;
     })
     .join("\n");
+
+  // When a per-sheet color budget is active, some relevant picks get dropped for
+  // using colors that don't fit the running budget — so ask Claude for a deeper
+  // ranked list to choose from. We still return at most `n`.
+  const candidateN =
+    perSheet != null ? Math.min(MAX_COUNT, Math.max(n, n * 2)) : n;
 
   // The catalog is the same on every request, so it's sent as its own cached
   // block: repeat generations within ~5 minutes reuse it (cheaper + faster).
@@ -123,7 +192,7 @@ export async function selectIconsForTheme(
           },
           {
             type: "text",
-            text: `THEME: ${cleanTheme}\nN: ${n}\n\nReturn a JSON array of up to ${n} id numbers that genuinely fit the theme — fewer is completely fine, most relevant first.`,
+            text: `THEME: ${cleanTheme}\nN: ${n}\n\nReturn a JSON array of up to ${candidateN} id numbers that genuinely fit the theme, most relevant first — fewer is completely fine. I'll use the top ${n}.`,
           },
         ],
       },
@@ -138,13 +207,24 @@ export async function selectIconsForTheme(
 
   const ids = parseIndexArray(text);
 
-  // Validate ids against the pool, dedupe, and preserve Claude's ordering.
+  // Walk Claude's ranked ids, validate + dedupe, and (when a per-sheet cap is
+  // set) greedily enforce the sheet-wide color budget: an icon is added only if
+  // it keeps the union of all picked colors within maxPerSheet. Going in
+  // relevance order means the strongest matches claim the budget first; later
+  // picks that reuse those colors cost nothing and still get in.
   const seen = new Set<number>();
   const icons: SheetIcon[] = [];
+  const sheetColors = new Set<number>();
   for (const id of ids) {
     if (!Number.isInteger(id) || id < 0 || id >= pool.length || seen.has(id)) continue;
     seen.add(id);
     const icon = pool[id];
+    if (perSheet != null) {
+      const merged = new Set(sheetColors);
+      for (const s of icon.threadSlots) merged.add(s);
+      if (merged.size > perSheet) continue; // would blow the sheet budget — skip
+      for (const s of icon.threadSlots) sheetColors.add(s);
+    }
     icons.push({
       slug: icon.slug,
       name: icon.name,
@@ -160,11 +240,20 @@ export async function selectIconsForTheme(
     );
   }
 
+  const capParts: string[] = [];
+  if (perIcon != null) capParts.push(`${perIcon}/icon`);
+  if (perSheet != null) capParts.push(`${perSheet}/sheet`);
+  if (paletteSet != null) capParts.push(`${paletteSet.size}-color palette`);
+  const capNote = capParts.length
+    ? ` within your color limits (${capParts.join(", ")})`
+    : "";
   const note =
     icons.length < n
       ? `Only ${icons.length} strong match${
           icons.length === 1 ? "" : "es"
-        } for "${cleanTheme}" — add a few manually or reword the theme to reach ${n}.`
+        } for "${cleanTheme}"${capNote} — add a few manually${
+          capParts.length ? ", raise the color limits," : ""
+        } or reword the theme to reach ${n}.`
       : null;
 
   return { theme: cleanTheme, requested: n, icons, note };

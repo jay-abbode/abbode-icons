@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PDFDocument } from "pdf-lib";
 import { WORDMARK_PATHS, wordmarkSvg } from "@/lib/wordmark";
+import { THREAD_PALETTE, rgbToHex } from "@/lib/threadPalette";
 
 /* ------------------------------------------------------------------ *
  * Contact-sheet generator.
@@ -154,6 +155,10 @@ function dataUrlToBytes(dataUrl: string): Uint8Array {
 export default function ContactSheetGenerator({ loadId }: { loadId?: string }) {
   const [theme, setTheme] = useState("");
   const [count, setCount] = useState(12);
+  const [maxPerIcon, setMaxPerIcon] = useState<number | null>(null); // null = Any
+  const [maxPerSheet, setMaxPerSheet] = useState<number | null>(null); // null = Any
+  const [palette, setPalette] = useState<number[]>([]); // selected thread slots
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [status, setStatus] = useState<"idle" | "matching" | "ready">("idle");
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -329,7 +334,7 @@ export default function ContactSheetGenerator({ loadId }: { loadId?: string }) {
       const res = await fetch("/api/contact-sheet/match", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ theme: t, count }),
+        body: JSON.stringify({ theme: t, count, maxPerIcon, maxPerSheet, palette }),
       });
       const data = (await res.json()) as MatchResponse & { error?: string };
       if (!res.ok) throw new Error(data.error || "Something went wrong.");
@@ -341,7 +346,7 @@ export default function ContactSheetGenerator({ loadId }: { loadId?: string }) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
       setStatus("ready");
     }
-  }, [theme, count, labelTouched]);
+  }, [theme, count, maxPerIcon, maxPerSheet, palette, labelTouched]);
 
   const removeIcon = useCallback((slug: string) => {
     setIcons((prev) => prev.filter((i) => i.slug !== slug));
@@ -352,6 +357,26 @@ export default function ContactSheetGenerator({ loadId }: { loadId?: string }) {
     setIcons((prev) => (prev.some((i) => i.slug === p.slug) ? prev : [...prev, p]));
     setNote(null);
   }, []);
+
+  // Toggle a thread color in the palette. Selection is capped by the per-sheet
+  // limit (you can't pick more colors than the sheet is allowed to use).
+  const togglePaletteColor = useCallback(
+    (slot: number) => {
+      setPalette((prev) => {
+        if (prev.includes(slot)) return prev.filter((s) => s !== slot);
+        if (maxPerSheet != null && prev.length >= maxPerSheet) return prev;
+        return [...prev, slot];
+      });
+    },
+    [maxPerSheet]
+  );
+
+  // If the per-sheet cap drops below the current palette size, trim the palette
+  // to fit (keeping the earliest-selected colors).
+  useEffect(() => {
+    if (maxPerSheet == null) return;
+    setPalette((prev) => (prev.length > maxPerSheet ? prev.slice(0, maxPerSheet) : prev));
+  }, [maxPerSheet]);
 
   const saveToLibrary = useCallback(async () => {
     if (icons.length === 0) return;
@@ -561,9 +586,146 @@ ${parts.join("\n")}
             {status === "matching" ? "Curating…" : "Generate"}
           </button>
         </div>
+
+        {/* Optional color limits */}
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="w-full sm:w-52">
+            <label className={labelClass} htmlFor="cs-maxpericon">
+              Max colors / icon
+            </label>
+            <select
+              id="cs-maxpericon"
+              value={maxPerIcon ?? "any"}
+              onChange={(e) =>
+                setMaxPerIcon(e.target.value === "any" ? null : Number(e.target.value))
+              }
+              className={inputClass}
+            >
+              <option value="any">Any</option>
+              <option value="1">1 or fewer</option>
+              <option value="2">2 or fewer</option>
+              <option value="3">3 or fewer</option>
+              <option value="4">4 or fewer</option>
+              <option value="5">5 or fewer</option>
+              <option value="6">6 or fewer</option>
+            </select>
+          </div>
+          <div className="w-full sm:w-52">
+            <label className={labelClass} htmlFor="cs-maxpersheet">
+              Max colors / sheet
+            </label>
+            <select
+              id="cs-maxpersheet"
+              value={maxPerSheet ?? "any"}
+              onChange={(e) =>
+                setMaxPerSheet(e.target.value === "any" ? null : Number(e.target.value))
+              }
+              className={inputClass}
+            >
+              <option value="any">Any</option>
+              <option value="3">3 or fewer</option>
+              <option value="4">4 or fewer</option>
+              <option value="5">5 or fewer</option>
+              <option value="6">6 or fewer</option>
+              <option value="8">8 or fewer</option>
+              <option value="10">10 or fewer</option>
+              <option value="12">12 or fewer</option>
+              <option value="16">16 or fewer</option>
+            </select>
+          </div>
+          <div className="w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={() => setPaletteOpen((o) => !o)}
+              aria-expanded={paletteOpen}
+              className={`font-ui inline-flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition-colors focus-ring sm:w-auto ${
+                palette.length
+                  ? "border-cherry bg-pink-soft text-cherry"
+                  : "border-cream-200 bg-porcelain text-espresso hover:border-pink hover:bg-pink-soft"
+              }`}
+            >
+              <PaletteIcon className="h-4 w-4" />
+              Limit palette
+              {palette.length > 0 && (
+                <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-cherry px-1 text-[11px] font-bold leading-none text-porcelain tabular-nums">
+                  {palette.length}
+                </span>
+              )}
+              <ChevronIcon
+                className={`h-3 w-3 transition-transform ${paletteOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+          </div>
+        </div>
+
+        {paletteOpen && (
+          <div className="mt-3 rounded-xl border border-parchment bg-porcelain/50 p-4">
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div>
+                <p className="font-ui text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                  Palette
+                </p>
+                <p className="font-ui mt-0.5 text-[11px] text-ink-muted">
+                  Only icons that use nothing outside these colors are shown.
+                  {maxPerSheet != null
+                    ? ` ${palette.length} / ${maxPerSheet} selected.`
+                    : palette.length
+                      ? ` ${palette.length} selected.`
+                      : ""}
+                </p>
+              </div>
+              {palette.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setPalette([])}
+                  className="font-ui shrink-0 text-xs font-semibold text-ink-soft transition-colors hover:text-cherry focus-ring"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+              {THREAD_PALETTE.map((t) => {
+                const on = palette.includes(t.slot);
+                const disabled =
+                  !on && maxPerSheet != null && palette.length >= maxPerSheet;
+                return (
+                  <button
+                    key={t.slot}
+                    type="button"
+                    onClick={() => togglePaletteColor(t.slot)}
+                    disabled={disabled}
+                    aria-pressed={on}
+                    title={t.name}
+                    className={`font-ui flex items-center gap-2 rounded-lg border px-2.5 py-2 text-left text-xs transition-colors focus-ring ${
+                      on
+                        ? "border-cherry bg-pink-soft"
+                        : disabled
+                          ? "cursor-not-allowed border-cream-200 bg-white opacity-40"
+                          : "border-cream-200 bg-white hover:border-pink hover:bg-pink-soft"
+                    }`}
+                  >
+                    <span
+                      className={`h-5 w-5 flex-none rounded-full ring-1 ring-black/10 ${
+                        on ? "ring-2 ring-cherry ring-offset-1" : ""
+                      }`}
+                      style={{ backgroundColor: rgbToHex(t.rgb) }}
+                    />
+                    <span className="flex-1 truncate text-espresso">{t.name}</span>
+                    {on && <CheckIcon className="h-3.5 w-3.5 flex-none text-cherry" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <p className="font-ui mt-3 text-xs text-ink-muted">
-          Claude reads the whole catalog and picks the icons that fit — reword the
-          theme or hit Regenerate for a different take.
+          Claude reads the whole catalog and picks the icons that fit. Color
+          limits are optional: <strong>per icon</strong> caps how many thread
+          colors each design uses; <strong>per sheet</strong> caps the total
+          across the whole set; <strong>limit palette</strong> restricts the
+          sheet to specific colors.
         </p>
       </div>
 
@@ -778,4 +940,53 @@ function escapeXml(s: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+function PaletteIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.75}
+      aria-hidden
+    >
+      <path
+        d="M12 3a9 9 0 1 0 0 18c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.4-1-.24-.27-.39-.62-.39-1.01 0-.83.67-1.5 1.5-1.5H16a5 5 0 0 0 5-5c0-4.42-4.03-8-9-8Z"
+        strokeLinejoin="round"
+      />
+      <circle cx="7.5" cy="11" r="1" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="7.5" r="1" fill="currentColor" stroke="none" />
+      <circle cx="16.5" cy="11" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function ChevronIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 12 12" fill="none" aria-hidden>
+      <path
+        d="M3 4.5 6 7.5 9 4.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function CheckIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="none" aria-hidden>
+      <path
+        d="m3.5 8.5 3 3 6-7"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
 }
