@@ -61,18 +61,25 @@ Dashboard app, request `read_all_orders` again or the window silently truncates
 to 60 days — the run will still go green, it'll just be wrong.
 
 ---
+## New: the ICON_HEALTH tab
 
-## Known gap in the data (worth fixing next)
+The script now also writes an `ICON_HEALTH` tab: one row for **every** icon in
+MASTER, zeros included, with the date the icon became selectable and a verdict.
 
-`ORDER_STATS` only writes icons with **at least one order**. Icons with zero
-orders are simply absent from the tab.
+| Verdict | Meaning |
+|---|---|
+| `SELLS` | Ordered at least once in the window |
+| `TOO NEW` | Zero orders, but live under 120 days — do not cut |
+| `DEAD` | Zero orders after a fair run — a real cut candidate |
+| `ZERO (age unknown)` | Zero orders, no first-seen date. Verify before cutting. |
 
-That's a real blind spot for cut decisions: 284 catalog icons are missing from
-the tab, but only 129 are genuinely dead. The other 155 are recent additions
-that hadn't been created yet when the populator last ran — "absent" and "dead"
-look identical.
+Sorted worst-first, so the cut candidates are at the top. `ORDER_STATS` is
+completely unchanged — it still lists only icons that sold, because
+`threadAllocation.ts` and the Live Order Data dropdown read it and padding it
+with zero-count rows would skew thread allocation.
 
-The fix is to emit a row for every catalog icon, zeros included, plus a
-first-seen date so a new icon can't be mistaken for a dead one. That's a change
-to `write_stats()` in the script — worth doing, but it needs the actual file in
-front of us rather than a guess at it.
+**This needs one extra Shopify scope: `read_metaobjects`.** Add it to the Dev
+Dashboard app (same place you set `read_orders`) and reinstall. Without it the
+run still succeeds and `ICON_HEALTH` is still written — it just prints a warning
+and leaves the dates blank, so everything reads `ZERO (age unknown)` and you
+lose the new-vs-dead distinction, which is the whole point.

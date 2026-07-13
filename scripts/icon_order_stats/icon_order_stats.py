@@ -63,6 +63,8 @@ COMPOSITE_TAB = "COMPOSITE"
 ICON_TRENDS_TAB = "ICON_TRENDS"     # rising/spiking icons (recent vs previous window)
 COLOR_TRENDS_TAB = "COLOR_TRENDS"   # rising/spiking TEXT colors
 USAGE_TAB = "PRODUCT_USAGE"         # most-common icons/fonts/colors per product & template
+ICON_HEALTH_TAB = "ICON_HEALTH"     # EVERY catalog icon incl. zeros, with a first-seen date
+DEAD_AFTER_DAYS = 120  # zero orders after this long live = actually dead, not just new
 WINDOWS = (3, 6, 12)  # rolling-month buckets for the composite
 TREND_DAYS_DEFAULT = 30  # trend = last N days vs the N days before that
 USAGE_WINDOWS = ("3mo", "6mo", "all")  # windows offered on the Product Usage report
@@ -257,6 +259,71 @@ query($after: String) {
   }
 }
 """
+
+
+ICON_OPTIONS_QUERY = """
+query($after: String) {
+  metaobjects(type: "custom_icon_option", first: 250, after: $after) {
+    pageInfo { hasNextPage endCursor }
+    edges { node {
+      createdAt
+      field(key: "label") { value }
+    } }
+  }
+}
+"""
+
+
+def fetch_icon_first_seen(shop, token, max_pages=20):
+    """norm(customizer label) -> first-seen date (YYYY-MM-DD).
+
+    The customizer's `custom_icon_option` metaobjects carry a createdAt, which is
+    when the icon actually became selectable. That's the clock a cut decision
+    needs: without it, a brand-new icon and a dead icon both read as zero.
+
+    Needs the read_metaobjects scope. If the app doesn't have it, warn and return
+    {} rather than killing the whole run — ICON_HEALTH still gets written, just
+    with blank ages and an honest "ZERO (age unknown)" verdict.
+    """
+    url = f"https://{shop}.myshopify.com/admin/api/{API_VERSION}/graphql.json"
+    headers = {"X-Shopify-Access-Token": token, "Content-Type": "application/json"}
+    out, after, pages, resp = {}, None, 0, None
+    while pages < max_pages:
+        for attempt in range(5):
+            resp = requests.post(url, headers=headers,
+                                 json={"query": ICON_OPTIONS_QUERY, "variables": {"after": after}})
+            if resp.status_code == 429:
+                time.sleep(2 * (attempt + 1)); continue
+            break
+        if resp is not None and resp.status_code == 403:
+            print("  WARNING: no read_metaobjects scope — first-seen dates unavailable.")
+            print("           Add read_metaobjects to the Dev Dashboard app to enable them.")
+            return {}
+        try:
+            resp.raise_for_status()
+            data = resp.json()
+            if "errors" in data:
+                raise RuntimeError(data["errors"])
+            block = data["data"]["metaobjects"]
+        except Exception as e:
+            print(f"  WARNING: metaobject fetch failed ({e}) — first-seen dates unavailable.")
+            return {}
+        for edge in block["edges"]:
+            n = edge["node"]
+            label = ((n.get("field") or {}).get("value") or "").strip()
+            if not label:
+                continue
+            key, day = norm(label), (n.get("createdAt") or "")[:10]
+            # Duplicate labels exist in the customizer. Keep the EARLIEST date —
+            # that's when the icon genuinely first became orderable.
+            if key and day and (key not in out or day < out[key]):
+                out[key] = day
+        if not block["pageInfo"]["hasNextPage"]:
+            break
+        after = block["pageInfo"]["endCursor"]
+        pages += 1
+        time.sleep(0.2)
+    return out
 
 
 def fetch_product_map(shop, token, max_pages=80):
@@ -668,6 +735,56 @@ def write_thread_stats(sheets, sheet_id, counts_3mo, catalog, window_label):
     return _ensure_clear_update(sheets, sheet_id, THREAD_STATS_TAB, rows)
 
 
+def write_icon_health(sheets, sheet_id, counts, catalog, first_seen, window_label, today):
+    """Every catalog icon — including the ones that never sold.
+
+    ORDER_STATS only lists icons with at least one order, so "never ordered" and
+    "didn't exist yet" collapse into the same thing: an absent row. That is not a
+    safe basis for deciding what to cut. This tab writes a row for every icon in
+    MASTER, pairs the order count with the date the icon became selectable, and
+    calls it:
+
+      SELLS              ordered at least once in the window
+      TOO NEW            zero orders, but live < DEAD_AFTER_DAYS
+      DEAD               zero orders after a fair run — a real cut candidate
+      ZERO (age unknown) zero orders, no first-seen date (name drift, or no
+                         read_metaobjects scope). Verify before cutting.
+
+    Written to its own tab on purpose. ORDER_STATS feeds threadAllocation.ts and
+    the Live Order Data dropdown; padding it with zero-count rows would skew
+    thread allocation. Nothing reads ICON_HEALTH, so it is safe to widen.
+    """
+    header = ["Icon", "Category", "Status", "Orders", "First Seen", "Days Live",
+              "Verdict", "Window", "Updated"]
+    today_d = datetime.now(timezone.utc).date()
+    out = []
+    for name, row in catalog.items():
+        cnt = counts.get(name, 0)
+        seen = (first_seen.get(norm(name))
+                or first_seen.get(norm(row.get("old_name") or ""))
+                or "")
+        days = ""
+        if seen:
+            try:
+                days = (today_d - datetime.strptime(seen, "%Y-%m-%d").date()).days
+            except ValueError:
+                seen, days = "", ""
+        if cnt > 0:
+            verdict = "SELLS"
+        elif days == "":
+            verdict = "ZERO (age unknown)"
+        elif days < DEAD_AFTER_DAYS:
+            verdict = "TOO NEW"
+        else:
+            verdict = "DEAD"
+        out.append([name, row.get("category", ""), row.get("status", ""), cnt,
+                    seen, days, verdict, window_label, today])
+
+    rank = {"DEAD": 0, "ZERO (age unknown)": 1, "TOO NEW": 2, "SELLS": 3}
+    out.sort(key=lambda r: (rank[r[6]], r[3], r[0]))  # cut candidates first
+    return _ensure_clear_update(sheets, sheet_id, ICON_HEALTH_TAB, [header] + out)
+
+
 def write_composite(sheets, sheet_id, composite, coverage, today):
     header = ["Slot", "Color",
               "3mo Icons", "3mo Text", "3mo Total",
@@ -791,6 +908,10 @@ def main():
     print(f"Getting a Shopify access token for {shop}.myshopify.com ...")
     token = get_access_token(shop, args.client_id, args.client_secret)
 
+    print("Reading icon first-seen dates (customizer metaobjects)...")
+    first_seen = fetch_icon_first_seen(shop, token)
+    print(f"  {len(first_seen)} icons dated.")
+
     print("Mapping products to base/template (for the usage report)...")
     product_map = fetch_product_map(shop, token)
     print(f"  {len(product_map)} customizable products mapped.")
@@ -823,7 +944,31 @@ def main():
 
     if args.dry_run:
         print("\n--dry-run: nothing written.")
-        print("Top 15 icons:")
+        health = {"SELLS": 0, "TOO NEW": 0, "DEAD": 0, "ZERO (age unknown)": 0}
+        dead = []
+        for name, row in catalog.items():
+            cnt = counts.get(name, 0)
+            seen = (first_seen.get(norm(name))
+                    or first_seen.get(norm(row.get("old_name") or "")) or "")
+            if cnt > 0:
+                health["SELLS"] += 1
+            elif not seen:
+                health["ZERO (age unknown)"] += 1
+            else:
+                age = (datetime.now(timezone.utc).date()
+                       - datetime.strptime(seen, "%Y-%m-%d").date()).days
+                if age < DEAD_AFTER_DAYS:
+                    health["TOO NEW"] += 1
+                else:
+                    health["DEAD"] += 1
+                    dead.append((name, row.get("category", ""), age))
+        print(f"\nICON_HEALTH — {len(catalog)} catalog icons:")
+        for k in ("SELLS", "TOO NEW", "DEAD", "ZERO (age unknown)"):
+            print(f"  {k:<20} {health[k]:>4}")
+        print(f"\n  Cut candidates (zero orders, live {DEAD_AFTER_DAYS}+ days) — first 15:")
+        for name, cat, age in sorted(dead, key=lambda x: -x[2])[:15]:
+            print(f"     {name:32} {cat:16} {age:>4}d live")
+        print("\nTop 15 icons:")
         for canon, cnt in sorted(counts.items(), key=lambda x: -x[1])[:15]:
             slots, cat = catalog_slots_for(canon, catalog)
             print(f"  {canon:28} {cat:14} {cnt:>5}  slots={slots}")
@@ -867,9 +1012,11 @@ def main():
     n4 = write_color_trends(sheets, args.sheet_id, color_trends, trend_label, today)
     n5 = write_usage(sheets, args.sheet_id, usage, coverage, today)
     n6 = write_thread_stats(sheets, args.sheet_id, counts_3mo, catalog, thread_window)
+    n7 = write_icon_health(sheets, args.sheet_id, counts, catalog, first_seen, coverage, today)
     print(f"\nWrote {n1} rows to {OUT_TAB}, {n2} to {COMPOSITE_TAB}, "
           f"{n3} to {ICON_TRENDS_TAB}, {n4} to {COLOR_TRENDS_TAB}, "
-          f"{n5} to {USAGE_TAB}, {n6} to {THREAD_STATS_TAB}. "
+          f"{n5} to {USAGE_TAB}, {n6} to {THREAD_STATS_TAB}, "
+          f"{n7} to {ICON_HEALTH_TAB}. "
           "The app will show them within ~60s.")
 
 
