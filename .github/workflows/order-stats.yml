@@ -1,0 +1,97 @@
+name: Icon order stats
+
+# Repopulates the ORDER_STATS tab in the Icon List sheet.
+# Runs itself weekly; also has a manual "Run workflow" button.
+
+on:
+  schedule:
+    # 07:00 UTC every Monday (~3am ET). GitHub may delay cron under load.
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+    inputs:
+      months:
+        description: 'Rolling window, in months'
+        required: false
+        default: '12'
+      dry_run:
+        description: 'Preview only — do not write the sheet'
+        type: boolean
+        required: false
+        default: false
+
+concurrency:
+  group: order-stats
+  cancel-in-progress: false
+
+jobs:
+  populate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: scripts/icon_order_stats/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r scripts/icon_order_stats/requirements.txt
+
+      - name: Write Google service-account credentials
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GOOGLE_CREDENTIALS_JSON:-}" ]; then
+            echo "::error::GOOGLE_CREDENTIALS_JSON secret is empty or not set."
+            exit 1
+          fi
+          printf '%s' "$GOOGLE_CREDENTIALS_JSON" > "$RUNNER_TEMP/google-credentials.json"
+          python - <<'PY'
+          import json, os
+          p = os.path.join(os.environ["RUNNER_TEMP"], "google-credentials.json")
+          d = json.load(open(p))
+          print("credentials JSON parsed OK — service account:", d.get("client_email", "?"))
+          PY
+
+      - name: Show script interface
+        # Prints the real argparse flags into the log. If the run below ever
+        # fails on an unknown argument, this step is where to look.
+        run: python scripts/icon_order_stats/icon_order_stats.py --help
+
+      - name: Populate ORDER_STATS
+        env:
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+          SHOPIFY_SHOP: ${{ secrets.SHOPIFY_SHOP }}
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+          MONTHS: ${{ inputs.months || '12' }}
+          DRY: ${{ inputs.dry_run && '--dry-run' || '' }}
+        run: |
+          set -euo pipefail
+          python scripts/icon_order_stats/icon_order_stats.py \
+            --shop          "$SHOPIFY_SHOP" \
+            --client-id     "$SHOPIFY_CLIENT_ID" \
+            --client-secret "$SHOPIFY_CLIENT_SECRET" \
+            --sheet-id      "$GOOGLE_SHEET_ID" \
+            --creds         "$RUNNER_TEMP/google-credentials.json" \
+            --months        "$MONTHS" \
+            $DRY
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Icon order stats"
+            echo ""
+            echo "- Window: ${{ inputs.months || '12' }} months"
+            echo "- Dry run: ${{ inputs.dry_run || 'false' }}"
+            echo "- Result: ${{ job.status }}"
+            echo ""
+            echo "The app reflects a fresh ORDER_STATS tab within ~60s. No redeploy needed."
+          } >> "$GITHUB_STEP_SUMMARY"
