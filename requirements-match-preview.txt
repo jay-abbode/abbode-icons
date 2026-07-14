@@ -1,0 +1,9 @@
+torch
+timm
+pillow
+numpy
+requests
+google-api-python-client
+google-auth
+anthropic
+openpyxl

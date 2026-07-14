@@ -3,19 +3,25 @@
 import Link from "next/link";
 
 /**
- * Top bar for the printable day sheet: shows today's date in the operator's
- * local time and a Print / Save-as-PDF button. The button and the back link are
- * hidden when actually printing (print:hidden) so only the document itself ends
- * up on paper / in the PDF.
+ * Top bar for the printable day sheet: what this sheet covers, today's date in
+ * the operator's local time, and a Print / Save-as-PDF button. The button and
+ * the back link are hidden when actually printing (print:hidden) so only the
+ * document itself ends up on paper / in the PDF.
  */
 export default function DaySheetHeader({
   windowLabel,
   jobCount,
   updatedAt,
+  scopeLabel,
+  configName,
 }: {
   windowLabel: string;
   jobCount: number;
   updatedAt: string | null;
+  /** e.g. "Webster · Room 3" when the sheet is scoped to one room. */
+  scopeLabel?: string;
+  /** Set when printing a specific saved configuration rather than the active one. */
+  configName?: string | null;
 }) {
   const today = new Date().toLocaleDateString(undefined, {
     weekday: "long",
@@ -37,12 +43,18 @@ export default function DaySheetHeader({
       <div>
         <div className="font-ui mb-1 print:hidden">
           <Link href="/machines" className="text-xs text-ink-muted hover:text-espresso">
-            ← Back to machines
+            ← Back to Thread Config
           </Link>
         </div>
-        <h1 className="font-display text-2xl text-espresso md:text-3xl">Thread allocations</h1>
+        <h1 className="font-display text-2xl text-espresso md:text-3xl">
+          Thread allocations
+          {scopeLabel ? <span className="font-ui text-base font-normal text-ink-soft"> — {scopeLabel}</span> : null}
+        </h1>
         <p className="font-ui mt-1 text-sm text-ink-soft">{today}</p>
         {meta ? <p className="font-ui text-xs text-ink-muted">{meta}</p> : null}
+        {configName ? (
+          <p className="font-ui text-xs text-ink-muted">Configuration: {configName}</p>
+        ) : null}
       </div>
       <button
         type="button"
