@@ -25,6 +25,11 @@ const links: { href: string; label: string; blurb: string }[] = [
     blurb: "What's rising and falling lately",
   },
   {
+    href: "/reports/trends",
+    label: "Product Trends",
+    blurb: "Volume, item colors, product mix & seasonality (DTC)",
+  },
+  {
     href: "/reports/usage",
     label: "Product Usage",
     blurb: "Top icons, fonts & colors by product or template",

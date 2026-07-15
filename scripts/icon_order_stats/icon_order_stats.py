@@ -64,6 +64,14 @@ ICON_TRENDS_TAB = "ICON_TRENDS"     # rising/spiking icons (recent vs previous w
 COLOR_TRENDS_TAB = "COLOR_TRENDS"   # rising/spiking TEXT colors
 USAGE_TAB = "PRODUCT_USAGE"         # most-common icons/fonts/colors per product & template
 ICON_HEALTH_TAB = "ICON_HEALTH"     # EVERY catalog icon incl. zeros, with a first-seen date
+# DTC "Product Trends" section — monthly x channel (web/pos) aggregates. Written
+# from the SAME order scan as everything above (no second Shopify pass), by
+# aggregate_trends() below. Wholesale (Faire) and draft orders are excluded here
+# on purpose: this section is direct-to-consumer only.
+TRENDS_TS_TAB = "TRENDS_TIMESERIES"    # Month | Channel | Orders | Units | ...
+TRENDS_COLORS_TAB = "TRENDS_ITEM_COLORS"  # Month | Channel | Color | Units | ...  (garment color)
+TRENDS_CATS_TAB = "TRENDS_CATEGORIES"  # Month | Channel | Category | Units | ...  (base product)
+DTC_SOURCES = {"web": "web", "pos": "pos"}  # sourceName -> channel; anything else is not DTC
 DEAD_AFTER_DAYS = 120  # zero orders after this long live = actually dead, not just new
 WINDOWS = (3, 6, 12)  # rolling-month buckets for the composite
 TREND_DAYS_DEFAULT = 30  # trend = last N days vs the N days before that
@@ -236,11 +244,14 @@ query($q: String!, $after: String) {
   orders(first: 100, query: $q, sortKey: CREATED_AT, reverse: true, after: $after) {
     pageInfo { hasNextPage endCursor }
     edges { node {
+      id
       createdAt
+      sourceName
       lineItems(first: 20) { edges { node {
         sku
+        variantTitle
         customAttributes { key value }
-        variant { product { id handle } }
+        variant { product { id handle } selectedOptions { name value } }
       } } }
     } }
   }
@@ -420,8 +431,16 @@ def _scan(shop, token, months, state, limit=None):
         for edge in block["edges"]:
             node = edge["node"]
             created = node.get("createdAt")
+            src = node.get("sourceName")
+            oid = node.get("id")
             for li in node["lineItems"]["edges"]:
-                yield created, li["node"]
+                lin = li["node"]
+                # Stamp order-level context onto the line so aggregate_trends()
+                # can bucket by channel + order without a second scan. Existing
+                # aggregate() ignores these underscore keys.
+                lin["_source"] = src
+                lin["_order_id"] = oid
+                yield created, lin
             state["seen"] += 1
             state["yielded"] = True
             if limit and state["seen"] >= limit:
@@ -876,6 +895,123 @@ def write_usage(sheets, sheet_id, usage, coverage_label, today):
     return _ensure_clear_update(sheets, sheet_id, USAGE_TAB, rows, clear_range="A1:Z100000")
 
 
+# --------------------------------------------------------------------------
+# DTC Product Trends: monthly x channel aggregates (web + in-store only)
+# --------------------------------------------------------------------------
+def item_colors_from_line(li):
+    """Garment/product color(s) chosen on this line, from the variant options.
+
+    Item color is the customer-facing PRODUCT color (e.g. "Blush", "Navy"), which
+    lives in the variant's selectedOptions under an option named "Color" (or a
+    component-specific "... Color" on bundles, or "Style" on a couple of POS
+    products). This is distinct from thread/text colors, which come from the
+    customizer attributes and are handled by the composite/usage tallies. Returns
+    a de-duplicated list — a bundle can carry more than one colored component.
+    """
+    out = []
+    opts = (li.get("variant") or {}).get("selectedOptions") or []
+    names = [(o.get("name") or "").strip().lower() for o in opts]
+    for o in opts:
+        name = (o.get("name") or "").strip().lower()
+        val = (o.get("value") or "").strip()
+        if not val or val.lower() == "default title":
+            continue
+        if "color" in name or name == "style":
+            if val not in out:
+                out.append(val)
+    # Fallback: single-option variant whose title IS the color (no Size/Title).
+    if not out:
+        vt = (li.get("variantTitle") or "").strip()
+        if (vt and vt.lower() != "default title" and "size" not in names
+                and all(n in ("", "title") for n in names)):
+            out.append(vt)
+    return out
+
+
+def _tmonth(created_at_iso):
+    """'YYYY-MM' for an order timestamp, or None if unparseable."""
+    s = (created_at_iso or "").strip()
+    if len(s) >= 7 and s[4] == "-":
+        return s[:7]
+    return None
+
+
+def aggregate_trends(order_lines, product_map, catalog):
+    """DTC product-trends tallies, monthly x channel, from the shared order scan.
+
+    Only web (online) and pos (in-store) orders are counted — Faire wholesale and
+    draft orders are excluded, matching the DTC scope of the Product Trends
+    section. Add-on / noise lines (shipping protection, fees) are dropped via the
+    same line_is_noise() filter the main aggregate uses.
+
+    Returns dict with:
+      timeseries -> {(month, channel): {"orders": set(order_ids), "units": n}}
+      colors     -> {(month, channel, color): units}   (garment color)
+      categories -> {(month, channel, base_product): units}
+    Orders is a set of order ids so distinct-order counts and items-per-order are
+    exact; the writer collapses each set to its length.
+    """
+    product_map = product_map or {}
+    ts, colors, cats = {}, {}, {}
+    for created_at, li in order_lines:
+        channel = DTC_SOURCES.get((li.get("_source") or "").strip().lower())
+        if not channel:
+            continue  # not DTC (Faire / draft / other)
+        sku = li.get("sku")
+        variant = li.get("variant") or {}
+        product = variant.get("product") or {}
+        if line_is_noise(sku, product.get("handle")):
+            continue
+        month = _tmonth(created_at)
+        if not month:
+            continue
+        oid = li.get("_order_id") or ""
+
+        cell = ts.setdefault((month, channel), {"orders": set(), "units": 0})
+        if oid:
+            cell["orders"].add(oid)
+        cell["units"] += 1
+
+        for color in item_colors_from_line(li):
+            k = (month, channel, color)
+            colors[k] = colors.get(k, 0) + 1
+
+        mapped = product_map.get(product.get("id"))
+        base = mapped[0] if mapped else None
+        if base:
+            k = (month, channel, base)
+            cats[k] = cats.get(k, 0) + 1
+
+    return {"timeseries": ts, "colors": colors, "categories": cats}
+
+
+def write_trends_timeseries(sheets, sheet_id, ts, coverage, today):
+    header = ["Month", "Channel", "Orders", "Units", "Coverage", "Updated"]
+    rows = [header]
+    for (month, channel) in sorted(ts.keys()):
+        d = ts[(month, channel)]
+        rows.append([month, channel, len(d["orders"]), d["units"], coverage, today])
+    return _ensure_clear_update(sheets, sheet_id, TRENDS_TS_TAB, rows)
+
+
+def write_trends_item_colors(sheets, sheet_id, colors, coverage, today):
+    header = ["Month", "Channel", "Color", "Units", "Coverage", "Updated"]
+    rows = [header]
+    for k in sorted(colors.keys(), key=lambda k: (k[0], k[1], -colors[k], k[2])):
+        rows.append([k[0], k[1], k[2], colors[k], coverage, today])
+    return _ensure_clear_update(sheets, sheet_id, TRENDS_COLORS_TAB, rows,
+                                clear_range="A1:Z100000")
+
+
+def write_trends_categories(sheets, sheet_id, cats, coverage, today):
+    header = ["Month", "Channel", "Category", "Units", "Coverage", "Updated"]
+    rows = [header]
+    for k in sorted(cats.keys(), key=lambda k: (k[0], k[1], -cats[k], k[2])):
+        rows.append([k[0], k[1], k[2], cats[k], coverage, today])
+    return _ensure_clear_update(sheets, sheet_id, TRENDS_CATS_TAB, rows,
+                                clear_range="A1:Z100000")
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--sheet-id", default=os.environ.get("GOOGLE_SHEET_ID"))
@@ -919,9 +1055,12 @@ def main():
     matcher = Matcher(catalog, aliases)
     print(f"Scanning Shopify orders (up to {args.months:g} months, gross)...")
     state = {"seen": 0, "yielded": False, "capped": False}
+    # Materialize once so the same lines feed both the existing per-icon/color
+    # aggregate and the new DTC monthly x channel trends — one Shopify scan.
+    order_lines = list(scan_orders(shop, token, args.months, state, args.limit))
     counts, counts_3mo, composite, icon_trends, color_trends, usage = aggregate(
-        scan_orders(shop, token, args.months, state, args.limit),
-        matcher, catalog, args.trend_days, product_map)
+        order_lines, matcher, catalog, args.trend_days, product_map)
+    trends = aggregate_trends(order_lines, product_map, catalog)
 
     coverage = ("Last ~60 days (read_all_orders pending)" if state["capped"]
                 else f"Rolling {args.months:g} months")
@@ -1004,6 +1143,21 @@ def main():
             tc = max(u["color"].items(), key=lambda x: x[1], default=("\u2014", 0))
             print(f"  {cell[0]} / {cell[1]}: icon={ti[0]}({ti[1]}) "
                   f"font={tf[0]}({tf[1]}) color={tc[0]}({tc[1]})")
+        ts = trends["timeseries"]
+        by_month = {}
+        for (m, ch), d in ts.items():
+            e = by_month.setdefault(m, {"orders": 0, "units": 0})
+            e["orders"] += len(d["orders"]); e["units"] += d["units"]
+        print(f"\nProduct Trends (DTC) — {len(ts)} month x channel cells. By month:")
+        for m in sorted(by_month):
+            e = by_month[m]
+            print(f"  {m}: {e['orders']:>5} orders · {e['units']:>5} units")
+        top_colors = {}
+        for (m, ch, c), n in trends["colors"].items():
+            top_colors[c] = top_colors.get(c, 0) + n
+        if top_colors:
+            print("  Top item colors: " + ", ".join(
+                f"{c} ({n})" for c, n in sorted(top_colors.items(), key=lambda x: -x[1])[:8]))
         return
 
     n1 = write_stats(sheets, args.sheet_id, counts, catalog, coverage)
@@ -1013,10 +1167,14 @@ def main():
     n5 = write_usage(sheets, args.sheet_id, usage, coverage, today)
     n6 = write_thread_stats(sheets, args.sheet_id, counts_3mo, catalog, thread_window)
     n7 = write_icon_health(sheets, args.sheet_id, counts, catalog, first_seen, coverage, today)
+    n8 = write_trends_timeseries(sheets, args.sheet_id, trends["timeseries"], coverage, today)
+    n9 = write_trends_item_colors(sheets, args.sheet_id, trends["colors"], coverage, today)
+    n10 = write_trends_categories(sheets, args.sheet_id, trends["categories"], coverage, today)
     print(f"\nWrote {n1} rows to {OUT_TAB}, {n2} to {COMPOSITE_TAB}, "
           f"{n3} to {ICON_TRENDS_TAB}, {n4} to {COLOR_TRENDS_TAB}, "
           f"{n5} to {USAGE_TAB}, {n6} to {THREAD_STATS_TAB}, "
-          f"{n7} to {ICON_HEALTH_TAB}. "
+          f"{n7} to {ICON_HEALTH_TAB}, {n8} to {TRENDS_TS_TAB}, "
+          f"{n9} to {TRENDS_COLORS_TAB}, {n10} to {TRENDS_CATS_TAB}. "
           "The app will show them within ~60s.")
 
 

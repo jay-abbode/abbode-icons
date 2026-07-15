@@ -64,6 +64,7 @@ export default function MobileNav({
   const reports: Item[] = [
     { href: "/composite", label: "Composite Data" },
     { href: "/trends", label: "Trends" },
+    { href: "/reports/trends", label: "Product Trends" },
     { href: "/reports/usage", label: "Product Usage" },
   ];
 
