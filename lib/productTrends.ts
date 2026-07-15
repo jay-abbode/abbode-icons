@@ -10,7 +10,7 @@
  *
  * Expected tab layouts (row 1 = headers, case-insensitive):
  *   TRENDS_TIMESERIES:  Month | Channel | Orders | Units | Coverage | Updated
- *   TRENDS_ITEM_COLORS: Month | Channel | Color  | Units | Coverage | Updated
+ *   TRENDS_ITEM_COLORS: Month | Channel | Product | Color | Units | Coverage | Updated
  *   TRENDS_CATEGORIES:  Month | Channel | Category | Units | Coverage | Updated
  * where Month is "YYYY-MM" and Channel is one of web | pos.
  */
@@ -20,7 +20,7 @@ import { getSheetsClient } from "./google";
 export type Channel = "web" | "pos";
 
 export type TsRow = { month: string; channel: Channel; orders: number; units: number };
-export type ColorRow = { month: string; channel: Channel; color: string; units: number };
+export type ColorRow = { month: string; channel: Channel; product: string; color: string; units: number };
 export type CatRow = { month: string; channel: Channel; category: string; units: number };
 
 export type ProductTrendsSnapshot = {
@@ -108,6 +108,7 @@ async function fetchProductTrends(): Promise<ProductTrendsSnapshot> {
     const ci = (n: string) => h.indexOf(n);
     const iM = ci("month");
     const iCh = ci("channel");
+    const iP = ci("product");
     const iC = ci("color");
     const iU = ci("units");
     if (iM >= 0 && iCh >= 0 && iC >= 0) {
@@ -115,9 +116,10 @@ async function fetchProductTrends(): Promise<ProductTrendsSnapshot> {
         const row = cRows[r] || [];
         const month = String(row[iM] ?? "").trim();
         const channel = toChannel(String(row[iCh] ?? ""));
+        const product = iP >= 0 ? String(row[iP] ?? "").trim() : "";
         const color = String(row[iC] ?? "").trim();
         if (!month || !channel || !color) continue;
-        colors.push({ month, channel, color, units: toInt(row[iU]) });
+        colors.push({ month, channel, product, color, units: toInt(row[iU]) });
         monthSet.add(month);
       }
     }

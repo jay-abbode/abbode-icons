@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import type { ProductTrendsSnapshot } from "@/lib/productTrends";
+import type { ProductTrendsSnapshot, ColorRow } from "@/lib/productTrends";
 import type { UsageSnapshot, UsageType, UsageWindow } from "@/lib/usageStats";
 import type { TrendsSnapshot, TrendItem } from "@/lib/trendStats";
 
@@ -44,6 +44,8 @@ const GARMENT_HEX: Record<string, string> = {
 };
 
 type Ranked = { label: string; value: number };
+type ColorGroup = { product: string; total: number; colors: Ranked[] };
+type ProductGroup = { color: string; total: number; products: Ranked[] };
 type Riser = { label: string; recent: number; previous: number; delta: number; growth: number | null };
 type Signal = { text: string; tone: "up" | "alert" | "spark" };
 type MonthPoint = { month: string; units: number; orders: number };
@@ -108,6 +110,68 @@ function risers(now: Ranked[], prev: Ranked[]): Riser[] {
       return { label: n.label, recent: n.value, previous, delta, growth };
     })
     .sort((a, b) => b.delta - a.delta);
+}
+
+/** Group garment-color demand by product, each product's colors ranked by units. */
+function groupColorsByProduct(
+  rows: ColorRow[],
+  monthSet: Set<string>,
+  channelOk: ChannelOk,
+): ColorGroup[] {
+  const byProd = new Map<string, Map<string, number>>();
+  const totals = new Map<string, number>();
+  for (const r of rows) {
+    if (!monthSet.has(r.month) || !channelOk(r.channel)) continue;
+    const product = (r.product || "").trim() || "Unspecified";
+    const color = r.color.trim();
+    if (!color) continue;
+    let cm = byProd.get(product);
+    if (!cm) {
+      cm = new Map();
+      byProd.set(product, cm);
+    }
+    cm.set(color, (cm.get(color) || 0) + r.units);
+    totals.set(product, (totals.get(product) || 0) + r.units);
+  }
+  const groups: ColorGroup[] = [];
+  for (const [product, cm] of byProd.entries()) {
+    const colors = [...cm.entries()]
+      .map(([label, value]) => ({ label, value }))
+      .sort((a, b) => b.value - a.value);
+    groups.push({ product, total: totals.get(product) || 0, colors });
+  }
+  return groups.sort((a, b) => b.total - a.total);
+}
+
+/** Inverse view: each garment color with the products it sells on, ranked by units. */
+function groupProductsByColor(
+  rows: ColorRow[],
+  monthSet: Set<string>,
+  channelOk: ChannelOk,
+): ProductGroup[] {
+  const byColor = new Map<string, Map<string, number>>();
+  const totals = new Map<string, number>();
+  for (const r of rows) {
+    if (!monthSet.has(r.month) || !channelOk(r.channel)) continue;
+    const color = r.color.trim();
+    if (!color) continue;
+    const product = (r.product || "").trim() || "Unspecified";
+    let pm = byColor.get(color);
+    if (!pm) {
+      pm = new Map();
+      byColor.set(color, pm);
+    }
+    pm.set(product, (pm.get(product) || 0) + r.units);
+    totals.set(color, (totals.get(color) || 0) + r.units);
+  }
+  const groups: ProductGroup[] = [];
+  for (const [color, pm] of byColor.entries()) {
+    const products = [...pm.entries()]
+      .map(([label, value]) => ({ label, value }))
+      .sort((a, b) => b.value - a.value);
+    groups.push({ color, total: totals.get(color) || 0, products });
+  }
+  return groups.sort((a, b) => b.total - a.total);
 }
 
 function topUsage(usage: UsageSnapshot, win: UsageWindow, type: UsageType, limit = 10): Ranked[] {
@@ -216,6 +280,14 @@ export default function ProductTrends({
   const colors = useMemo(() => rankBy(trends.colors, (r) => r.color, selSet, channelOk), [trends.colors, selSet, channel]);
   const colorsPrev = useMemo(() => rankBy(trends.colors, (r) => r.color, prevSet, channelOk), [trends.colors, prevSet, channel]);
   const colorRisers = useMemo(() => risers(colors, colorsPrev), [colors, colorsPrev]);
+  const colorsByProduct = useMemo(
+    () => groupColorsByProduct(trends.colors, selSet, channelOk),
+    [trends.colors, selSet, channel],
+  );
+  const productsByColor = useMemo(
+    () => groupProductsByColor(trends.colors, selSet, channelOk),
+    [trends.colors, selSet, channel],
+  );
 
   const cats = useMemo(() => rankBy(trends.categories, (r) => r.category, selSet, channelOk), [trends.categories, selSet, channel]);
 
@@ -282,7 +354,9 @@ export default function ProductTrends({
       {tab === "ordered" && (
         <OrderedTab cats={cats} topIcons={topIcons} topFonts={topFonts} topText={topText} useWin={useWin} />
       )}
-      {tab === "colors" && <ColorsTab colors={colors} colorRisers={colorRisers} hasPrev={totals.hasPrev} />}
+      {tab === "colors" && (
+        <ColorsTab byProduct={colorsByProduct} byColor={productsByColor} colorRisers={colorRisers} hasPrev={totals.hasPrev} />
+      )}
       {tab === "seasonality" && <SeasonalityTab seasonVolume={seasonVolume} months={months} />}
     </div>
   );
@@ -404,30 +478,112 @@ function OrderedTab({
   );
 }
 
-function ColorsTab({ colors, colorRisers, hasPrev }: { colors: Ranked[]; colorRisers: Riser[]; hasPrev: boolean }) {
-  if (colors.length === 0) {
+function ColorsTab({
+  byProduct,
+  byColor,
+  colorRisers,
+  hasPrev,
+}: {
+  byProduct: ColorGroup[];
+  byColor: ProductGroup[];
+  colorRisers: Riser[];
+  hasPrev: boolean;
+}) {
+  const [view, setView] = useState<"product" | "color">("product");
+  if (byProduct.length === 0) {
     return <EmptyNote>No item-color data yet. Run the updated order-stats script to fill the &ldquo;TRENDS_ITEM_COLORS&rdquo; tab.</EmptyNote>;
   }
   const rising = colorRisers.filter((r) => r.delta > 0).slice(0, 6);
   const falling = colorRisers.filter((r) => r.delta < 0).sort((a, b) => a.delta - b.delta).slice(0, 6);
+  // Old single-bucket data (no product column) collapses to one group — label it plainly.
+  const soleAll = byProduct.length === 1 && byProduct[0].product === "Unspecified";
+  const prodShown = byProduct.slice(0, 12);
+  const colorShown = byColor.slice(0, 12);
   return (
     <div className="space-y-6">
-      <Card eyebrow="Item color" title="Most ordered colors" meta="share of units in window">
-        <RankedList items={colors} unit="units" showSwatch limit={16} />
-      </Card>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Toggle
+          options={[
+            { key: "product", label: "By product" },
+            { key: "color", label: "By color" },
+          ]}
+          value={view}
+          onChange={(v) => setView(v)}
+          label="Color grouping"
+        />
+        <p className="font-ui text-[11px] text-ink-muted">
+          {view === "product"
+            ? "Each product\u2019s garment-color split"
+            : "Each color and the products it sells on"}
+        </p>
+      </div>
+
+      {view === "product" ? (
+        <>
+          <div className="grid gap-6 lg:grid-cols-2">
+            {prodShown.map((g) => (
+              <Card
+                key={g.product}
+                eyebrow="Colors by product"
+                title={soleAll ? "All products" : g.product}
+                meta={`${g.total.toLocaleString()} units`}
+              >
+                <RankedList items={g.colors} unit="units" showSwatch limit={8} />
+              </Card>
+            ))}
+          </div>
+          {byProduct.length > prodShown.length && (
+            <p className="font-ui text-[11px] text-ink-muted">
+              Showing the top {prodShown.length} products by volume of {byProduct.length.toLocaleString()}.
+            </p>
+          )}
+        </>
+      ) : (
+        <>
+          <div className="grid gap-6 lg:grid-cols-2">
+            {colorShown.map((g) => {
+              const hex = GARMENT_HEX[g.color.toLowerCase()];
+              return (
+                <Card
+                  key={g.color}
+                  eyebrow="Products by color"
+                  title={
+                    <span className="inline-flex items-center gap-2">
+                      <span
+                        className="h-3.5 w-3.5 flex-none rounded-full ring-1 ring-black/10"
+                        style={hex ? { backgroundColor: hex } : { boxShadow: "inset 0 0 0 1px rgba(67,34,34,0.25)" }}
+                        aria-hidden
+                      />
+                      {g.color}
+                    </span>
+                  }
+                  meta={`${g.total.toLocaleString()} units`}
+                >
+                  <RankedList items={g.products} unit="units" limit={8} />
+                </Card>
+              );
+            })}
+          </div>
+          {byColor.length > colorShown.length && (
+            <p className="font-ui text-[11px] text-ink-muted">
+              Showing the top {colorShown.length} colors by volume of {byColor.length.toLocaleString()}.
+            </p>
+          )}
+        </>
+      )}
       {hasPrev && (rising.length > 0 || falling.length > 0) && (
         <div className="grid gap-6 lg:grid-cols-2">
-          <Card eyebrow="Colors" title="Gaining">
+          <Card eyebrow="Colors" title="Gaining (all products)">
             <RiserRows items={rising} rising />
           </Card>
-          <Card eyebrow="Colors" title="Fading">
+          <Card eyebrow="Colors" title="Fading (all products)">
             <RiserRows items={falling} />
           </Card>
         </div>
       )}
       <p className="font-ui text-[11px] leading-relaxed text-ink-muted">
-        Item color is the garment/product color chosen at checkout — distinct from thread or text colors. Swatches are
-        approximate.
+        Item color is the garment/product color chosen at checkout, broken out per product — distinct from thread or text
+        colors. Swatches are approximate.
       </p>
     </div>
   );
@@ -544,7 +700,7 @@ function Card({
   children,
 }: {
   eyebrow?: string;
-  title: string;
+  title: ReactNode;
   meta?: string;
   children: ReactNode;
 }) {

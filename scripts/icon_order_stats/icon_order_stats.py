@@ -69,7 +69,7 @@ ICON_HEALTH_TAB = "ICON_HEALTH"     # EVERY catalog icon incl. zeros, with a fir
 # aggregate_trends() below. Wholesale (Faire) and draft orders are excluded here
 # on purpose: this section is direct-to-consumer only.
 TRENDS_TS_TAB = "TRENDS_TIMESERIES"    # Month | Channel | Orders | Units | ...
-TRENDS_COLORS_TAB = "TRENDS_ITEM_COLORS"  # Month | Channel | Color | Units | ...  (garment color)
+TRENDS_COLORS_TAB = "TRENDS_ITEM_COLORS"  # Month | Channel | Product | Color | Units | ...  (garment color, per product)
 TRENDS_CATS_TAB = "TRENDS_CATEGORIES"  # Month | Channel | Category | Units | ...  (base product)
 DTC_SOURCES = {"web": "web", "pos": "pos"}  # sourceName -> channel; anything else is not DTC
 DEAD_AFTER_DAYS = 120  # zero orders after this long live = actually dead, not just new
@@ -946,7 +946,7 @@ def aggregate_trends(order_lines, product_map, catalog):
 
     Returns dict with:
       timeseries -> {(month, channel): {"orders": set(order_ids), "units": n}}
-      colors     -> {(month, channel, color): units}   (garment color)
+      colors     -> {(month, channel, product, color): units}  (garment color, per product)
       categories -> {(month, channel, base_product): units}
     Orders is a set of order ids so distinct-order counts and items-per-order are
     exact; the writer collapses each set to its length.
@@ -972,12 +972,16 @@ def aggregate_trends(order_lines, product_map, catalog):
             cell["orders"].add(oid)
         cell["units"] += 1
 
-        for color in item_colors_from_line(li):
-            k = (month, channel, color)
-            colors[k] = colors.get(k, 0) + 1
-
         mapped = product_map.get(product.get("id"))
         base = mapped[0] if mapped else None
+        # Product label for the colors breakdown: the curated base product when
+        # we have it, else fall back to the handle so no color line is dropped.
+        prod_label = base or (product.get("handle") or "(unknown)")
+
+        for color in item_colors_from_line(li):
+            k = (month, channel, prod_label, color)
+            colors[k] = colors.get(k, 0) + 1
+
         if base:
             k = (month, channel, base)
             cats[k] = cats.get(k, 0) + 1
@@ -995,10 +999,11 @@ def write_trends_timeseries(sheets, sheet_id, ts, coverage, today):
 
 
 def write_trends_item_colors(sheets, sheet_id, colors, coverage, today):
-    header = ["Month", "Channel", "Color", "Units", "Coverage", "Updated"]
+    header = ["Month", "Channel", "Product", "Color", "Units", "Coverage", "Updated"]
     rows = [header]
-    for k in sorted(colors.keys(), key=lambda k: (k[0], k[1], -colors[k], k[2])):
-        rows.append([k[0], k[1], k[2], colors[k], coverage, today])
+    # month, channel, product, then colors within a product by units desc.
+    for k in sorted(colors.keys(), key=lambda k: (k[0], k[1], k[2], -colors[k], k[3])):
+        rows.append([k[0], k[1], k[2], k[3], colors[k], coverage, today])
     return _ensure_clear_update(sheets, sheet_id, TRENDS_COLORS_TAB, rows,
                                 clear_range="A1:Z100000")
 
