@@ -2,11 +2,11 @@
 
 import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import type { ProductTrendsSnapshot, ColorRow } from "@/lib/productTrends";
+import type { ProductTrendsSnapshot, ColorRow, CatRow } from "@/lib/productTrends";
 import type { UsageSnapshot, UsageType, UsageWindow } from "@/lib/usageStats";
 import type { TrendsSnapshot, TrendItem } from "@/lib/trendStats";
 
-type TabKey = "overview" | "ordered" | "colors" | "seasonality";
+type TabKey = "overview" | "ordered" | "products" | "seasonality";
 type ChannelFilter = "all" | "web" | "pos";
 type WindowChoice = 3 | 6 | 12 | 0; // 0 = all available months
 type ChannelOk = (c: "web" | "pos") => boolean;
@@ -14,7 +14,7 @@ type ChannelOk = (c: "web" | "pos") => boolean;
 const TABS: { key: TabKey; label: string }[] = [
   { key: "overview", label: "Overview" },
   { key: "ordered", label: "What's ordered" },
-  { key: "colors", label: "Colors" },
+  { key: "products", label: "Products" },
   { key: "seasonality", label: "Seasonality" },
 ];
 
@@ -45,7 +45,6 @@ const GARMENT_HEX: Record<string, string> = {
 
 type Ranked = { label: string; value: number };
 type ColorGroup = { product: string; total: number; colors: Ranked[] };
-type ProductGroup = { color: string; total: number; products: Ranked[] };
 type Riser = { label: string; recent: number; previous: number; delta: number; growth: number | null };
 type Signal = { text: string; tone: "up" | "alert" | "spark" };
 type MonthPoint = { month: string; units: number; orders: number };
@@ -139,37 +138,6 @@ function groupColorsByProduct(
       .map(([label, value]) => ({ label, value }))
       .sort((a, b) => b.value - a.value);
     groups.push({ product, total: totals.get(product) || 0, colors });
-  }
-  return groups.sort((a, b) => b.total - a.total);
-}
-
-/** Inverse view: each garment color with the products it sells on, ranked by units. */
-function groupProductsByColor(
-  rows: ColorRow[],
-  monthSet: Set<string>,
-  channelOk: ChannelOk,
-): ProductGroup[] {
-  const byColor = new Map<string, Map<string, number>>();
-  const totals = new Map<string, number>();
-  for (const r of rows) {
-    if (!monthSet.has(r.month) || !channelOk(r.channel)) continue;
-    const color = r.color.trim();
-    if (!color) continue;
-    const product = (r.product || "").trim() || "Unspecified";
-    let pm = byColor.get(color);
-    if (!pm) {
-      pm = new Map();
-      byColor.set(color, pm);
-    }
-    pm.set(product, (pm.get(product) || 0) + r.units);
-    totals.set(color, (totals.get(color) || 0) + r.units);
-  }
-  const groups: ProductGroup[] = [];
-  for (const [color, pm] of byColor.entries()) {
-    const products = [...pm.entries()]
-      .map(([label, value]) => ({ label, value }))
-      .sort((a, b) => b.value - a.value);
-    groups.push({ color, total: totals.get(color) || 0, products });
   }
   return groups.sort((a, b) => b.total - a.total);
 }
@@ -284,10 +252,6 @@ export default function ProductTrends({
     () => groupColorsByProduct(trends.colors, selSet, channelOk),
     [trends.colors, selSet, channel],
   );
-  const productsByColor = useMemo(
-    () => groupProductsByColor(trends.colors, selSet, channelOk),
-    [trends.colors, selSet, channel],
-  );
 
   const cats = useMemo(() => rankBy(trends.categories, (r) => r.category, selSet, channelOk), [trends.categories, selSet, channel]);
 
@@ -354,7 +318,16 @@ export default function ProductTrends({
       {tab === "ordered" && (
         <OrderedTab cats={cats} topIcons={topIcons} topFonts={topFonts} topText={topText} useWin={useWin} />
       )}
-      {tab === "colors" && <ColorsTab byProduct={colorsByProduct} byColor={productsByColor} />}
+      {tab === "products" && (
+        <ProductsTab
+          byProduct={colorsByProduct}
+          colorRows={trends.colors}
+          catRows={trends.categories}
+          monthList={sel}
+          prevList={prev}
+          channel={channel}
+        />
+      )}
       {tab === "seasonality" && <SeasonalityTab seasonVolume={seasonVolume} months={months} />}
     </div>
   );
@@ -476,72 +449,161 @@ function OrderedTab({
   );
 }
 
-type DrillItem = { label: string; value: number; swatch?: string | null; preview?: (string | null)[] };
+type TrendRowT = {
+  label: string;
+  value: number;
+  share: number;
+  previous: number;
+  delta: number;
+  growth: number | null;
+  spark: number[];
+  preview?: (string | null)[];
+  swatch?: string | null;
+};
 
-/** Clickable ranked rows — click a row to drill into it. */
-function DrillList({
+/** Tiny inline trend line — the shape is the "why" (seasonal, growing, dying). */
+function Spark({ values }: { values: number[] }) {
+  if (values.length < 2) return null;
+  const max = Math.max(1, ...values);
+  const w = 64;
+  const h = 22;
+  const step = w / (values.length - 1);
+  const pts = values
+    .map((v, i) => `${(i * step).toFixed(1)},${(h - 2 - (v / max) * (h - 4)).toFixed(1)}`)
+    .join(" ");
+  const flat = values.every((v) => v === 0);
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="hidden flex-none sm:block" aria-hidden>
+      <polyline
+        points={pts}
+        fill="none"
+        stroke={flat ? "rgba(67,34,34,0.18)" : "#BB3767"}
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function DeltaChip({ growth, delta }: { growth: number | null; delta: number }) {
+  if (delta === 0) return <span className="font-ui text-[11px] tabular-nums text-ink-muted">&ndash;</span>;
+  if (growth === null) return <span className="font-ui text-[11px] font-semibold text-cherry">new</span>;
+  const up = growth >= 0;
+  return (
+    <span className={`font-ui text-[11px] font-semibold tabular-nums ${up ? "text-cherry" : "text-ink-muted"}`}>
+      {up ? "\u25B2" : "\u25BC"} {Math.abs(growth).toFixed(0)}%
+    </span>
+  );
+}
+
+function SignalTile({
+  label,
+  value,
+  sub,
+  swatch,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  swatch?: string | null;
+}) {
+  return (
+    <div className="rounded-xl border border-parchment bg-white p-4">
+      <p className="font-ui text-xs text-ink-soft">{label}</p>
+      <p className="font-display mt-1 flex items-center gap-2 text-base text-espresso">
+        {swatch !== undefined && (
+          <span
+            className="h-3 w-3 flex-none rounded-full ring-1 ring-black/10"
+            style={swatch ? { backgroundColor: swatch } : { boxShadow: "inset 0 0 0 1px rgba(67,34,34,0.25)" }}
+            aria-hidden
+          />
+        )}
+        <span className="truncate">{value}</span>
+      </p>
+      <p className="font-ui mt-1 text-[11px] tabular-nums text-ink-muted">{sub || "\u00a0"}</p>
+    </div>
+  );
+}
+
+/** One ranked row style for products and colors: name → sparkline → units + momentum. */
+function TrendRows({
   items,
   unit = "units",
   onSelect,
+  showDelta,
 }: {
-  items: DrillItem[];
+  items: TrendRowT[];
   unit?: string;
-  onSelect: (label: string) => void;
+  onSelect?: (label: string) => void;
+  showDelta: boolean;
 }) {
-  const max = Math.max(1, ...items.map((i) => i.value));
-  const total = items.reduce((s, i) => s + i.value, 0) || 1;
   if (items.length === 0) {
     return <p className="font-ui px-4 py-8 text-center text-xs text-ink-muted">Nothing here in this window.</p>;
   }
   return (
     <ul>
       {items.map((it, idx) => {
-        const fill = (it.value / max) * 100;
-        const share = (it.value / total) * 100;
+        const inner = (
+          <>
+            <span className="font-ui w-5 flex-none text-right text-xs tabular-nums text-ink-muted">{idx + 1}</span>
+            {it.swatch !== undefined && (
+              <span
+                className="h-3.5 w-3.5 flex-none rounded-full ring-1 ring-black/10"
+                style={it.swatch ? { backgroundColor: it.swatch } : { boxShadow: "inset 0 0 0 1px rgba(67,34,34,0.25)" }}
+                aria-hidden
+              />
+            )}
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-2">
+                <span className="font-ui truncate text-xs font-semibold text-espresso">{it.label}</span>
+                {it.preview && it.preview.length > 0 && (
+                  <span className="flex flex-none items-center gap-1" aria-hidden>
+                    {it.preview.map((hex, i) => (
+                      <span
+                        key={i}
+                        className="h-2.5 w-2.5 rounded-full ring-1 ring-black/10"
+                        style={hex ? { backgroundColor: hex } : { boxShadow: "inset 0 0 0 1px rgba(67,34,34,0.25)" }}
+                      />
+                    ))}
+                  </span>
+                )}
+              </span>
+              <span className="font-ui mt-0.5 block text-[11px] tabular-nums text-ink-muted">
+                {it.share.toFixed(0)}% of {unit} this window
+              </span>
+            </span>
+            <Spark values={it.spark} />
+            <span className="w-16 flex-none text-right">
+              <span className="font-ui block text-xs font-semibold tabular-nums text-espresso">
+                {it.value.toLocaleString()}
+              </span>
+              {showDelta && (
+                <span className="block">
+                  <DeltaChip growth={it.growth} delta={it.delta} />
+                </span>
+              )}
+            </span>
+            {onSelect && (
+              <span className="font-ui flex-none text-sm text-ink-muted" aria-hidden>
+                &rsaquo;
+              </span>
+            )}
+          </>
+        );
         return (
           <li key={`${it.label}-${idx}`} className="border-b border-parchment/60 last:border-b-0">
-            <button
-              type="button"
-              onClick={() => onSelect(it.label)}
-              className="focus-ring flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-pink-soft/30"
-            >
-              <span className="font-ui w-5 flex-none text-right text-xs tabular-nums text-ink-muted">{idx + 1}</span>
-              {it.swatch !== undefined && (
-                <span
-                  className="h-3.5 w-3.5 flex-none rounded-full ring-1 ring-black/10"
-                  style={it.swatch ? { backgroundColor: it.swatch } : { boxShadow: "inset 0 0 0 1px rgba(67,34,34,0.25)" }}
-                  aria-hidden
-                />
-              )}
-              <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-2">
-                  <span className="font-ui truncate text-xs font-semibold text-espresso">{it.label}</span>
-                  {it.preview && it.preview.length > 0 && (
-                    <span className="flex flex-none items-center gap-1" aria-hidden>
-                      {it.preview.map((hex, i) => (
-                        <span
-                          key={i}
-                          className="h-2.5 w-2.5 rounded-full ring-1 ring-black/10"
-                          style={hex ? { backgroundColor: hex } : { boxShadow: "inset 0 0 0 1px rgba(67,34,34,0.25)" }}
-                        />
-                      ))}
-                    </span>
-                  )}
-                </span>
-                <span className="mt-1 block h-1.5 w-full overflow-hidden rounded-full bg-parchment">
-                  <span className="block h-full rounded-full bg-berry" style={{ width: `${Math.max(fill, 2)}%` }} />
-                </span>
-              </span>
-              <span className="flex-none text-right">
-                <span className="font-ui block text-xs font-semibold tabular-nums text-espresso">{it.value.toLocaleString()}</span>
-                <span className="font-ui block text-[11px] tabular-nums text-ink-muted">
-                  {Math.round(share)}% · {unit}
-                </span>
-              </span>
-              <span className="font-ui flex-none text-sm text-ink-muted" aria-hidden>
-                ›
-              </span>
-            </button>
+            {onSelect ? (
+              <button
+                type="button"
+                onClick={() => onSelect(it.label)}
+                className="focus-ring flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-pink-soft/30"
+              >
+                {inner}
+              </button>
+            ) : (
+              <div className="flex items-center gap-3 px-4 py-2.5">{inner}</div>
+            )}
           </li>
         );
       })}
@@ -549,123 +611,479 @@ function DrillList({
   );
 }
 
-function ColorsTab({ byProduct, byColor }: { byProduct: ColorGroup[]; byColor: ProductGroup[] }) {
-  const [mode, setMode] = useState<"product" | "color">("product");
-  const [selProduct, setSelProduct] = useState<string | null>(null);
-  const [selColor, setSelColor] = useState<string | null>(null);
-  if (byProduct.length === 0) {
-    return <EmptyNote>No item-color data yet. Run the updated order-stats script to fill the &ldquo;TRENDS_ITEM_COLORS&rdquo; tab.</EmptyNote>;
+function MiniBars({ points }: { points: { month: string; units: number }[] }) {
+  const max = Math.max(1, ...points.map((p) => p.units));
+  return (
+    <div className="flex items-stretch gap-1.5 px-4 py-4" style={{ height: 130 }}>
+      {points.map((p) => (
+        <div
+          key={p.month}
+          className="flex flex-1 flex-col items-center gap-1"
+          title={`${fmtMonth(p.month, true)} · ${p.units.toLocaleString()} units`}
+        >
+          <div className="flex w-full flex-1 items-end">
+            <span className="w-full rounded-t bg-berry" style={{ height: `${Math.max(2, (p.units / max) * 100)}%` }} />
+          </div>
+          <span className="font-ui text-[10px] text-ink-muted">{fmtMonth(p.month)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ColorSplitRows({
+  items,
+  deltas,
+  showDelta,
+}: {
+  items: Ranked[];
+  deltas: Map<string, { delta: number; growth: number | null }>;
+  showDelta: boolean;
+}) {
+  const max = Math.max(1, ...items.map((i) => i.value));
+  const total = items.reduce((s, i) => s + i.value, 0) || 1;
+  return (
+    <ul>
+      {items.map((it, idx) => {
+        const hex = GARMENT_HEX[it.label.toLowerCase()];
+        const d = deltas.get(it.label);
+        return (
+          <li
+            key={`${it.label}-${idx}`}
+            className="flex items-center gap-3 border-b border-parchment/60 px-4 py-2.5 last:border-b-0"
+          >
+            <span
+              className="h-3.5 w-3.5 flex-none rounded-full ring-1 ring-black/10"
+              style={hex ? { backgroundColor: hex } : { boxShadow: "inset 0 0 0 1px rgba(67,34,34,0.25)" }}
+              aria-hidden
+            />
+            <span className="min-w-0 flex-1">
+              <span className="font-ui block truncate text-xs font-semibold text-espresso">{it.label}</span>
+              <span className="mt-1 block h-1.5 w-full overflow-hidden rounded-full bg-parchment">
+                <span className="block h-full rounded-full bg-berry" style={{ width: `${Math.max((it.value / max) * 100, 2)}%` }} />
+              </span>
+            </span>
+            <span className="w-20 flex-none text-right">
+              <span className="font-ui block text-xs font-semibold tabular-nums text-espresso">
+                {it.value.toLocaleString()} · {Math.round((it.value / total) * 100)}%
+              </span>
+              {showDelta && d && (
+                <span className="block">
+                  <DeltaChip growth={d.growth} delta={d.delta} />
+                </span>
+              )}
+            </span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function ChannelSplitBlock({ web, pos }: { web: number; pos: number }) {
+  const total = web + pos;
+  if (!total) return null;
+  const wp = Math.round((web / total) * 100);
+  return (
+    <div className="rounded-xl border border-parchment bg-white p-4">
+      <p className="font-ui text-xs text-ink-soft">Channel</p>
+      <div className="mt-2 flex h-2 w-full overflow-hidden rounded-full bg-parchment">
+        <span className="h-full bg-berry" style={{ width: `${wp}%` }} />
+        <span className="h-full" style={{ width: `${100 - wp}%`, backgroundColor: "#F2B2AE" }} />
+      </div>
+      <p className="font-ui mt-2 text-[11px] tabular-nums text-ink-muted">
+        Online {wp}% · In-store {100 - wp}%
+      </p>
+    </div>
+  );
+}
+
+function ProductsTab({
+  byProduct,
+  colorRows,
+  catRows,
+  monthList,
+  prevList,
+  channel,
+}: {
+  byProduct: ColorGroup[];
+  colorRows: ColorRow[];
+  catRows: CatRow[];
+  monthList: string[];
+  prevList: string[];
+  channel: "all" | ColorRow["channel"];
+}) {
+  const [view, setView] = useState<"products" | "colors">("products");
+  const [selected, setSelected] = useState<string | null>(null);
+
+  const model = useMemo(() => {
+    const monthSet = new Set(monthList);
+    const prevSet = new Set(prevList);
+    const chOk = (c: ColorRow["channel"]) => channel === "all" || c === channel;
+
+    const groupMap = new Map<string, ColorGroup>();
+    for (const g of byProduct) groupMap.set(g.product, g);
+    const hasUnattached = groupMap.has("Unspecified");
+
+    // True per-product volume (every non-noise line, colored or not) from the categories tab.
+    const catCur = new Map<string, number>();
+    const catPrev = new Map<string, number>();
+    const catMonthly = new Map<string, Map<string, number>>();
+    const catChan = new Map<string, { web: number; pos: number }>();
+    for (const r of catRows) {
+      const label = r.category.trim();
+      if (!label) continue;
+      if (monthSet.has(r.month)) {
+        const ch = catChan.get(label) || { web: 0, pos: 0 };
+        ch[r.channel] += r.units;
+        catChan.set(label, ch);
+      }
+      if (!chOk(r.channel)) continue;
+      if (monthSet.has(r.month)) {
+        catCur.set(label, (catCur.get(label) || 0) + r.units);
+        let mm = catMonthly.get(label);
+        if (!mm) {
+          mm = new Map();
+          catMonthly.set(label, mm);
+        }
+        mm.set(r.month, (mm.get(r.month) || 0) + r.units);
+      } else if (prevSet.has(r.month)) {
+        catPrev.set(label, (catPrev.get(label) || 0) + r.units);
+      }
+    }
+
+    // Color rows: per-product fallback series + per-product color momentum + cross-product colors.
+    const colCur = new Map<string, number>();
+    const colPrev = new Map<string, number>();
+    const colMonthly = new Map<string, Map<string, number>>();
+    const colChan = new Map<string, { web: number; pos: number }>();
+    const prodColorPrev = new Map<string, Map<string, number>>();
+    const colorCur = new Map<string, number>();
+    const colorPrev = new Map<string, number>();
+    const colorMonthlyAll = new Map<string, Map<string, number>>();
+    for (const r of colorRows) {
+      const label = (r.product || "").trim() || "Unspecified";
+      const color = r.color.trim();
+      if (monthSet.has(r.month)) {
+        const ch = colChan.get(label) || { web: 0, pos: 0 };
+        ch[r.channel] += r.units;
+        colChan.set(label, ch);
+      }
+      if (!chOk(r.channel)) continue;
+      if (monthSet.has(r.month)) {
+        colCur.set(label, (colCur.get(label) || 0) + r.units);
+        let mm = colMonthly.get(label);
+        if (!mm) {
+          mm = new Map();
+          colMonthly.set(label, mm);
+        }
+        mm.set(r.month, (mm.get(r.month) || 0) + r.units);
+        if (color) {
+          colorCur.set(color, (colorCur.get(color) || 0) + r.units);
+          let cm = colorMonthlyAll.get(color);
+          if (!cm) {
+            cm = new Map();
+            colorMonthlyAll.set(color, cm);
+          }
+          cm.set(r.month, (cm.get(r.month) || 0) + r.units);
+        }
+      } else if (prevSet.has(r.month)) {
+        colPrev.set(label, (colPrev.get(label) || 0) + r.units);
+        if (color) {
+          colorPrev.set(color, (colorPrev.get(color) || 0) + r.units);
+          let pm = prodColorPrev.get(label);
+          if (!pm) {
+            pm = new Map();
+            prodColorPrev.set(label, pm);
+          }
+          pm.set(color, (pm.get(color) || 0) + r.units);
+        }
+      }
+    }
+
+    // Whether a product's numbers come from the categories tab or its color rows — keep cur/prev consistent.
+    const fromCat = (label: string) => catCur.has(label) || catPrev.has(label);
+
+    const labels = new Set<string>([...catCur.keys(), ...groupMap.keys()]);
+    labels.delete("Unspecified");
+    const totalCur =
+      [...labels].reduce((s, l) => s + (fromCat(l) ? catCur.get(l) || 0 : colCur.get(l) || 0), 0) || 1;
+
+    const products: TrendRowT[] = [...labels]
+      .map((label) => {
+        const cat = fromCat(label);
+        const value = (cat ? catCur.get(label) : colCur.get(label)) || 0;
+        const previous = (cat ? catPrev.get(label) : colPrev.get(label)) || 0;
+        const mm = (cat ? catMonthly.get(label) : colMonthly.get(label)) || new Map<string, number>();
+        const g = groupMap.get(label);
+        return {
+          label,
+          value,
+          share: (value / totalCur) * 100,
+          previous,
+          delta: value - previous,
+          growth: previous > 0 ? ((value - previous) / previous) * 100 : null,
+          spark: monthList.map((mo) => mm.get(mo) || 0),
+          preview: g ? g.colors.slice(0, 5).map((c) => GARMENT_HEX[c.label.toLowerCase()] ?? null) : undefined,
+        };
+      })
+      .filter((it) => it.value > 0)
+      .sort((a, b) => b.value - a.value);
+
+    const colorTotal = [...colorCur.values()].reduce((s, v) => s + v, 0) || 1;
+    const colorItems: TrendRowT[] = [...colorCur.entries()]
+      .map(([label, value]) => {
+        const previous = colorPrev.get(label) || 0;
+        const mm = colorMonthlyAll.get(label) || new Map<string, number>();
+        return {
+          label,
+          value,
+          share: (value / colorTotal) * 100,
+          previous,
+          delta: value - previous,
+          growth: previous > 0 ? ((value - previous) / previous) * 100 : null,
+          spark: monthList.map((mo) => mm.get(mo) || 0),
+          swatch: GARMENT_HEX[label.toLowerCase()] ?? null,
+        };
+      })
+      .sort((a, b) => b.value - a.value);
+
+    const colorRiserList = risers(
+      colorItems.map((c) => ({ label: c.label, value: c.value })),
+      [...colorPrev.entries()].map(([label, value]) => ({ label, value })),
+    );
+
+    const hasPrev = prevList.length > 0;
+    const bestRiser = (arr: TrendRowT[]) =>
+      arr
+        .filter((x) => x.previous > 0 && x.value >= 3 && (x.growth ?? 0) > 0)
+        .sort((a, b) => (b.growth ?? 0) - (a.growth ?? 0))[0];
+
+    return {
+      groupMap,
+      hasUnattached,
+      products,
+      colorItems,
+      colorRiserList,
+      hasPrev,
+      totalCur,
+      risingProduct: hasPrev ? bestRiser(products) : undefined,
+      risingColor: hasPrev ? bestRiser(colorItems) : undefined,
+      chanOf: (label: string) => (fromCat(label) ? catChan.get(label) : colChan.get(label)),
+      monthlyOf: (label: string) =>
+        (fromCat(label) ? catMonthly.get(label) : colMonthly.get(label)) || new Map<string, number>(),
+      prodColorPrev,
+    };
+  }, [byProduct, colorRows, catRows, monthList, prevList, channel]);
+
+  const {
+    groupMap,
+    hasUnattached,
+    products,
+    colorItems,
+    colorRiserList,
+    hasPrev,
+    risingProduct,
+    risingColor,
+  } = model;
+
+  const unattachedNote = hasUnattached ? (
+    <p className="font-ui rounded-xl border border-parchment bg-pink-soft/40 px-4 py-3 text-[11px] leading-relaxed text-ink-soft">
+      Some colors aren&rsquo;t attached to products yet — the sheet&rsquo;s color tab predates this update. Run{" "}
+      <span className="font-semibold">Actions → Icon order stats</span> once and every product picks up its color split
+      automatically.
+    </p>
+  ) : null;
+
+  if (products.length === 0) {
+    const flat = groupMap.get("Unspecified");
+    if (flat) {
+      return (
+        <div className="space-y-6">
+          {unattachedNote}
+          <Card eyebrow="Garment colors" title="All products" meta={`${flat.total.toLocaleString()} units`}>
+            <RankedList items={flat.colors} unit="units" showSwatch />
+          </Card>
+        </div>
+      );
+    }
+    return (
+      <EmptyNote>
+        No product data yet. Run the order-stats workflow once — it fills the &ldquo;TRENDS_ITEM_COLORS&rdquo; and
+        &ldquo;TRENDS_CATEGORIES&rdquo; tabs this page reads.
+      </EmptyNote>
+    );
   }
-  // Old single-bucket data (no product column yet) — say so plainly instead of faking a drill-down.
-  const soleAll = byProduct.length === 1 && byProduct[0].product === "Unspecified";
-  if (soleAll) {
+
+  // ----- Product detail -----
+  const detail = selected ? products.find((p) => p.label === selected) : undefined;
+  if (selected && detail) {
+    const group = groupMap.get(selected) ?? null;
+    const mm = model.monthlyOf(selected);
+    const points = monthList.map((mo) => ({ month: mo, units: mm.get(mo) || 0 }));
+    const activeMonths = points.filter((p) => p.units > 0).length;
+    const top = group?.colors[0];
+    const chan = channel === "all" ? model.chanOf(selected) : undefined;
+    const deltas = new Map<string, { delta: number; growth: number | null }>();
+    if (group) {
+      const pm = model.prodColorPrev.get(selected);
+      for (const c of group.colors) {
+        const prevU = pm?.get(c.label) || 0;
+        deltas.set(c.label, {
+          delta: c.value - prevU,
+          growth: prevU > 0 ? ((c.value - prevU) / prevU) * 100 : null,
+        });
+      }
+    }
     return (
       <div className="space-y-6">
-        <p className="font-ui rounded-xl border border-parchment bg-pink-soft/40 px-4 py-3 text-[11px] leading-relaxed text-ink-soft">
-          Colors aren&rsquo;t attached to products yet — the sheet&rsquo;s data tab predates this update. Run{" "}
-          <span className="font-semibold">Actions → Icon order stats</span> once and this becomes a click-through
-          per-product breakdown automatically.
+        <button
+          type="button"
+          onClick={() => setSelected(null)}
+          className="focus-ring font-ui inline-flex items-center gap-1.5 rounded text-xs font-semibold text-berry transition-colors hover:text-cherry"
+        >
+          <span aria-hidden>←</span> All products
+        </button>
+        <div className="flex flex-wrap items-baseline gap-3">
+          <h3 className="font-display text-xl text-espresso">{selected}</h3>
+          {hasPrev && <DeltaChip growth={detail.growth} delta={detail.delta} />}
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatTile
+            label="Units"
+            value={detail.value.toLocaleString()}
+            growth={hasPrev ? detail.growth : undefined}
+            sub="this window"
+          />
+          <StatTile label="Share of window" value={`${detail.share.toFixed(0)}%`} sub="of all units" />
+          <StatTile
+            label="Top color"
+            value={top ? top.label : "—"}
+            sub={top ? `${top.value.toLocaleString()} units` : "no color option"}
+          />
+          <StatTile label="Active months" value={String(activeMonths)} sub={`of ${monthList.length} in window`} />
+        </div>
+        {chan && <ChannelSplitBlock web={chan.web} pos={chan.pos} />}
+        {monthList.length > 1 && (
+          <Card eyebrow="Volume" title="Monthly units">
+            <MiniBars points={points} />
+          </Card>
+        )}
+        {group ? (
+          <Card eyebrow="Color split" title="Colors" meta={`${group.total.toLocaleString()} units with a color`}>
+            <ColorSplitRows items={group.colors} deltas={deltas} showDelta={hasPrev} />
+          </Card>
+        ) : (
+          <Card eyebrow="Color split" title="Colors">
+            <p className="font-ui px-4 py-6 text-xs text-ink-muted">
+              {hasUnattached
+                ? "Colors for this product aren\u2019t attached yet — run the order-stats workflow once."
+                : "This product has no color option at checkout."}
+            </p>
+          </Card>
+        )}
+        <p className="font-ui text-[11px] leading-relaxed text-ink-muted">
+          Momentum compares this window to the {prevList.length} months before it. Item color is the garment color chosen
+          at checkout — distinct from thread or text colors. Swatches are approximate.
         </p>
-        <Card eyebrow="Garment colors" title="All products" meta={`${byProduct[0].total.toLocaleString()} units`}>
-          <RankedList items={byProduct[0].colors} unit="units" showSwatch />
-        </Card>
       </div>
     );
   }
-  const activeProduct = selProduct ? byProduct.find((g) => g.product === selProduct) ?? null : null;
-  const activeColor = selColor ? byColor.find((g) => g.color === selColor) ?? null : null;
-  const activeColorHex = activeColor ? GARMENT_HEX[activeColor.color.toLowerCase()] : undefined;
+
+  // ----- Signals + list / color trends -----
+  const topProduct = products[0];
+  const topColor = colorItems[0];
+  const signals: { label: string; value: string; sub?: string; swatch?: string | null }[] = [
+    {
+      label: "Top product",
+      value: topProduct.label,
+      sub: `${topProduct.value.toLocaleString()} units · ${topProduct.share.toFixed(0)}% of window`,
+    },
+  ];
+  if (risingProduct) {
+    signals.push({
+      label: "Rising product",
+      value: risingProduct.label,
+      sub: `\u25B2 ${(risingProduct.growth ?? 0).toFixed(0)}% vs prior ${prevList.length} mo`,
+    });
+  } else if (topColor) {
+    signals.push({
+      label: "Top color",
+      value: topColor.label,
+      sub: `${topColor.value.toLocaleString()} units across products`,
+      swatch: topColor.swatch,
+    });
+  }
+  if (risingColor) {
+    signals.push({
+      label: "Rising color",
+      value: risingColor.label,
+      sub: `\u25B2 ${(risingColor.growth ?? 0).toFixed(0)}% vs prior ${prevList.length} mo`,
+      swatch: risingColor.swatch,
+    });
+  } else if (signals.length < 3 && topColor && signals[1]?.label !== "Top color") {
+    signals.push({
+      label: "Top color",
+      value: topColor.label,
+      sub: `${topColor.value.toLocaleString()} units across products`,
+      swatch: topColor.swatch,
+    });
+  }
+  if (signals.length < 3) {
+    signals.push({ label: "Products selling", value: String(products.length), sub: "this window" });
+  }
+
   return (
     <div className="space-y-6">
+      {unattachedNote}
+      <div className="grid gap-4 sm:grid-cols-3">
+        {signals.slice(0, 3).map((s) => (
+          <SignalTile key={s.label} label={s.label} value={s.value} sub={s.sub} swatch={s.swatch} />
+        ))}
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Toggle
           options={[
-            { key: "product", label: "Products" },
-            { key: "color", label: "Colors" },
+            { key: "products", label: "Products" },
+            { key: "colors", label: "Color trends" },
           ]}
-          value={mode}
-          onChange={(v) => setMode(v)}
-          label="Color grouping"
+          value={view}
+          onChange={(v) => setView(v)}
+          label="Trends view"
         />
         <p className="font-ui text-[11px] text-ink-muted">
-          {mode === "product"
-            ? "Click into a product to see its colors"
-            : "Click into a color to see the products it sells on"}
+          {view === "products" ? "Click into a product for its colors & volume" : "Garment colors across all products"}
         </p>
       </div>
 
-      {mode === "product" &&
-        (activeProduct ? (
-          <div className="space-y-4">
-            <button
-              type="button"
-              onClick={() => setSelProduct(null)}
-              className="focus-ring font-ui inline-flex items-center gap-1.5 rounded text-xs font-semibold text-berry transition-colors hover:text-cherry"
-            >
-              <span aria-hidden>←</span> All products
-            </button>
-            <Card eyebrow="Color split" title={activeProduct.product} meta={`${activeProduct.total.toLocaleString()} units`}>
-              <RankedList items={activeProduct.colors} unit="units" showSwatch />
-            </Card>
-          </div>
-        ) : (
-          <Card eyebrow="Garment colors" title="Products" meta="click a product for its colors">
-            <DrillList
-              unit="units"
-              onSelect={setSelProduct}
-              items={byProduct.map((g) => ({
-                label: g.product,
-                value: g.total,
-                preview: g.colors.slice(0, 5).map((c) => GARMENT_HEX[c.label.toLowerCase()] ?? null),
-              }))}
-            />
+      {view === "products" ? (
+        <Card eyebrow="Forecast" title="Products" meta="ranked by units this window">
+          <TrendRows items={products} unit="units" onSelect={setSelected} showDelta={hasPrev} />
+        </Card>
+      ) : (
+        <>
+          {hasPrev && (
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Card eyebrow="Colors" title="Gaining">
+                <RiserRows items={colorRiserList.filter((r) => r.delta > 0).slice(0, 6)} rising />
+              </Card>
+              <Card eyebrow="Colors" title="Fading">
+                <RiserRows
+                  items={colorRiserList.filter((r) => r.delta < 0).sort((a, b) => a.delta - b.delta).slice(0, 6)}
+                />
+              </Card>
+            </div>
+          )}
+          <Card eyebrow="Forecast" title="All colors" meta="every product combined">
+            <TrendRows items={colorItems} unit="color picks" showDelta={hasPrev} />
           </Card>
-        ))}
-
-      {mode === "color" &&
-        (activeColor ? (
-          <div className="space-y-4">
-            <button
-              type="button"
-              onClick={() => setSelColor(null)}
-              className="focus-ring font-ui inline-flex items-center gap-1.5 rounded text-xs font-semibold text-berry transition-colors hover:text-cherry"
-            >
-              <span aria-hidden>←</span> All colors
-            </button>
-            <Card
-              eyebrow="Sells on"
-              title={
-                <span className="inline-flex items-center gap-2">
-                  <span
-                    className="h-3.5 w-3.5 flex-none rounded-full ring-1 ring-black/10"
-                    style={activeColorHex ? { backgroundColor: activeColorHex } : { boxShadow: "inset 0 0 0 1px rgba(67,34,34,0.25)" }}
-                    aria-hidden
-                  />
-                  {activeColor.color}
-                </span>
-              }
-              meta={`${activeColor.total.toLocaleString()} units`}
-            >
-              <RankedList items={activeColor.products} unit="units" />
-            </Card>
-          </div>
-        ) : (
-          <Card eyebrow="Garment colors" title="Colors" meta="click a color for its products">
-            <DrillList
-              unit="units"
-              onSelect={setSelColor}
-              items={byColor.map((g) => ({
-                label: g.color,
-                value: g.total,
-                swatch: GARMENT_HEX[g.color.toLowerCase()] ?? null,
-              }))}
-            />
-          </Card>
-        ))}
+        </>
+      )}
 
       <p className="font-ui text-[11px] leading-relaxed text-ink-muted">
-        Item color is the garment/product color chosen at checkout, broken out per product — distinct from thread or text
-        colors. Swatches are approximate.
+        Sparklines show monthly units across the window — the shape is the story. {"\u25B2"}/{"\u25BC"} compare this
+        window to the equal window before it.
       </p>
     </div>
   );
