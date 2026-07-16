@@ -354,9 +354,7 @@ export default function ProductTrends({
       {tab === "ordered" && (
         <OrderedTab cats={cats} topIcons={topIcons} topFonts={topFonts} topText={topText} useWin={useWin} />
       )}
-      {tab === "colors" && (
-        <ColorsTab byProduct={colorsByProduct} byColor={productsByColor} colorRisers={colorRisers} hasPrev={totals.hasPrev} />
-      )}
+      {tab === "colors" && <ColorsTab byProduct={colorsByProduct} byColor={productsByColor} />}
       {tab === "seasonality" && <SeasonalityTab seasonVolume={seasonVolume} months={months} />}
     </div>
   );
@@ -478,109 +476,193 @@ function OrderedTab({
   );
 }
 
-function ColorsTab({
-  byProduct,
-  byColor,
-  colorRisers,
-  hasPrev,
+type DrillItem = { label: string; value: number; swatch?: string | null; preview?: (string | null)[] };
+
+/** Clickable ranked rows — click a row to drill into it. */
+function DrillList({
+  items,
+  unit = "units",
+  onSelect,
 }: {
-  byProduct: ColorGroup[];
-  byColor: ProductGroup[];
-  colorRisers: Riser[];
-  hasPrev: boolean;
+  items: DrillItem[];
+  unit?: string;
+  onSelect: (label: string) => void;
 }) {
-  const [view, setView] = useState<"product" | "color">("product");
+  const max = Math.max(1, ...items.map((i) => i.value));
+  const total = items.reduce((s, i) => s + i.value, 0) || 1;
+  if (items.length === 0) {
+    return <p className="font-ui px-4 py-8 text-center text-xs text-ink-muted">Nothing here in this window.</p>;
+  }
+  return (
+    <ul>
+      {items.map((it, idx) => {
+        const fill = (it.value / max) * 100;
+        const share = (it.value / total) * 100;
+        return (
+          <li key={`${it.label}-${idx}`} className="border-b border-parchment/60 last:border-b-0">
+            <button
+              type="button"
+              onClick={() => onSelect(it.label)}
+              className="focus-ring flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-pink-soft/30"
+            >
+              <span className="font-ui w-5 flex-none text-right text-xs tabular-nums text-ink-muted">{idx + 1}</span>
+              {it.swatch !== undefined && (
+                <span
+                  className="h-3.5 w-3.5 flex-none rounded-full ring-1 ring-black/10"
+                  style={it.swatch ? { backgroundColor: it.swatch } : { boxShadow: "inset 0 0 0 1px rgba(67,34,34,0.25)" }}
+                  aria-hidden
+                />
+              )}
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2">
+                  <span className="font-ui truncate text-xs font-semibold text-espresso">{it.label}</span>
+                  {it.preview && it.preview.length > 0 && (
+                    <span className="flex flex-none items-center gap-1" aria-hidden>
+                      {it.preview.map((hex, i) => (
+                        <span
+                          key={i}
+                          className="h-2.5 w-2.5 rounded-full ring-1 ring-black/10"
+                          style={hex ? { backgroundColor: hex } : { boxShadow: "inset 0 0 0 1px rgba(67,34,34,0.25)" }}
+                        />
+                      ))}
+                    </span>
+                  )}
+                </span>
+                <span className="mt-1 block h-1.5 w-full overflow-hidden rounded-full bg-parchment">
+                  <span className="block h-full rounded-full bg-berry" style={{ width: `${Math.max(fill, 2)}%` }} />
+                </span>
+              </span>
+              <span className="flex-none text-right">
+                <span className="font-ui block text-xs font-semibold tabular-nums text-espresso">{it.value.toLocaleString()}</span>
+                <span className="font-ui block text-[11px] tabular-nums text-ink-muted">
+                  {Math.round(share)}% · {unit}
+                </span>
+              </span>
+              <span className="font-ui flex-none text-sm text-ink-muted" aria-hidden>
+                ›
+              </span>
+            </button>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function ColorsTab({ byProduct, byColor }: { byProduct: ColorGroup[]; byColor: ProductGroup[] }) {
+  const [mode, setMode] = useState<"product" | "color">("product");
+  const [selProduct, setSelProduct] = useState<string | null>(null);
+  const [selColor, setSelColor] = useState<string | null>(null);
   if (byProduct.length === 0) {
     return <EmptyNote>No item-color data yet. Run the updated order-stats script to fill the &ldquo;TRENDS_ITEM_COLORS&rdquo; tab.</EmptyNote>;
   }
-  const rising = colorRisers.filter((r) => r.delta > 0).slice(0, 6);
-  const falling = colorRisers.filter((r) => r.delta < 0).sort((a, b) => a.delta - b.delta).slice(0, 6);
-  // Old single-bucket data (no product column) collapses to one group — label it plainly.
+  // Old single-bucket data (no product column yet) — say so plainly instead of faking a drill-down.
   const soleAll = byProduct.length === 1 && byProduct[0].product === "Unspecified";
-  const prodShown = byProduct.slice(0, 12);
-  const colorShown = byColor.slice(0, 12);
+  if (soleAll) {
+    return (
+      <div className="space-y-6">
+        <p className="font-ui rounded-xl border border-parchment bg-pink-soft/40 px-4 py-3 text-[11px] leading-relaxed text-ink-soft">
+          Colors aren&rsquo;t attached to products yet — the sheet&rsquo;s data tab predates this update. Run{" "}
+          <span className="font-semibold">Actions → Icon order stats</span> once and this becomes a click-through
+          per-product breakdown automatically.
+        </p>
+        <Card eyebrow="Garment colors" title="All products" meta={`${byProduct[0].total.toLocaleString()} units`}>
+          <RankedList items={byProduct[0].colors} unit="units" showSwatch />
+        </Card>
+      </div>
+    );
+  }
+  const activeProduct = selProduct ? byProduct.find((g) => g.product === selProduct) ?? null : null;
+  const activeColor = selColor ? byColor.find((g) => g.color === selColor) ?? null : null;
+  const activeColorHex = activeColor ? GARMENT_HEX[activeColor.color.toLowerCase()] : undefined;
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Toggle
           options={[
-            { key: "product", label: "By product" },
-            { key: "color", label: "By color" },
+            { key: "product", label: "Products" },
+            { key: "color", label: "Colors" },
           ]}
-          value={view}
-          onChange={(v) => setView(v)}
+          value={mode}
+          onChange={(v) => setMode(v)}
           label="Color grouping"
         />
         <p className="font-ui text-[11px] text-ink-muted">
-          {view === "product"
-            ? "Each product\u2019s garment-color split"
-            : "Each color and the products it sells on"}
+          {mode === "product"
+            ? "Click into a product to see its colors"
+            : "Click into a color to see the products it sells on"}
         </p>
       </div>
 
-      {view === "product" ? (
-        <>
-          <div className="grid gap-6 lg:grid-cols-2">
-            {prodShown.map((g) => (
-              <Card
-                key={g.product}
-                eyebrow="Colors by product"
-                title={soleAll ? "All products" : g.product}
-                meta={`${g.total.toLocaleString()} units`}
-              >
-                <RankedList items={g.colors} unit="units" showSwatch limit={8} />
-              </Card>
-            ))}
+      {mode === "product" &&
+        (activeProduct ? (
+          <div className="space-y-4">
+            <button
+              type="button"
+              onClick={() => setSelProduct(null)}
+              className="focus-ring font-ui inline-flex items-center gap-1.5 rounded text-xs font-semibold text-berry transition-colors hover:text-cherry"
+            >
+              <span aria-hidden>←</span> All products
+            </button>
+            <Card eyebrow="Color split" title={activeProduct.product} meta={`${activeProduct.total.toLocaleString()} units`}>
+              <RankedList items={activeProduct.colors} unit="units" showSwatch />
+            </Card>
           </div>
-          {byProduct.length > prodShown.length && (
-            <p className="font-ui text-[11px] text-ink-muted">
-              Showing the top {prodShown.length} products by volume of {byProduct.length.toLocaleString()}.
-            </p>
-          )}
-        </>
-      ) : (
-        <>
-          <div className="grid gap-6 lg:grid-cols-2">
-            {colorShown.map((g) => {
-              const hex = GARMENT_HEX[g.color.toLowerCase()];
-              return (
-                <Card
-                  key={g.color}
-                  eyebrow="Products by color"
-                  title={
-                    <span className="inline-flex items-center gap-2">
-                      <span
-                        className="h-3.5 w-3.5 flex-none rounded-full ring-1 ring-black/10"
-                        style={hex ? { backgroundColor: hex } : { boxShadow: "inset 0 0 0 1px rgba(67,34,34,0.25)" }}
-                        aria-hidden
-                      />
-                      {g.color}
-                    </span>
-                  }
-                  meta={`${g.total.toLocaleString()} units`}
-                >
-                  <RankedList items={g.products} unit="units" limit={8} />
-                </Card>
-              );
-            })}
+        ) : (
+          <Card eyebrow="Garment colors" title="Products" meta="click a product for its colors">
+            <DrillList
+              unit="units"
+              onSelect={setSelProduct}
+              items={byProduct.map((g) => ({
+                label: g.product,
+                value: g.total,
+                preview: g.colors.slice(0, 5).map((c) => GARMENT_HEX[c.label.toLowerCase()] ?? null),
+              }))}
+            />
+          </Card>
+        ))}
+
+      {mode === "color" &&
+        (activeColor ? (
+          <div className="space-y-4">
+            <button
+              type="button"
+              onClick={() => setSelColor(null)}
+              className="focus-ring font-ui inline-flex items-center gap-1.5 rounded text-xs font-semibold text-berry transition-colors hover:text-cherry"
+            >
+              <span aria-hidden>←</span> All colors
+            </button>
+            <Card
+              eyebrow="Sells on"
+              title={
+                <span className="inline-flex items-center gap-2">
+                  <span
+                    className="h-3.5 w-3.5 flex-none rounded-full ring-1 ring-black/10"
+                    style={activeColorHex ? { backgroundColor: activeColorHex } : { boxShadow: "inset 0 0 0 1px rgba(67,34,34,0.25)" }}
+                    aria-hidden
+                  />
+                  {activeColor.color}
+                </span>
+              }
+              meta={`${activeColor.total.toLocaleString()} units`}
+            >
+              <RankedList items={activeColor.products} unit="units" />
+            </Card>
           </div>
-          {byColor.length > colorShown.length && (
-            <p className="font-ui text-[11px] text-ink-muted">
-              Showing the top {colorShown.length} colors by volume of {byColor.length.toLocaleString()}.
-            </p>
-          )}
-        </>
-      )}
-      {hasPrev && (rising.length > 0 || falling.length > 0) && (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card eyebrow="Colors" title="Gaining (all products)">
-            <RiserRows items={rising} rising />
+        ) : (
+          <Card eyebrow="Garment colors" title="Colors" meta="click a color for its products">
+            <DrillList
+              unit="units"
+              onSelect={setSelColor}
+              items={byColor.map((g) => ({
+                label: g.color,
+                value: g.total,
+                swatch: GARMENT_HEX[g.color.toLowerCase()] ?? null,
+              }))}
+            />
           </Card>
-          <Card eyebrow="Colors" title="Fading (all products)">
-            <RiserRows items={falling} />
-          </Card>
-        </div>
-      )}
+        ))}
+
       <p className="font-ui text-[11px] leading-relaxed text-ink-muted">
         Item color is the garment/product color chosen at checkout, broken out per product — distinct from thread or text
         colors. Swatches are approximate.
