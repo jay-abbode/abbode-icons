@@ -112,10 +112,9 @@ export function baseProduct(raw: string): string | null {
 // brand adds a new garment color, add it here too.
 const REAL_COLORS = new Set([
   "blush", "olive", "bonbon", "cloud", "linen", "blueberry", "fig", "chocolate", "butter",
-  "cherry", "navy", "noir", "noir (black)", "yuzu", "azure", "black", "red", "espresso",
+  "cherry", "navy", "noir", "yuzu", "azure", "black", "red", "espresso",
   "pink", "white", "white / pink", "white / black", "burgundy", "brown", "pink striped",
-  "cabana", "poolside", "natural", "blush polka dot", "lemon sugar", "morning angel",
-  "citrus polka dot",
+  "cabana", "poolside", "natural",
 ]);
 
 function toChannel(raw: string): Channel | null {

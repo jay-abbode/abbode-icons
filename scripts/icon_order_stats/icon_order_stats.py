@@ -148,10 +148,9 @@ FUZZY_AUTO = 88
 # with REAL_COLORS in lib/productTrends.ts.
 REAL_COLORS = {
     "blush", "olive", "bonbon", "cloud", "linen", "blueberry", "fig", "chocolate", "butter",
-    "cherry", "navy", "noir", "noir (black)", "yuzu", "azure", "black", "red", "espresso",
+    "cherry", "navy", "noir", "yuzu", "azure", "black", "red", "espresso",
     "pink", "white", "white / pink", "white / black", "burgundy", "brown", "pink striped",
-    "cabana", "poolside", "natural", "blush polka dot", "lemon sugar", "morning angel",
-    "citrus polka dot",
+    "cabana", "poolside", "natural",
 }
 FUZZY_REVIEW = 78
 
