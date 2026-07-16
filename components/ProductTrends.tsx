@@ -715,6 +715,7 @@ function ProductsTab({
 }) {
   const [view, setView] = useState<"products" | "colors">("products");
   const [selected, setSelected] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
 
   const model = useMemo(() => {
     const monthSet = new Set(monthList);
@@ -761,6 +762,7 @@ function ProductsTab({
     const colorCur = new Map<string, number>();
     const colorPrev = new Map<string, number>();
     const colorMonthlyAll = new Map<string, Map<string, number>>();
+    const colorProds = new Map<string, Map<string, number>>();
     for (const r of colorRows) {
       const label = (r.product || "").trim() || "Unspecified";
       const color = r.color.trim();
@@ -786,6 +788,14 @@ function ProductsTab({
             colorMonthlyAll.set(color, cm);
           }
           cm.set(r.month, (cm.get(r.month) || 0) + r.units);
+          if (label !== "Unspecified") {
+            let pm2 = colorProds.get(color);
+            if (!pm2) {
+              pm2 = new Map();
+              colorProds.set(color, pm2);
+            }
+            pm2.set(label, (pm2.get(label) || 0) + r.units);
+          }
         }
       } else if (prevSet.has(r.month)) {
         colPrev.set(label, (colPrev.get(label) || 0) + r.units);
@@ -872,6 +882,11 @@ function ProductsTab({
       chanOf: (label: string) => (fromCat(label) ? catChan.get(label) : colChan.get(label)),
       monthlyOf: (label: string) =>
         (fromCat(label) ? catMonthly.get(label) : colMonthly.get(label)) || new Map<string, number>(),
+      colorMonthlyOf: (label: string) => colorMonthlyAll.get(label) || new Map<string, number>(),
+      colorProdsOf: (label: string) =>
+        [...(colorProds.get(label) || new Map<string, number>()).entries()]
+          .map(([l, v]) => ({ label: l, value: v }))
+          .sort((a, b) => b.value - a.value),
       prodColorPrev,
     };
   }, [byProduct, colorRows, catRows, monthList, prevList, channel]);
@@ -990,6 +1005,61 @@ function ProductsTab({
     );
   }
 
+  // ----- Color detail -----
+  const cDetail = selectedColor ? colorItems.find((c) => c.label === selectedColor) : undefined;
+  if (selectedColor && cDetail) {
+    const mm = model.colorMonthlyOf(selectedColor);
+    const points = monthList.map((mo) => ({ month: mo, units: mm.get(mo) || 0 }));
+    const activeMonths = points.filter((p) => p.units > 0).length;
+    const prods = model.colorProdsOf(selectedColor);
+    return (
+      <div className="space-y-6">
+        <button
+          type="button"
+          onClick={() => setSelectedColor(null)}
+          className="focus-ring font-ui inline-flex items-center gap-1.5 rounded text-xs font-semibold text-berry transition-colors hover:text-cherry"
+        >
+          <span aria-hidden>←</span> All colors
+        </button>
+        <div className="flex flex-wrap items-baseline gap-3">
+          <h3 className="font-display flex items-center gap-2.5 text-xl text-espresso">
+            <span
+              className="h-4 w-4 flex-none rounded-full ring-1 ring-black/10"
+              style={cDetail.swatch ? { backgroundColor: cDetail.swatch } : { boxShadow: "inset 0 0 0 1px rgba(67,34,34,0.25)" }}
+              aria-hidden
+            />
+            {selectedColor}
+          </h3>
+          {hasPrev && <DeltaChip growth={cDetail.growth} delta={cDetail.delta} />}
+        </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <StatTile
+            label="Color picks"
+            value={cDetail.value.toLocaleString()}
+            growth={hasPrev ? cDetail.growth : undefined}
+            sub="this window"
+          />
+          <StatTile label="Share of picks" value={`${cDetail.share.toFixed(0)}%`} sub="of all color picks" />
+          <StatTile label="Active months" value={String(activeMonths)} sub={`of ${monthList.length} in window`} />
+        </div>
+        {monthList.length > 1 && (
+          <Card eyebrow="Popularity" title="Picks over time">
+            <MiniBars points={points} />
+          </Card>
+        )}
+        {prods.length > 0 && (
+          <Card eyebrow="Sells on" title="Products" meta={`${prods.length} product${prods.length === 1 ? "" : "s"}`}>
+            <RankedList items={prods} unit="units" limit={8} />
+          </Card>
+        )}
+        <p className="font-ui text-[11px] leading-relaxed text-ink-muted">
+          Momentum compares this window to the {prevList.length} months before it. Item color is the garment color chosen
+          at checkout — distinct from thread or text colors. Swatches are approximate.
+        </p>
+      </div>
+    );
+  }
+
   // ----- Signals + list / color trends -----
   const topProduct = products[0];
   const topColor = colorItems[0];
@@ -1075,8 +1145,8 @@ function ProductsTab({
               </Card>
             </div>
           )}
-          <Card eyebrow="Forecast" title="All colors" meta="every product combined">
-            <TrendRows items={colorItems} unit="color picks" showDelta={hasPrev} />
+          <Card eyebrow="Forecast" title="All colors" meta="click a color for its history">
+            <TrendRows items={colorItems} unit="color picks" onSelect={setSelectedColor} showDelta={hasPrev} />
           </Card>
         </>
       )}

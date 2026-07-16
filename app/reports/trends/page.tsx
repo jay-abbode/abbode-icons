@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import ProductTrends from "@/components/ProductTrends";
+import AskTrends from "@/components/AskTrends";
 import { getProductTrends, EMPTY_PRODUCT_TRENDS } from "@/lib/productTrends";
 import { getUsageStats, EMPTY_USAGE } from "@/lib/usageStats";
 import { getTrendStats, EMPTY_TRENDS } from "@/lib/trendStats";
@@ -45,6 +46,10 @@ export default async function ProductTrendsPage() {
         </div>
 
         <ProductTrends trends={trends} usage={usage} momentum={momentum} />
+
+        <div className="mt-10">
+          <AskTrends />
+        </div>
       </main>
     </>
   );

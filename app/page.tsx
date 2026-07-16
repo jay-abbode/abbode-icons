@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getIconCatalog, type Icon } from "@/lib/sheets";
 import Header from "@/components/Header";
+import Curtain from "@/components/Curtain";
 import SearchBar from "@/components/SearchBar";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +29,7 @@ export default async function HomePage() {
 
   return (
     <>
+      <Curtain />
       <Header showSearch />
       <main>
         {/* Hero */}

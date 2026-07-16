@@ -2,8 +2,8 @@ import "./globals.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Abbode Icon Library",
-  description: "Internal embroidery icon catalog for the Abbode team and partners.",
+  title: "Abbode Embroidery",
+  description: "Abbode's internal home — icon catalog, product & color trends, and order data.",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },

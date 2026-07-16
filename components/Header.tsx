@@ -80,12 +80,12 @@ export default async function Header({
 
           <Link
             href="/"
-            aria-label="Abbode Icons — home"
+            aria-label="Abbode Embroidery — home"
             className="group flex cursor-pointer items-end gap-2.5 rounded-md focus-ring"
           >
             <AbbodeLogo className="h-7 w-auto text-sage transition-colors duration-200 group-hover:text-olive md:h-[30px]" />
             <span className="font-display text-[26px] leading-none text-plum transition-colors duration-200 group-hover:text-cherry md:text-[30px]">
-              Icons
+              Embroidery
             </span>
           </Link>
 
