@@ -6,7 +6,7 @@ import type { ProductTrendsSnapshot, ColorRow, CatRow } from "@/lib/productTrend
 import type { UsageSnapshot, UsageType, UsageWindow } from "@/lib/usageStats";
 import type { TrendsSnapshot, TrendItem } from "@/lib/trendStats";
 
-type TabKey = "overview" | "ordered" | "products" | "seasonality";
+type TabKey = "overview" | "ordered" | "products" | "forecast" | "seasonality";
 type ChannelFilter = "all" | "web" | "pos";
 type WindowChoice = 3 | 6 | 12 | 0; // 0 = all available months
 type ChannelOk = (c: "web" | "pos") => boolean;
@@ -15,6 +15,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "overview", label: "Overview" },
   { key: "ordered", label: "What's ordered" },
   { key: "products", label: "Products" },
+  { key: "forecast", label: "Forecast" },
   { key: "seasonality", label: "Seasonality" },
 ];
 
@@ -300,10 +301,12 @@ export default function ProductTrends({
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <Toggle options={CHANNELS} value={channel} onChange={(v) => setChannel(v)} label="Channel" />
-          <Toggle options={WINDOWS} value={win} onChange={(v) => setWin(v)} label="Window" />
+          {tab !== "forecast" && <Toggle options={WINDOWS} value={win} onChange={(v) => setWin(v)} label="Window" />}
         </div>
         <p className="font-ui text-xs text-ink-muted">
-          {sel.length > 0
+          {tab === "forecast"
+            ? "range set below"
+            : sel.length > 0
             ? `${fmtMonth(sel[0], true)} – ${fmtMonth(sel[sel.length - 1], true)}`
             : win === 0
               ? "all available months"
@@ -345,6 +348,9 @@ export default function ProductTrends({
           channel={channel}
           initialProduct={jumpProduct}
         />
+      )}
+      {tab === "forecast" && (
+        <ForecastTab catRows={trends.categories} colorRows={trends.colors} months={months} channel={channel} />
       )}
       {tab === "seasonality" && <SeasonalityTab seasonVolume={seasonVolume} months={months} />}
     </div>
@@ -1177,6 +1183,376 @@ function ProductsTab({
         Sparklines show monthly units across the window — the shape is the story. {"\u25B2"}/{"\u25BC"} compare this
         window to the equal window before it.
       </p>
+    </div>
+  );
+}
+
+// ---------- Forecast pane: line chart with selectable series and projections ----------
+
+const LINE_PALETTE = ["#BB3767", "#432222", "#D1C68F", "#972945", "#F2B2AE", "#671E30", "#6E6E6E", "#A0785A"];
+
+function nextMonths(last: string, n: number): string[] {
+  const out: string[] = [];
+  let y = parseInt(last.slice(0, 4), 10);
+  let m = parseInt(last.slice(5, 7), 10);
+  for (let i = 0; i < n; i++) {
+    m += 1;
+    if (m > 12) {
+      m = 1;
+      y += 1;
+    }
+    out.push(`${y}-${String(m).padStart(2, "0")}`);
+  }
+  return out;
+}
+
+/** Straight-line fit of the recent trend (last ≤6 points), projected `horizon` months, floored at 0. */
+function projectLinear(vals: number[], horizon: number): number[] {
+  const n = vals.length;
+  if (n < 2) return [];
+  const k = Math.min(n, 6);
+  const ys = vals.slice(n - k);
+  const mx = (k - 1) / 2;
+  const my = ys.reduce((a, b) => a + b, 0) / k;
+  let num = 0;
+  let den = 0;
+  for (let i = 0; i < k; i++) {
+    num += (i - mx) * (ys[i] - my);
+    den += (i - mx) * (i - mx);
+  }
+  const slope = den ? num / den : 0;
+  const out: number[] = [];
+  for (let h = 1; h <= horizon; h++) out.push(Math.max(0, my + slope * (k - 1 - mx + h)));
+  return out;
+}
+
+function niceCeil(v: number): number {
+  if (v <= 5) return 5;
+  const pow = Math.pow(10, Math.floor(Math.log10(v)));
+  for (const m of [1, 2, 5, 10]) {
+    if (v <= m * pow) return m * pow;
+  }
+  return 10 * pow;
+}
+
+type ChartSeries = { label: string; color: string; actual: number[]; projected: number[] };
+
+function LineChart({ series, axis, actualCount }: { series: ChartSeries[]; axis: string[]; actualCount: number }) {
+  const W = 720;
+  const H = 260;
+  const padL = 40;
+  const padR = 12;
+  const padT = 12;
+  const padB = 26;
+  const maxVal = niceCeil(
+    Math.max(1, ...series.flatMap((s) => [...s.actual, ...s.projected])),
+  );
+  const x = (i: number) => padL + (i * (W - padL - padR)) / Math.max(1, axis.length - 1);
+  const y = (v: number) => padT + (1 - v / maxVal) * (H - padT - padB);
+  const labelEvery = axis.length > 10 ? 2 : 1;
+  const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => Math.round(maxVal * f));
+  const lastActualX = x(actualCount - 1);
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label="Trend lines with projections">
+      {/* projected zone */}
+      {axis.length > actualCount && (
+        <>
+          <rect x={lastActualX} y={padT} width={x(axis.length - 1) - lastActualX} height={H - padT - padB} fill="#FBE3E1" opacity="0.35" />
+          <line x1={lastActualX} y1={padT} x2={lastActualX} y2={H - padB} stroke="#BB3767" strokeOpacity="0.35" strokeDasharray="3 4" />
+        </>
+      )}
+      {/* gridlines + y labels */}
+      {ticks.map((t) => (
+        <g key={t}>
+          <line x1={padL} y1={y(t)} x2={W - padR} y2={y(t)} stroke="#F5F0EB" />
+          <text x={padL - 6} y={y(t) + 3} textAnchor="end" fontSize="9" fill="#A39A93">
+            {t.toLocaleString()}
+          </text>
+        </g>
+      ))}
+      {/* x labels */}
+      {axis.map((m, i) =>
+        i % labelEvery === 0 ? (
+          <text
+            key={m}
+            x={x(i)}
+            y={H - 8}
+            textAnchor="middle"
+            fontSize="9"
+            fill={i >= actualCount ? "#BB3767" : "#A39A93"}
+          >
+            {fmtMonth(m)}
+          </text>
+        ) : null,
+      )}
+      {/* lines */}
+      {series.map((s) => {
+        const solid = s.actual.map((v, i) => `${x(i)},${y(v)}`).join(" ");
+        const projPts = s.projected.length
+          ? [`${x(s.actual.length - 1)},${y(s.actual[s.actual.length - 1] ?? 0)}`]
+              .concat(s.projected.map((v, j) => `${x(s.actual.length + j)},${y(v)}`))
+              .join(" ")
+          : "";
+        return (
+          <g key={s.label}>
+            {s.actual.length > 1 && (
+              <>
+                <polyline points={solid} fill="none" stroke="#432222" strokeOpacity="0.18" strokeWidth="3.5" strokeLinejoin="round" strokeLinecap="round" />
+                <polyline points={solid} fill="none" stroke={s.color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+              </>
+            )}
+            {projPts && (
+              <>
+                <polyline points={projPts} fill="none" stroke="#432222" strokeOpacity="0.14" strokeWidth="3.5" strokeDasharray="4 4" strokeLinejoin="round" strokeLinecap="round" />
+                <polyline points={projPts} fill="none" stroke={s.color} strokeWidth="2" strokeDasharray="4 4" strokeOpacity="0.85" strokeLinejoin="round" strokeLinecap="round" />
+              </>
+            )}
+            {s.actual.map((v, i) => (
+              <circle key={`a${i}`} cx={x(i)} cy={y(v)} r="2.6" fill={s.color} stroke="#FFFCF7" strokeWidth="1">
+                <title>{`${fmtMonth(axis[i], true)} · ${s.label} · ${v.toLocaleString()} units`}</title>
+              </circle>
+            ))}
+            {s.projected.map((v, j) => (
+              <circle
+                key={`p${j}`}
+                cx={x(s.actual.length + j)}
+                cy={y(v)}
+                r="2.4"
+                fill="#FFFCF7"
+                stroke={s.color}
+                strokeWidth="1.4"
+              >
+                <title>{`${fmtMonth(axis[s.actual.length + j], true)} · ${s.label} · ~${Math.round(v).toLocaleString()} projected`}</title>
+              </circle>
+            ))}
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+type ForecastMode = "products" | "colors" | "productColors";
+
+function ForecastTab({
+  catRows,
+  colorRows,
+  months,
+  channel,
+}: {
+  catRows: CatRow[];
+  colorRows: ColorRow[];
+  months: string[];
+  channel: "all" | ColorRow["channel"];
+}) {
+  const [mode, setMode] = useState<ForecastMode>("products");
+  const [granProduct, setGranProduct] = useState<string>("");
+  const [fromM, setFromM] = useState<string>("");
+  const [toM, setToM] = useState<string>("");
+  const [picked, setPicked] = useState<string[] | null>(null); // null = auto top 5
+
+  const chOk = (c: ColorRow["channel"]) => channel === "all" || c === channel;
+
+  // Product options for the granular mode, ranked by total units.
+  const productOptions = useMemo(() => {
+    const totals = new Map<string, number>();
+    for (const r of catRows) {
+      const l = r.category.trim();
+      if (l) totals.set(l, (totals.get(l) || 0) + r.units);
+    }
+    for (const r of colorRows) {
+      const l = (r.product || "").trim();
+      if (l && l !== "Unspecified" && !totals.has(l)) totals.set(l, (totals.get(l) || 0) + r.units);
+    }
+    return [...totals.entries()].sort((a, b) => b[1] - a[1]).map(([l]) => l);
+  }, [catRows, colorRows]);
+
+  const from = fromM || months[0] || "";
+  const to = toM || months[months.length - 1] || "";
+  const fromIdx = Math.max(0, months.indexOf(from));
+  const toIdx = Math.min(months.length - 1, months.indexOf(to) === -1 ? months.length - 1 : months.indexOf(to));
+  const rangeMonths = fromIdx <= toIdx ? months.slice(fromIdx, toIdx + 1) : months.slice(toIdx, fromIdx + 1);
+  const granProd = granProduct || productOptions[0] || "";
+
+  // Build monthly series for the chosen mode within the range.
+  const built = useMemo(() => {
+    const inRange = new Set(rangeMonths);
+    const bucket = new Map<string, Map<string, number>>();
+    const add = (label: string, month: string, units: number) => {
+      let mm = bucket.get(label);
+      if (!mm) {
+        mm = new Map();
+        bucket.set(label, mm);
+      }
+      mm.set(month, (mm.get(month) || 0) + units);
+    };
+    if (mode === "products") {
+      for (const r of catRows) {
+        const l = r.category.trim();
+        if (l && inRange.has(r.month) && chOk(r.channel)) add(l, r.month, r.units);
+      }
+      // colors-only products (unmapped) still deserve a line
+      const catLabels = new Set(bucket.keys());
+      for (const r of colorRows) {
+        const l = (r.product || "").trim();
+        if (l && l !== "Unspecified" && !catLabels.has(l) && inRange.has(r.month) && chOk(r.channel)) {
+          add(l, r.month, r.units);
+        }
+      }
+    } else if (mode === "colors") {
+      for (const r of colorRows) {
+        const c = r.color.trim();
+        if (c && inRange.has(r.month) && chOk(r.channel)) add(c, r.month, r.units);
+      }
+    } else {
+      for (const r of colorRows) {
+        const c = r.color.trim();
+        const l = (r.product || "").trim();
+        if (c && l === granProd && inRange.has(r.month) && chOk(r.channel)) add(c, r.month, r.units);
+      }
+    }
+    const ranked = [...bucket.entries()]
+      .map(([label, mm]) => ({
+        label,
+        total: rangeMonths.reduce((s, mo) => s + (mm.get(mo) || 0), 0),
+        vals: rangeMonths.map((mo) => mm.get(mo) || 0),
+      }))
+      .filter((e) => e.total > 0)
+      .sort((a, b) => b.total - a.total);
+    return ranked;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, granProd, catRows, colorRows, rangeMonths.join(","), channel]);
+
+  const candidates = built.slice(0, 10);
+  const activeLabels = picked ?? candidates.slice(0, 5).map((c) => c.label);
+  const shown = candidates.filter((c) => activeLabels.includes(c.label)).slice(0, 8);
+
+  const HORIZON = 3;
+  const canProject = rangeMonths.length >= 2;
+  const axis = canProject ? [...rangeMonths, ...nextMonths(rangeMonths[rangeMonths.length - 1], HORIZON)] : rangeMonths;
+
+  const series: ChartSeries[] = shown.map((c, i) => ({
+    label: c.label,
+    color:
+      mode !== "products"
+        ? GARMENT_HEX[c.label.toLowerCase()] ?? LINE_PALETTE[i % LINE_PALETTE.length]
+        : LINE_PALETTE[i % LINE_PALETTE.length],
+    actual: c.vals,
+    projected: canProject ? projectLinear(c.vals, HORIZON) : [],
+  }));
+
+  const selCls =
+    "focus-ring font-ui rounded-full border border-parchment bg-white px-3 py-1.5 text-xs text-espresso";
+
+  if (months.length === 0) {
+    return <EmptyNote>No monthly data yet. Run the order-stats workflow once to fill the trends tabs.</EmptyNote>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center gap-2">
+        <select
+          value={mode}
+          onChange={(e) => {
+            setMode(e.target.value as ForecastMode);
+            setPicked(null);
+          }}
+          className={selCls}
+          aria-label="Series"
+        >
+          <option value="products">Products (overall)</option>
+          <option value="colors">Colors (overall)</option>
+          <option value="productColors">Colors of a product…</option>
+        </select>
+        {mode === "productColors" && (
+          <select
+            value={granProd}
+            onChange={(e) => {
+              setGranProduct(e.target.value);
+              setPicked(null);
+            }}
+            className={selCls}
+            aria-label="Product"
+          >
+            {productOptions.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+        )}
+        <span className="font-ui text-xs text-ink-muted">from</span>
+        <select value={from} onChange={(e) => setFromM(e.target.value)} className={selCls} aria-label="From month">
+          {months.map((m) => (
+            <option key={m} value={m}>
+              {fmtMonth(m, true)}
+            </option>
+          ))}
+        </select>
+        <span className="font-ui text-xs text-ink-muted">to</span>
+        <select value={to} onChange={(e) => setToM(e.target.value)} className={selCls} aria-label="To month">
+          {months.map((m) => (
+            <option key={m} value={m}>
+              {fmtMonth(m, true)}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {candidates.length === 0 ? (
+        <EmptyNote>Nothing in this range for that selection — widen the range or switch series.</EmptyNote>
+      ) : (
+        <>
+          <div className="flex flex-wrap gap-2">
+            {candidates.map((c) => {
+              const on = activeLabels.includes(c.label);
+              const idx = shown.findIndex((s) => s.label === c.label);
+              const dot =
+                mode !== "products"
+                  ? GARMENT_HEX[c.label.toLowerCase()] ?? LINE_PALETTE[Math.max(idx, 0) % LINE_PALETTE.length]
+                  : LINE_PALETTE[Math.max(idx, 0) % LINE_PALETTE.length];
+              return (
+                <button
+                  key={c.label}
+                  type="button"
+                  onClick={() => {
+                    const next = on ? activeLabels.filter((l) => l !== c.label) : [...activeLabels, c.label];
+                    setPicked(next);
+                  }}
+                  className={`focus-ring font-ui flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                    on ? "border-espresso/30 bg-white text-espresso" : "border-parchment bg-porcelain text-ink-muted opacity-60"
+                  }`}
+                >
+                  <span
+                    className="h-2.5 w-2.5 flex-none rounded-full ring-1 ring-black/10"
+                    style={{ backgroundColor: on ? dot : "#D8CFC7" }}
+                    aria-hidden
+                  />
+                  {c.label}
+                  <span className="tabular-nums text-ink-muted">{c.total.toLocaleString()}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <Card
+            eyebrow="Forecast"
+            title="Units over time"
+            meta={canProject ? `dotted = next ${HORIZON} months, projected` : "one month selected — no projection yet"}
+          >
+            <div className="px-4 py-4">
+              <LineChart series={series} axis={axis} actualCount={rangeMonths.length} />
+            </div>
+          </Card>
+
+          <p className="font-ui text-[11px] leading-relaxed text-ink-muted">
+            Projections are a straight-line fit of the recent trend (up to the last 6 months), floored at zero — directional,
+            not gospel. They sharpen as more months accrue{rangeMonths.length < 3 ? " — with this little history, treat them loosely" : ""}.
+            Lines cap at 8 for readability; tap chips to swap lines in and out.
+          </p>
+        </>
+      )}
     </div>
   );
 }
