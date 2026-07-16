@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { ReactNode } from "react";
+import type { ReactNode, PointerEvent as ReactPointerEvent } from "react";
 import type { ProductTrendsSnapshot, ColorRow, CatRow } from "@/lib/productTrends";
 import type { UsageSnapshot, UsageType, UsageWindow } from "@/lib/usageStats";
 import type { TrendsSnapshot, TrendItem } from "@/lib/trendStats";
@@ -1255,158 +1255,147 @@ function lineSafe(hex: string): string {
 
 type ChartSeries = { label: string; color: string; actual: number[]; projected: number[] };
 
-function LineChart({
+/**
+ * Multi-line chart with a crosshair readout: move the pointer anywhere and a
+ * guideline snaps to the nearest month, every visible line gets a highlighted
+ * point, and a tooltip lists each series' value at that month (sorted high→low,
+ * projected months flagged with ~). Hovering a legend chip dims the rest.
+ */
+function ForecastChart({
   series,
   axis,
   actualCount,
-  hover,
-  onHover,
+  hoverLabel,
 }: {
   series: ChartSeries[];
   axis: string[];
   actualCount: number;
-  hover: string | null;
-  onHover: (label: string | null) => void;
+  hoverLabel: string | null;
 }) {
+  const [idx, setIdx] = useState<number | null>(null);
   const W = 720;
-  const H = 260;
-  const padL = 40;
-  const padR = 104;
-  const padT = 12;
-  const padB = 26;
+  const H = 300;
+  const padL = 46;
+  const padR = 18;
+  const padT = 16;
+  const padB = 30;
   const maxVal = niceCeil(Math.max(1, ...series.flatMap((s) => [...s.actual, ...s.projected])));
   const x = (i: number) => padL + (i * (W - padL - padR)) / Math.max(1, axis.length - 1);
   const y = (v: number) => padT + (1 - v / maxVal) * (H - padT - padB);
-  const labelEvery = axis.length > 10 ? 2 : 1;
   const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => Math.round(maxVal * f));
   const lastActualX = x(actualCount - 1);
   const endX = x(axis.length - 1);
+  const labelEvery = axis.length > 10 ? 2 : 1;
 
-  // End-of-line label positions, staggered so converging lines stay readable.
-  const ends = series
-    .map((s) => {
-      const v = s.projected.length ? s.projected[s.projected.length - 1] : s.actual[s.actual.length - 1] ?? 0;
-      return { label: s.label, color: s.color, y: y(v) };
-    })
-    .sort((a, b) => a.y - b.y);
-  for (let i = 1; i < ends.length; i++) {
-    if (ends[i].y - ends[i - 1].y < 11) ends[i].y = ends[i - 1].y + 11;
-  }
-  for (let i = ends.length - 1; i >= 0; i--) {
-    const maxY = H - padB - 2 - (ends.length - 1 - i) * 11;
-    if (ends[i].y > maxY) ends[i].y = maxY;
-  }
-  const endYof = new Map(ends.map((e) => [e.label, e.y]));
+  const onMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    if (r.width === 0) return;
+    const fx = (e.clientX - r.left) / r.width; // 0..1 across full svg width
+    const frac = (fx - padL / W) / ((W - padL - padR) / W);
+    const i = Math.round(frac * (axis.length - 1));
+    setIdx(Math.max(0, Math.min(axis.length - 1, i)));
+  };
+
+  const rows =
+    idx == null
+      ? []
+      : series
+          .map((s) => {
+            const projStart = s.actual.length;
+            const v = idx < projStart ? s.actual[idx] : s.projected[idx - projStart];
+            return { label: s.label, color: s.color, value: v ?? 0, projected: idx >= projStart };
+          })
+          .sort((a, b) => b.value - a.value);
+
+  const tipLeftPct = idx == null ? 0 : (x(idx) / W) * 100;
+  const flip = tipLeftPct > 60;
 
   return (
-    <svg
-      viewBox={`0 0 ${W} ${H}`}
-      className="h-auto w-full"
-      role="img"
-      aria-label="Trend lines with projections"
-      onPointerLeave={() => onHover(null)}
-    >
-      {axis.length > actualCount && (
-        <>
-          <rect x={lastActualX} y={padT} width={endX - lastActualX} height={H - padT - padB} fill="#FBE3E1" opacity="0.35" />
-          <line x1={lastActualX} y1={padT} x2={lastActualX} y2={H - padB} stroke="#BB3767" strokeOpacity="0.35" strokeDasharray="3 4" />
-        </>
-      )}
-      {ticks.map((t) => (
-        <g key={t}>
-          <line x1={padL} y1={y(t)} x2={W - padR} y2={y(t)} stroke="#F5F0EB" />
-          <text x={padL - 6} y={y(t) + 3} textAnchor="end" fontSize="9" fill="#A39A93">
-            {t.toLocaleString()}
-          </text>
-        </g>
-      ))}
-      {axis.map((m, i) =>
-        i % labelEvery === 0 ? (
-          <text key={m} x={x(i)} y={H - 8} textAnchor="middle" fontSize="9" fill={i >= actualCount ? "#BB3767" : "#A39A93"}>
-            {fmtMonth(m)}
-          </text>
-        ) : null,
-      )}
-      {series.map((s) => {
-        const isHover = hover === s.label;
-        const dim = hover !== null && !isHover;
-        const solid = s.actual.map((v, i) => `${x(i)},${y(v)}`).join(" ");
-        const projPts = s.projected.length
-          ? [`${x(s.actual.length - 1)},${y(s.actual[s.actual.length - 1] ?? 0)}`]
-              .concat(s.projected.map((v, j) => `${x(s.actual.length + j)},${y(v)}`))
-              .join(" ")
-          : "";
-        const allPts = s.actual
-          .map((v, i) => `${x(i)},${y(v)}`)
-          .concat(s.projected.map((v, j) => `${x(s.actual.length + j)},${y(v)}`))
-          .join(" ");
-        const lw = isHover ? 3 : 2;
-        return (
-          <g key={s.label} opacity={dim ? 0.16 : 1} style={{ transition: "opacity 120ms" }}>
-            {s.actual.length > 1 && (
-              <>
-                <polyline points={solid} fill="none" stroke="#432222" strokeOpacity="0.14" strokeWidth={lw + 1.5} strokeLinejoin="round" strokeLinecap="round" />
-                <polyline points={solid} fill="none" stroke={s.color} strokeWidth={lw} strokeLinejoin="round" strokeLinecap="round" />
-              </>
-            )}
-            {projPts && (
-              <polyline
-                points={projPts}
-                fill="none"
-                stroke={s.color}
-                strokeWidth={lw}
-                strokeDasharray="4 4"
-                strokeOpacity="0.85"
-                strokeLinejoin="round"
-                strokeLinecap="round"
-              />
-            )}
-            {s.actual.map((v, i) => (
-              <circle key={`a${i}`} cx={x(i)} cy={y(v)} r="2.6" fill={s.color} stroke="#FFFCF7" strokeWidth="1" onPointerEnter={() => onHover(s.label)}>
-                <title>{`${s.label} — ${fmtMonth(axis[i], true)} · ${v.toLocaleString()} units`}</title>
-              </circle>
-            ))}
-            {s.projected.map((v, j) => (
-              <circle
-                key={`p${j}`}
-                cx={x(s.actual.length + j)}
-                cy={y(v)}
-                r="2.4"
-                fill="#FFFCF7"
-                stroke={s.color}
-                strokeWidth="1.4"
-                onPointerEnter={() => onHover(s.label)}
-              >
-                <title>{`${s.label} — ${fmtMonth(axis[s.actual.length + j], true)} · ~${Math.round(v).toLocaleString()} projected`}</title>
-              </circle>
-            ))}
-            {/* invisible fat stroke: hover anywhere on the line to identify it */}
-            <polyline
-              points={allPts}
-              fill="none"
-              stroke="transparent"
-              strokeWidth="14"
-              style={{ pointerEvents: "stroke" }}
-              onPointerEnter={() => onHover(s.label)}
-            >
-              <title>{s.label}</title>
-            </polyline>
-            <text
-              x={endX + 6}
-              y={(endYof.get(s.label) ?? padT) + 3}
-              fontSize="9"
-              fontWeight={isHover ? 700 : 600}
-              fill={s.color}
-              style={{ pointerEvents: "all", cursor: "default" }}
-              onPointerEnter={() => onHover(s.label)}
-            >
-              {s.label.length > 17 ? `${s.label.slice(0, 16)}…` : s.label}
-              <title>{s.label}</title>
+    <div className="relative" onPointerMove={onMove} onPointerLeave={() => setIdx(null)}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label="Trend lines with projections">
+        {axis.length > actualCount && (
+          <>
+            <rect x={lastActualX} y={padT} width={endX - lastActualX} height={H - padT - padB} fill="#FBE3E1" opacity="0.3" />
+            <line x1={lastActualX} y1={padT} x2={lastActualX} y2={H - padB} stroke="#BB3767" strokeOpacity="0.4" strokeDasharray="3 4" />
+            <text x={(lastActualX + endX) / 2} y={padT + 10} textAnchor="middle" fontSize="8.5" fill="#BB3767" opacity="0.8">
+              projected
+            </text>
+          </>
+        )}
+        {ticks.map((t) => (
+          <g key={t}>
+            <line x1={padL} y1={y(t)} x2={W - padR} y2={y(t)} stroke="#F5F0EB" />
+            <text x={padL - 6} y={y(t) + 3} textAnchor="end" fontSize="9" fill="#A39A93">
+              {t.toLocaleString()}
             </text>
           </g>
-        );
-      })}
-    </svg>
+        ))}
+        {axis.map((m, i) =>
+          i % labelEvery === 0 ? (
+            <text key={m} x={x(i)} y={H - 9} textAnchor="middle" fontSize="9" fill={i >= actualCount ? "#BB3767" : "#A39A93"}>
+              {fmtMonth(m)}
+            </text>
+          ) : null,
+        )}
+        {/* crosshair */}
+        {idx != null && <line x1={x(idx)} y1={padT} x2={x(idx)} y2={H - padB} stroke="#432222" strokeOpacity="0.28" strokeWidth="1" />}
+        {/* lines */}
+        {series.map((s) => {
+          const dim = hoverLabel !== null && hoverLabel !== s.label;
+          const isHov = hoverLabel === s.label;
+          const lw = isHov ? 3 : 2;
+          const solid = s.actual.map((v, i) => `${x(i)},${y(v)}`).join(" ");
+          const projPts = s.projected.length
+            ? [`${x(s.actual.length - 1)},${y(s.actual[s.actual.length - 1] ?? 0)}`]
+                .concat(s.projected.map((v, j) => `${x(s.actual.length + j)},${y(v)}`))
+                .join(" ")
+            : "";
+          return (
+            <g key={s.label} opacity={dim ? 0.14 : 1} style={{ transition: "opacity 120ms" }}>
+              {s.actual.length > 1 && (
+                <polyline points={solid} fill="none" stroke={s.color} strokeWidth={lw} strokeLinejoin="round" strokeLinecap="round" />
+              )}
+              {projPts && (
+                <polyline points={projPts} fill="none" stroke={s.color} strokeWidth={lw} strokeDasharray="4 4" strokeOpacity="0.85" strokeLinejoin="round" strokeLinecap="round" />
+              )}
+              {s.actual.map((v, i) => (
+                <circle key={`a${i}`} cx={x(i)} cy={y(v)} r={idx === i ? 4 : 2.4} fill={s.color} stroke="#FFFCF7" strokeWidth="1" />
+              ))}
+              {s.projected.map((v, j) => {
+                const gi = s.actual.length + j;
+                return <circle key={`p${j}`} cx={x(gi)} cy={y(v)} r={idx === gi ? 4 : 2.4} fill="#FFFCF7" stroke={s.color} strokeWidth="1.4" />;
+              })}
+            </g>
+          );
+        })}
+      </svg>
+
+      {idx != null && rows.length > 0 && (
+        <div
+          className="pointer-events-none absolute top-3 z-10 w-max max-w-[220px]"
+          style={flip ? { right: `${100 - tipLeftPct}%`, marginRight: 8 } : { left: `${tipLeftPct}%`, marginLeft: 8 }}
+        >
+          <div className="font-ui rounded-lg border border-parchment bg-white/95 px-3 py-2 shadow-sm">
+            <p className="text-[11px] font-semibold text-espresso">
+              {fmtMonth(axis[idx], true)}
+              {idx >= actualCount ? " · projected" : ""}
+            </p>
+            <ul className="mt-1 space-y-0.5">
+              {rows.map((r) => (
+                <li key={r.label} className={`flex items-center gap-2 text-[11px] ${hoverLabel && hoverLabel !== r.label ? "opacity-40" : ""}`}>
+                  <span className="h-2 w-2 flex-none rounded-full ring-1 ring-black/10" style={{ backgroundColor: r.color }} />
+                  <span className="max-w-[120px] truncate text-ink-soft">{r.label}</span>
+                  <span className="ml-auto pl-2 font-semibold tabular-nums text-espresso">
+                    {r.projected ? "~" : ""}
+                    {Math.round(r.value).toLocaleString()}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -1502,20 +1491,34 @@ function ForecastTab({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, granProd, catRows, colorRows, rangeMonths.join(","), channel]);
 
-  const candidates = built.slice(0, 10);
-  const activeLabels = picked ?? candidates.slice(0, 5).map((c) => c.label);
-  const shown = candidates.filter((c) => activeLabels.includes(c.label)).slice(0, 8);
+  const MAX_LINES = 12;
+  // Stable color per label (independent of what else is toggled).
+  const colorFor = useMemo(() => {
+    const m = new Map<string, string>();
+    built.forEach((c, i) =>
+      m.set(
+        c.label,
+        mode !== "products"
+          ? lineSafe(GARMENT_HEX[c.label.toLowerCase()] ?? LINE_PALETTE[i % LINE_PALETTE.length])
+          : LINE_PALETTE[i % LINE_PALETTE.length],
+      ),
+    );
+    return m;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [built, mode]);
+
+  const activeLabels = picked ?? built.slice(0, 6).map((c) => c.label);
+  const selected = built.filter((c) => activeLabels.includes(c.label)); // every picked line, in rank order
+  const drawn = selected.slice(0, MAX_LINES);
+  const overCap = selected.length > MAX_LINES;
 
   const HORIZON = 3;
   const canProject = rangeMonths.length >= 2;
   const axis = canProject ? [...rangeMonths, ...nextMonths(rangeMonths[rangeMonths.length - 1], HORIZON)] : rangeMonths;
 
-  const series: ChartSeries[] = shown.map((c, i) => ({
+  const series: ChartSeries[] = drawn.map((c) => ({
     label: c.label,
-    color:
-      mode !== "products"
-        ? lineSafe(GARMENT_HEX[c.label.toLowerCase()] ?? LINE_PALETTE[i % LINE_PALETTE.length])
-        : LINE_PALETTE[i % LINE_PALETTE.length],
+    color: colorFor.get(c.label) ?? "#BB3767",
     actual: c.vals,
     projected: canProject ? projectLinear(c.vals, HORIZON) : [],
   }));
@@ -1578,18 +1581,41 @@ function ForecastTab({
         </select>
       </div>
 
-      {candidates.length === 0 ? (
+      {built.length === 0 ? (
         <EmptyNote>Nothing in this range for that selection — widen the range or switch series.</EmptyNote>
       ) : (
         <>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-ui text-[11px] uppercase tracking-wide text-ink-muted">Lines</span>
+            <button
+              type="button"
+              onClick={() => setPicked(built.slice(0, 6).map((c) => c.label))}
+              className="focus-ring font-ui rounded-full border border-parchment bg-porcelain px-2.5 py-1 text-[11px] text-ink-soft transition-colors hover:text-espresso"
+            >
+              Top 6
+            </button>
+            <button
+              type="button"
+              onClick={() => setPicked(built.map((c) => c.label))}
+              className="focus-ring font-ui rounded-full border border-parchment bg-porcelain px-2.5 py-1 text-[11px] text-ink-soft transition-colors hover:text-espresso"
+            >
+              All
+            </button>
+            <button
+              type="button"
+              onClick={() => setPicked([])}
+              className="focus-ring font-ui rounded-full border border-parchment bg-porcelain px-2.5 py-1 text-[11px] text-ink-soft transition-colors hover:text-espresso"
+            >
+              Clear
+            </button>
+            <span className="font-ui text-[11px] tabular-nums text-ink-muted">
+              {selected.length}/{built.length} selected
+            </span>
+          </div>
+
           <div className="flex flex-wrap gap-2">
-            {candidates.map((c) => {
+            {built.map((c) => {
               const on = activeLabels.includes(c.label);
-              const idx = shown.findIndex((s) => s.label === c.label);
-              const dot =
-                mode !== "products"
-                  ? lineSafe(GARMENT_HEX[c.label.toLowerCase()] ?? LINE_PALETTE[Math.max(idx, 0) % LINE_PALETTE.length])
-                  : LINE_PALETTE[Math.max(idx, 0) % LINE_PALETTE.length];
               return (
                 <button
                   key={c.label}
@@ -1606,7 +1632,7 @@ function ForecastTab({
                 >
                   <span
                     className="h-2.5 w-2.5 flex-none rounded-full ring-1 ring-black/10"
-                    style={{ backgroundColor: on ? dot : "#D8CFC7" }}
+                    style={{ backgroundColor: on ? colorFor.get(c.label) ?? "#BB3767" : "#D8CFC7" }}
                     aria-hidden
                   />
                   {c.label}
@@ -1616,20 +1642,30 @@ function ForecastTab({
             })}
           </div>
 
-          <Card
-            eyebrow="Forecast"
-            title="Units over time"
-            meta={canProject ? `dotted = next ${HORIZON} months, projected` : "one month selected — no projection yet"}
-          >
-            <div className="px-4 py-4">
-              <LineChart series={series} axis={axis} actualCount={rangeMonths.length} hover={hover} onHover={setHover} />
-            </div>
-          </Card>
+          {selected.length === 0 ? (
+            <EmptyNote>No lines selected — pick a chip above, or hit “Top 6”.</EmptyNote>
+          ) : (
+            <Card
+              eyebrow="Forecast"
+              title="Units over time"
+              meta={canProject ? `dotted = next ${HORIZON} months, projected` : "one month selected — no projection yet"}
+            >
+              <div className="px-4 py-4">
+                <ForecastChart series={series} axis={axis} actualCount={rangeMonths.length} hoverLabel={hover} />
+              </div>
+              {overCap && (
+                <p className="font-ui border-t border-parchment/60 px-4 py-2 text-[11px] text-ink-muted">
+                  Drawing the top {MAX_LINES} of {selected.length} selected (highest volume) so the chart stays legible —
+                  deselect a few to bring others in.
+                </p>
+              )}
+            </Card>
+          )}
 
           <p className="font-ui text-[11px] leading-relaxed text-ink-muted">
-            Projections are a straight-line fit of the recent trend (up to the last 6 months), floored at zero — directional,
-            not gospel. They sharpen as more months accrue{rangeMonths.length < 3 ? " — with this little history, treat them loosely" : ""}.
-            Lines cap at 8 for readability; tap chips to swap lines in and out.
+            Hover the chart to read every line at that month. Projections are a straight-line fit of the recent trend (up to
+            the last 6 months), floored at zero — directional, not gospel
+            {rangeMonths.length < 3 ? "; with this little history, treat them loosely" : ""}.
           </p>
         </>
       )}
