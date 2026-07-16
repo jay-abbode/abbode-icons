@@ -105,6 +105,19 @@ export function baseProduct(raw: string): string | null {
     .join(" ");
 }
 
+// Real garment colors, sourced from Shopify "Color" option values across every
+// product family. Used to reject non-colors that leak in through "Style" options
+// (e.g. "One Sided", "Mushroom", zodiac designs) and product-name junk. Keep in
+// sync with the same set in scripts/icon_order_stats/icon_order_stats.py; if the
+// brand adds a new garment color, add it here too.
+const REAL_COLORS = new Set([
+  "blush", "olive", "bonbon", "cloud", "linen", "blueberry", "fig", "chocolate", "butter",
+  "cherry", "navy", "noir", "noir (black)", "yuzu", "azure", "black", "red", "espresso",
+  "pink", "white", "white / pink", "white / black", "burgundy", "brown", "pink striped",
+  "cabana", "poolside", "natural", "blush polka dot", "lemon sugar", "morning angel",
+  "citrus polka dot",
+]);
+
 function toChannel(raw: string): Channel | null {
   const v = raw.trim().toLowerCase();
   return v === "web" || v === "pos" ? v : null;
@@ -181,6 +194,10 @@ async function fetchProductTrends(): Promise<ProductTrendsSnapshot> {
         const rawProduct = iP >= 0 ? String(row[iP] ?? "").trim() : "";
         const color = String(row[iC] ?? "").trim();
         if (!month || !channel || !color) continue;
+        // Only real garment colors count. Non-colors that leaked in via "Style"
+        // options (designs like "Mushroom", "One Sided", zodiac names) or stray
+        // product names are dropped.
+        if (!REAL_COLORS.has(color.toLowerCase())) continue;
         const product = baseProduct(rawProduct);
         if (product === null) continue; // Route/shipping/fee noise
         colors.push({ month, channel, product, color, units: toInt(row[iU]) });

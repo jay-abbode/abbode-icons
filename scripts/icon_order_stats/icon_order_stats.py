@@ -139,6 +139,20 @@ HANDLE_SKIP_SUBSTR = ("onward-package", "package-protection", "gift-card", "rout
                       "-pos", "wholesale", "essentials-fee", "-fee", "display-", "-sample")
 
 FUZZY_AUTO = 88
+
+# Real garment colors, from Shopify "Color" option values across every product
+# family. Item-color detection also reads "Style" options (a few POS products put
+# the color there), but Style is *also* where non-color designs live — "One Sided",
+# "Mushroom", zodiac names, etc. Gating every candidate through this set keeps real
+# colors (incl. Style-colors like Red/Azure) and drops the designs. Keep in sync
+# with REAL_COLORS in lib/productTrends.ts.
+REAL_COLORS = {
+    "blush", "olive", "bonbon", "cloud", "linen", "blueberry", "fig", "chocolate", "butter",
+    "cherry", "navy", "noir", "noir (black)", "yuzu", "azure", "black", "red", "espresso",
+    "pink", "white", "white / pink", "white / black", "burgundy", "brown", "pink striped",
+    "cabana", "poolside", "natural", "blush polka dot", "lemon sugar", "morning angel",
+    "citrus polka dot",
+}
 FUZZY_REVIEW = 78
 
 
@@ -917,13 +931,17 @@ def item_colors_from_line(li):
         val = (o.get("value") or "").strip()
         if not val or val.lower() == "default title":
             continue
-        if "color" in name or name == "style":
+        # A candidate color must be a real garment color. This keeps "Color"
+        # option values and the few POS "Style" options that are actually colors
+        # (Red, Azure, …), while dropping design-style values (One Sided,
+        # Mushroom, zodiac names) that aren't shades.
+        if ("color" in name or name == "style") and val.lower() in REAL_COLORS:
             if val not in out:
                 out.append(val)
-    # Fallback: single-option variant whose title IS the color (no Size/Title).
+    # Fallback: single-option variant whose title IS a real color (no Size/Title).
     if not out:
         vt = (li.get("variantTitle") or "").strip()
-        if (vt and vt.lower() != "default title" and "size" not in names
+        if (vt and vt.lower() in REAL_COLORS and "size" not in names
                 and all(n in ("", "title") for n in names)):
             out.append(vt)
     return out
