@@ -5,8 +5,7 @@ name: Icon order stats
 
 on:
   schedule:
-    # 07:00 UTC every Monday (~3am ET). GitHub may delay cron under load.
-    - cron: '0 7 * * 1'
+  - cron: '0 5 * * *'
   workflow_dispatch:
     inputs:
       months:
