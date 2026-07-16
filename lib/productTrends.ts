@@ -43,6 +43,68 @@ export const EMPTY_PRODUCT_TRENDS: ProductTrendsSnapshot = {
   updatedAt: null,
 };
 
+/**
+ * Collapse a raw product label — a Shopify handle ("signature-waffle-pouch"),
+ * title ("Signature Waffle Pouch"), or base-name — into a clean product family
+ * ("Waffle Pouch"), so design variants group together instead of sprawling into
+ * dozens of near-duplicate lines. Returns null for shipping/insurance/fee/
+ * display noise (Route, Onward, gift cards, digitization, POS display SKUs, …)
+ * so those drop out of every view even before the source data is re-scanned.
+ *
+ * Order matters: bundles first, then specific product types, then generic
+ * fallbacks. Unknown products keep their own (title-cased) name rather than
+ * vanishing.
+ */
+export function baseProduct(raw: string): string | null {
+  const original = (raw || "").trim();
+  if (!original) return "Unspecified";
+  if (original.toLowerCase() === "unspecified") return "Unspecified";
+  const s = ` ${original.toLowerCase().replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim()} `;
+  const has = (...needles: string[]) => needles.some((n) => s.includes(` ${n} `) || s.includes(`${n} `) || s.includes(` ${n}`));
+  const sub = (...needles: string[]) => needles.some((n) => s.includes(n));
+
+  // Noise — never a real sellable line.
+  if (sub("route", "onward", "shipping protection", "package protection", "insurance", "gift card", "digitization", "digitisation", "upcharge", "wholesale", "display", "sample", " fee")) {
+    return null;
+  }
+
+  // Bundles / sets.
+  if (has("set", "sets", "bundle", "kit")) return "Sets";
+
+  // Specific product families.
+  if (sub("waffle")) return "Waffle Pouch";
+  if (sub("croc")) return "Croc Pouch";
+  if (sub("terry") && sub("tote")) return "Terry Tote";
+  if (sub("terry")) return "Terry Pouch";
+  if (sub("canvas")) return "Canvas Tote";
+  if (sub("pointelle") || sub("tank")) return "Tank Top";
+  if (sub("eye mask") || sub("eyemask") || (sub("satin") && sub("mask"))) return "Satin Eye Mask";
+  if (sub("cocktail")) return "Cocktail Napkin";
+  if (sub("tea towel")) return "Tea Towel";
+  if (sub("pillow")) return "Pillowcase";
+  if (sub("lighter")) return "Lighter Case";
+  if (sub("charm")) return "Charms";
+  if (sub("clip")) return "Hair Clips";
+  if (sub("bandana")) return "Bandana";
+
+  // Generic fallbacks by noun.
+  if (sub("tote")) return "Tote";
+  if (sub("pouch")) return "Pouch";
+  if (sub("napkin")) return "Napkin";
+  if (sub("towel")) return "Towel";
+  if (sub("mask")) return "Eye Mask";
+  if (sub("bag")) return "Bag";
+
+  // Unknown — keep it, title-cased, so nothing silently disappears.
+  return original
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(" ");
+}
+
 function toChannel(raw: string): Channel | null {
   const v = raw.trim().toLowerCase();
   return v === "web" || v === "pos" ? v : null;
@@ -116,9 +178,11 @@ async function fetchProductTrends(): Promise<ProductTrendsSnapshot> {
         const row = cRows[r] || [];
         const month = String(row[iM] ?? "").trim();
         const channel = toChannel(String(row[iCh] ?? ""));
-        const product = iP >= 0 ? String(row[iP] ?? "").trim() : "";
+        const rawProduct = iP >= 0 ? String(row[iP] ?? "").trim() : "";
         const color = String(row[iC] ?? "").trim();
         if (!month || !channel || !color) continue;
+        const product = baseProduct(rawProduct);
+        if (product === null) continue; // Route/shipping/fee noise
         colors.push({ month, channel, product, color, units: toInt(row[iU]) });
         monthSet.add(month);
       }
@@ -139,8 +203,10 @@ async function fetchProductTrends(): Promise<ProductTrendsSnapshot> {
         const row = catRows[r] || [];
         const month = String(row[iM] ?? "").trim();
         const channel = toChannel(String(row[iCh] ?? ""));
-        const category = String(row[iC] ?? "").trim();
-        if (!month || !channel || !category) continue;
+        const rawCategory = String(row[iC] ?? "").trim();
+        if (!month || !channel || !rawCategory) continue;
+        const category = baseProduct(rawCategory);
+        if (category === null || category === "Unspecified") continue; // noise / unmapped
         categories.push({ month, channel, category, units: toInt(row[iU]) });
         monthSet.add(month);
       }

@@ -135,8 +135,8 @@ IGNORE = {"none", "baguette", "boot prints", "corndog", "bread", "avocado",
 # Lines that are never embroidered icons — never count these.
 SKU_SKIP_EXACT = {"ONWARDINS01", "ES-UPCHARGE", "CUST-DIG-FEE", "ROUTEINS"}
 HANDLE_SKIP_SUBSTR = ("onward-package", "package-protection", "gift-card", "routeins",
-                      "shipping-protection", "custom-digitization", "-pos", "wholesale",
-                      "essentials-fee", "-fee")
+                      "shipping-protection", "route-insurance", "custom-digitization",
+                      "-pos", "wholesale", "essentials-fee", "-fee", "display-", "-sample")
 
 FUZZY_AUTO = 88
 FUZZY_REVIEW = 78

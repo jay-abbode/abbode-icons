@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getProductTrends, EMPTY_PRODUCT_TRENDS } from "@/lib/productTrends";
+import { getProductTrends, EMPTY_PRODUCT_TRENDS, baseProduct } from "@/lib/productTrends";
 
 export const dynamic = "force-dynamic";
 
@@ -17,8 +17,8 @@ function condense(t: Awaited<ReturnType<typeof getProductTrends>>) {
   // Per-product totals + monthly series from the categories tab (true volume).
   const prod = new Map<string, { units: number; web: number; pos: number; byMonth: Record<string, number> }>();
   for (const r of t.categories) {
-    const label = r.category.trim();
-    if (!label) continue;
+    const label = baseProduct(r.category);
+    if (!label || label === "Unspecified") continue;
     const p = prod.get(label) || { units: 0, web: 0, pos: 0, byMonth: {} };
     p.units += r.units;
     p[r.channel] += r.units;
@@ -35,7 +35,8 @@ function condense(t: Awaited<ReturnType<typeof getProductTrends>>) {
     e.units += r.units;
     e.byMonth[r.month] = (e.byMonth[r.month] || 0) + r.units;
     color.set(c, e);
-    const label = (r.product || "").trim() || "Unspecified";
+    const label = baseProduct(r.product) || "Unspecified";
+    if (label === "Unspecified") { color.set(c, color.get(c)!); }
     const k = `${label} · ${c}`;
     pairs.set(k, (pairs.get(k) || 0) + r.units);
   }
