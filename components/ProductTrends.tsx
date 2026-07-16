@@ -1189,7 +1189,7 @@ function ProductsTab({
 
 // ---------- Forecast pane: line chart with selectable series and projections ----------
 
-const LINE_PALETTE = ["#BB3767", "#432222", "#D1C68F", "#972945", "#F2B2AE", "#671E30", "#6E6E6E", "#A0785A"];
+const LINE_PALETTE = ["#BB3767", "#3D5A80", "#8A8A46", "#B87333", "#432222", "#5B8A72", "#671E30", "#6E6E6E"];
 
 function nextMonths(last: string, n: number): string[] {
   const out: string[] = [];
@@ -1235,34 +1235,83 @@ function niceCeil(v: number): number {
   return 10 * pow;
 }
 
+function hexToRgb(h: string): [number, number, number] | null {
+  const m = /^#?([0-9a-f]{6})$/i.exec(h.trim());
+  if (!m) return null;
+  const n = parseInt(m[1], 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+/** Pale garment colors (Butter, Cloud, Linen…) get blended toward espresso so the line reads on porcelain. */
+function lineSafe(hex: string): string {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+  const lum = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255;
+  if (lum <= 0.72) return hex;
+  const esp = [67, 34, 34];
+  const t = 0.45;
+  return `#${rgb.map((c, i) => Math.round(c * (1 - t) + esp[i] * t).toString(16).padStart(2, "0")).join("")}`;
+}
+
 type ChartSeries = { label: string; color: string; actual: number[]; projected: number[] };
 
-function LineChart({ series, axis, actualCount }: { series: ChartSeries[]; axis: string[]; actualCount: number }) {
+function LineChart({
+  series,
+  axis,
+  actualCount,
+  hover,
+  onHover,
+}: {
+  series: ChartSeries[];
+  axis: string[];
+  actualCount: number;
+  hover: string | null;
+  onHover: (label: string | null) => void;
+}) {
   const W = 720;
   const H = 260;
   const padL = 40;
-  const padR = 12;
+  const padR = 104;
   const padT = 12;
   const padB = 26;
-  const maxVal = niceCeil(
-    Math.max(1, ...series.flatMap((s) => [...s.actual, ...s.projected])),
-  );
+  const maxVal = niceCeil(Math.max(1, ...series.flatMap((s) => [...s.actual, ...s.projected])));
   const x = (i: number) => padL + (i * (W - padL - padR)) / Math.max(1, axis.length - 1);
   const y = (v: number) => padT + (1 - v / maxVal) * (H - padT - padB);
   const labelEvery = axis.length > 10 ? 2 : 1;
   const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => Math.round(maxVal * f));
   const lastActualX = x(actualCount - 1);
+  const endX = x(axis.length - 1);
+
+  // End-of-line label positions, staggered so converging lines stay readable.
+  const ends = series
+    .map((s) => {
+      const v = s.projected.length ? s.projected[s.projected.length - 1] : s.actual[s.actual.length - 1] ?? 0;
+      return { label: s.label, color: s.color, y: y(v) };
+    })
+    .sort((a, b) => a.y - b.y);
+  for (let i = 1; i < ends.length; i++) {
+    if (ends[i].y - ends[i - 1].y < 11) ends[i].y = ends[i - 1].y + 11;
+  }
+  for (let i = ends.length - 1; i >= 0; i--) {
+    const maxY = H - padB - 2 - (ends.length - 1 - i) * 11;
+    if (ends[i].y > maxY) ends[i].y = maxY;
+  }
+  const endYof = new Map(ends.map((e) => [e.label, e.y]));
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label="Trend lines with projections">
-      {/* projected zone */}
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      className="h-auto w-full"
+      role="img"
+      aria-label="Trend lines with projections"
+      onPointerLeave={() => onHover(null)}
+    >
       {axis.length > actualCount && (
         <>
-          <rect x={lastActualX} y={padT} width={x(axis.length - 1) - lastActualX} height={H - padT - padB} fill="#FBE3E1" opacity="0.35" />
+          <rect x={lastActualX} y={padT} width={endX - lastActualX} height={H - padT - padB} fill="#FBE3E1" opacity="0.35" />
           <line x1={lastActualX} y1={padT} x2={lastActualX} y2={H - padB} stroke="#BB3767" strokeOpacity="0.35" strokeDasharray="3 4" />
         </>
       )}
-      {/* gridlines + y labels */}
       {ticks.map((t) => (
         <g key={t}>
           <line x1={padL} y1={y(t)} x2={W - padR} y2={y(t)} stroke="#F5F0EB" />
@@ -1271,46 +1320,50 @@ function LineChart({ series, axis, actualCount }: { series: ChartSeries[]; axis:
           </text>
         </g>
       ))}
-      {/* x labels */}
       {axis.map((m, i) =>
         i % labelEvery === 0 ? (
-          <text
-            key={m}
-            x={x(i)}
-            y={H - 8}
-            textAnchor="middle"
-            fontSize="9"
-            fill={i >= actualCount ? "#BB3767" : "#A39A93"}
-          >
+          <text key={m} x={x(i)} y={H - 8} textAnchor="middle" fontSize="9" fill={i >= actualCount ? "#BB3767" : "#A39A93"}>
             {fmtMonth(m)}
           </text>
         ) : null,
       )}
-      {/* lines */}
       {series.map((s) => {
+        const isHover = hover === s.label;
+        const dim = hover !== null && !isHover;
         const solid = s.actual.map((v, i) => `${x(i)},${y(v)}`).join(" ");
         const projPts = s.projected.length
           ? [`${x(s.actual.length - 1)},${y(s.actual[s.actual.length - 1] ?? 0)}`]
               .concat(s.projected.map((v, j) => `${x(s.actual.length + j)},${y(v)}`))
               .join(" ")
           : "";
+        const allPts = s.actual
+          .map((v, i) => `${x(i)},${y(v)}`)
+          .concat(s.projected.map((v, j) => `${x(s.actual.length + j)},${y(v)}`))
+          .join(" ");
+        const lw = isHover ? 3 : 2;
         return (
-          <g key={s.label}>
+          <g key={s.label} opacity={dim ? 0.16 : 1} style={{ transition: "opacity 120ms" }}>
             {s.actual.length > 1 && (
               <>
-                <polyline points={solid} fill="none" stroke="#432222" strokeOpacity="0.18" strokeWidth="3.5" strokeLinejoin="round" strokeLinecap="round" />
-                <polyline points={solid} fill="none" stroke={s.color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+                <polyline points={solid} fill="none" stroke="#432222" strokeOpacity="0.14" strokeWidth={lw + 1.5} strokeLinejoin="round" strokeLinecap="round" />
+                <polyline points={solid} fill="none" stroke={s.color} strokeWidth={lw} strokeLinejoin="round" strokeLinecap="round" />
               </>
             )}
             {projPts && (
-              <>
-                <polyline points={projPts} fill="none" stroke="#432222" strokeOpacity="0.14" strokeWidth="3.5" strokeDasharray="4 4" strokeLinejoin="round" strokeLinecap="round" />
-                <polyline points={projPts} fill="none" stroke={s.color} strokeWidth="2" strokeDasharray="4 4" strokeOpacity="0.85" strokeLinejoin="round" strokeLinecap="round" />
-              </>
+              <polyline
+                points={projPts}
+                fill="none"
+                stroke={s.color}
+                strokeWidth={lw}
+                strokeDasharray="4 4"
+                strokeOpacity="0.85"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+              />
             )}
             {s.actual.map((v, i) => (
-              <circle key={`a${i}`} cx={x(i)} cy={y(v)} r="2.6" fill={s.color} stroke="#FFFCF7" strokeWidth="1">
-                <title>{`${fmtMonth(axis[i], true)} · ${s.label} · ${v.toLocaleString()} units`}</title>
+              <circle key={`a${i}`} cx={x(i)} cy={y(v)} r="2.6" fill={s.color} stroke="#FFFCF7" strokeWidth="1" onPointerEnter={() => onHover(s.label)}>
+                <title>{`${s.label} — ${fmtMonth(axis[i], true)} · ${v.toLocaleString()} units`}</title>
               </circle>
             ))}
             {s.projected.map((v, j) => (
@@ -1322,10 +1375,34 @@ function LineChart({ series, axis, actualCount }: { series: ChartSeries[]; axis:
                 fill="#FFFCF7"
                 stroke={s.color}
                 strokeWidth="1.4"
+                onPointerEnter={() => onHover(s.label)}
               >
-                <title>{`${fmtMonth(axis[s.actual.length + j], true)} · ${s.label} · ~${Math.round(v).toLocaleString()} projected`}</title>
+                <title>{`${s.label} — ${fmtMonth(axis[s.actual.length + j], true)} · ~${Math.round(v).toLocaleString()} projected`}</title>
               </circle>
             ))}
+            {/* invisible fat stroke: hover anywhere on the line to identify it */}
+            <polyline
+              points={allPts}
+              fill="none"
+              stroke="transparent"
+              strokeWidth="14"
+              style={{ pointerEvents: "stroke" }}
+              onPointerEnter={() => onHover(s.label)}
+            >
+              <title>{s.label}</title>
+            </polyline>
+            <text
+              x={endX + 6}
+              y={(endYof.get(s.label) ?? padT) + 3}
+              fontSize="9"
+              fontWeight={isHover ? 700 : 600}
+              fill={s.color}
+              style={{ pointerEvents: "all", cursor: "default" }}
+              onPointerEnter={() => onHover(s.label)}
+            >
+              {s.label.length > 17 ? `${s.label.slice(0, 16)}…` : s.label}
+              <title>{s.label}</title>
+            </text>
           </g>
         );
       })}
@@ -1351,6 +1428,7 @@ function ForecastTab({
   const [fromM, setFromM] = useState<string>("");
   const [toM, setToM] = useState<string>("");
   const [picked, setPicked] = useState<string[] | null>(null); // null = auto top 5
+  const [hover, setHover] = useState<string | null>(null);
 
   const chOk = (c: ColorRow["channel"]) => channel === "all" || c === channel;
 
@@ -1436,7 +1514,7 @@ function ForecastTab({
     label: c.label,
     color:
       mode !== "products"
-        ? GARMENT_HEX[c.label.toLowerCase()] ?? LINE_PALETTE[i % LINE_PALETTE.length]
+        ? lineSafe(GARMENT_HEX[c.label.toLowerCase()] ?? LINE_PALETTE[i % LINE_PALETTE.length])
         : LINE_PALETTE[i % LINE_PALETTE.length],
     actual: c.vals,
     projected: canProject ? projectLinear(c.vals, HORIZON) : [],
@@ -1510,12 +1588,14 @@ function ForecastTab({
               const idx = shown.findIndex((s) => s.label === c.label);
               const dot =
                 mode !== "products"
-                  ? GARMENT_HEX[c.label.toLowerCase()] ?? LINE_PALETTE[Math.max(idx, 0) % LINE_PALETTE.length]
+                  ? lineSafe(GARMENT_HEX[c.label.toLowerCase()] ?? LINE_PALETTE[Math.max(idx, 0) % LINE_PALETTE.length])
                   : LINE_PALETTE[Math.max(idx, 0) % LINE_PALETTE.length];
               return (
                 <button
                   key={c.label}
                   type="button"
+                  onMouseEnter={() => setHover(c.label)}
+                  onMouseLeave={() => setHover(null)}
                   onClick={() => {
                     const next = on ? activeLabels.filter((l) => l !== c.label) : [...activeLabels, c.label];
                     setPicked(next);
@@ -1542,7 +1622,7 @@ function ForecastTab({
             meta={canProject ? `dotted = next ${HORIZON} months, projected` : "one month selected — no projection yet"}
           >
             <div className="px-4 py-4">
-              <LineChart series={series} axis={axis} actualCount={rangeMonths.length} />
+              <LineChart series={series} axis={axis} actualCount={rangeMonths.length} hover={hover} onHover={setHover} />
             </div>
           </Card>
 
