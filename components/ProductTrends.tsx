@@ -198,6 +198,7 @@ export default function ProductTrends({
   momentum: TrendsSnapshot;
 }) {
   const [tab, setTab] = useState<TabKey>("overview");
+  const [jumpProduct, setJumpProduct] = useState<string | null>(null);
   const [channel, setChannel] = useState<ChannelFilter>("all");
   const [win, setWin] = useState<WindowChoice>(6);
 
@@ -288,7 +289,13 @@ export default function ProductTrends({
 
   return (
     <div>
-      <TabNav tab={tab} onTab={setTab} />
+      <TabNav
+        tab={tab}
+        onTab={(t) => {
+          setJumpProduct(null);
+          setTab(t);
+        }}
+      />
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
@@ -316,7 +323,17 @@ export default function ProductTrends({
         />
       )}
       {tab === "ordered" && (
-        <OrderedTab cats={cats} topIcons={topIcons} topFonts={topFonts} topText={topText} useWin={useWin} />
+        <OrderedTab
+          cats={cats}
+          topIcons={topIcons}
+          topFonts={topFonts}
+          topText={topText}
+          useWin={useWin}
+          onProductSelect={(label) => {
+            setJumpProduct(label);
+            setTab("products");
+          }}
+        />
       )}
       {tab === "products" && (
         <ProductsTab
@@ -326,6 +343,7 @@ export default function ProductTrends({
           monthList={sel}
           prevList={prev}
           channel={channel}
+          initialProduct={jumpProduct}
         />
       )}
       {tab === "seasonality" && <SeasonalityTab seasonVolume={seasonVolume} months={months} />}
@@ -412,19 +430,21 @@ function OrderedTab({
   topFonts,
   topText,
   useWin,
+  onProductSelect,
 }: {
   cats: Ranked[];
   topIcons: Ranked[];
   topFonts: Ranked[];
   topText: Ranked[];
   useWin: UsageWindow;
+  onProductSelect: (label: string) => void;
 }) {
   const winLabel = useWin === "3mo" ? "last 3 months" : useWin === "6mo" ? "last 6 months" : "all time";
   const hasUsage = topIcons.length + topFonts.length + topText.length > 0;
   return (
     <div className="space-y-6">
-      <Card eyebrow="Product mix" title="Products & designs ordered" meta="units in window">
-        <RankedList items={cats} unit="units" limit={12} />
+      <Card eyebrow="Product mix" title="Products & designs ordered" meta="click a product for colors & volume">
+        <RankedList items={cats} unit="units" limit={12} onSelect={onProductSelect} />
       </Card>
       {hasUsage ? (
         <div className="grid gap-6 lg:grid-cols-3">
@@ -705,6 +725,7 @@ function ProductsTab({
   monthList,
   prevList,
   channel,
+  initialProduct = null,
 }: {
   byProduct: ColorGroup[];
   colorRows: ColorRow[];
@@ -712,9 +733,10 @@ function ProductsTab({
   monthList: string[];
   prevList: string[];
   channel: "all" | ColorRow["channel"];
+  initialProduct?: string | null;
 }) {
   const [view, setView] = useState<"products" | "colors">("products");
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(initialProduct);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
 
   const model = useMemo(() => {
@@ -1344,11 +1366,13 @@ function RankedList({
   unit = "orders",
   showSwatch = false,
   limit,
+  onSelect,
 }: {
   items: Ranked[];
   unit?: string;
   showSwatch?: boolean;
   limit?: number;
+  onSelect?: (label: string) => void;
 }) {
   const shown = limit ? items.slice(0, limit) : items;
   const max = Math.max(1, ...shown.map((i) => i.value));
@@ -1362,8 +1386,8 @@ function RankedList({
         const fill = (it.value / max) * 100;
         const share = (it.value / total) * 100;
         const hex = showSwatch ? GARMENT_HEX[it.label.toLowerCase()] : undefined;
-        return (
-          <li key={`${it.label}-${idx}`} className="flex items-center gap-3 border-b border-parchment/60 px-4 py-2.5 last:border-b-0">
+        const rowInner = (
+          <>
             <span className="font-ui w-5 flex-none text-right text-xs tabular-nums text-ink-muted">{idx + 1}</span>
             {showSwatch && (
               <span
@@ -1384,6 +1408,26 @@ function RankedList({
                 {Math.round(share)}% · {unit}
               </span>
             </span>
+            {onSelect && (
+              <span className="font-ui flex-none text-sm text-ink-muted" aria-hidden>
+                &rsaquo;
+              </span>
+            )}
+          </>
+        );
+        return (
+          <li key={`${it.label}-${idx}`} className="border-b border-parchment/60 last:border-b-0">
+            {onSelect ? (
+              <button
+                type="button"
+                onClick={() => onSelect(it.label)}
+                className="focus-ring flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-pink-soft/30"
+              >
+                {rowInner}
+              </button>
+            ) : (
+              <div className="flex items-center gap-3 px-4 py-2.5">{rowInner}</div>
+            )}
           </li>
         );
       })}
