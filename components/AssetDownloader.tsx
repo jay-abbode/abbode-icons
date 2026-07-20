@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { downloadZip } from "client-zip";
 import type { Icon } from "@/lib/sheets";
+import { isPremadeCategory } from "@/lib/categories";
 import { buildExportVariants, iconFileLabel, fileSafe } from "@/lib/variants";
 
 /**
@@ -304,7 +305,11 @@ export default function AssetDownloader({ icons, categories }: Props) {
                 disabled={running}
                 className="h-4 w-4 accent-berry"
               />
-              <span className="truncate">{cat}</span>
+              <span
+                className={`truncate ${isPremadeCategory(cat) ? "text-berry" : ""}`}
+              >
+                {cat}
+              </span>
             </label>
           ))}
         </div>

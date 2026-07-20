@@ -1,5 +1,6 @@
 import { getSheetsClient } from "./google";
 import { parseThreadSlots } from "./threadPalette";
+import { orderCategories } from "./categories";
 
 /**
  * Public shape of a single icon, as the rest of the app sees it.
@@ -179,7 +180,11 @@ async function fetchCatalogFromSheet(): Promise<IconCatalog> {
 
   return {
     icons,
-    categories: Array.from(categorySet).sort((a, b) => a.localeCompare(b)),
+    // Alphabetical, but with "Premade Designs" pinned to the bottom of the list
+    // (see lib/categories.ts). This ordering flows to every surface that reads
+    // catalog.categories — the home tiles, the browse sidebar, and the /assets
+    // download page — so the pin is defined in exactly one place.
+    categories: orderCategories(Array.from(categorySet)),
     totalCount: icons.length,
     fetchedAt: new Date().toISOString(),
   };

@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTransition } from "react";
+import { isPremadeCategory } from "@/lib/categories";
 
 interface Props {
   categories: string[];
@@ -89,15 +90,23 @@ export default function FilterControls({
             count={totalCount}
             onSelect={() => setParam("category", null)}
           />
-          {categories.map((cat) => (
-            <RadioRow
-              key={cat}
-              label={cat}
-              checked={currentCategory === cat}
-              count={categoryCounts?.[cat]}
-              onSelect={() => setParam("category", cat)}
-            />
-          ))}
+          {categories.map((cat) => {
+            const premade = isPremadeCategory(cat);
+            return (
+              <div
+                key={cat}
+                className={premade ? "mt-2 border-t border-parchment pt-2" : ""}
+              >
+                <RadioRow
+                  label={cat}
+                  checked={currentCategory === cat}
+                  count={categoryCounts?.[cat]}
+                  onSelect={() => setParam("category", cat)}
+                  accent={premade}
+                />
+              </div>
+            );
+          })}
         </div>
       </FilterGroup>
 
@@ -208,11 +217,14 @@ function RadioRow({
   checked,
   count,
   onSelect,
+  accent = false,
 }: {
   label: string;
   checked: boolean;
   count?: number;
   onSelect: () => void;
+  /** Tint the label in the brand berry to mark a special category. */
+  accent?: boolean;
 }) {
   return (
     <button
@@ -222,7 +234,9 @@ function RadioRow({
         checked ? "text-espresso font-medium" : "text-ink-soft hover:text-espresso"
       }`}
     >
-      <span className="flex-1 truncate">{label}</span>
+      <span className={`flex-1 truncate ${accent ? "text-berry" : ""}`}>
+        {label}
+      </span>
       {typeof count === "number" && (
         <span
           className={`tabular-nums text-xs transition-colors ${

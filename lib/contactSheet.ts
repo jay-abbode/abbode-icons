@@ -1,5 +1,6 @@
 import { getIconCatalog } from "./sheets";
 import { loadVisualDescriptions } from "./visualIndex";
+import { isPremadeCategory } from "./categories";
 
 /**
  * Contact-sheet icon curation.
@@ -105,8 +106,14 @@ export async function selectIconsForTheme(
   const catalog = await getIconCatalog();
 
   // Only active designs that actually have a rendered PNG can go on a sheet.
+  // Premade Designs are finished, fixed-size products — they're never used as
+  // building blocks on a curated contact sheet, so they're excluded from the
+  // pool the model picks from.
   let pool = catalog.icons.filter(
-    (i) => i.status.toUpperCase() === "ACTIVE" && i.pngFileId
+    (i) =>
+      i.status.toUpperCase() === "ACTIVE" &&
+      i.pngFileId &&
+      !isPremadeCategory(i.category)
   );
 
   // Two independent color caps (both optional):

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getIconCatalog, type Icon } from "@/lib/sheets";
+import { isPremadeCategory } from "@/lib/categories";
 import Header from "@/components/Header";
 import Curtain from "@/components/Curtain";
 import SearchBar from "@/components/SearchBar";
@@ -77,7 +78,11 @@ export default async function HomePage() {
 
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {categories.map((category) => (
-              <CategoryTile key={category.name} {...category} />
+              <CategoryTile
+                key={category.name}
+                {...category}
+                accent={isPremadeCategory(category.name)}
+              />
             ))}
           </div>
         </section>
@@ -103,16 +108,23 @@ function CategoryTile({
   name,
   count,
   sample,
+  accent = false,
 }: {
   name: string;
   count: number;
   sample?: Icon;
+  /** Special-category treatment: berry border, faint wash, berry title. */
+  accent?: boolean;
 }) {
   const slug = encodeURIComponent(name);
   return (
     <Link
       href={`/browse?category=${slug}`}
-      className="group relative flex aspect-[4/5] flex-col overflow-hidden rounded-2xl border border-parchment bg-white p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-pink hover:shadow-[0_8px_30px_-12px_rgba(187,55,103,0.20)] focus-ring"
+      className={`group relative flex aspect-[4/5] flex-col overflow-hidden rounded-2xl border p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_30px_-12px_rgba(187,55,103,0.20)] focus-ring ${
+        accent
+          ? "border-pink bg-pink-soft/40 hover:border-berry"
+          : "border-parchment bg-white hover:border-pink"
+      }`}
     >
       <div className="flex flex-1 items-center justify-center">
         {sample?.pngFileId ? (
@@ -128,7 +140,11 @@ function CategoryTile({
         )}
       </div>
       <div className="mt-auto flex items-end justify-between gap-2">
-        <h3 className="font-display text-xl font-medium leading-tight tracking-tight text-espresso">
+        <h3
+          className={`font-display text-xl font-medium leading-tight tracking-tight ${
+            accent ? "text-berry" : "text-espresso"
+          }`}
+        >
           {name}
         </h3>
         <span className="font-ui text-[10px] uppercase tracking-wider text-ink-muted">

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PDFDocument } from "pdf-lib";
 import { WORDMARK_PATHS, wordmarkSvg } from "@/lib/wordmark";
 import { THREAD_PALETTE, rgbToHex } from "@/lib/threadPalette";
+import { isPremadeCategory } from "@/lib/categories";
 
 /* ------------------------------------------------------------------ *
  * Contact-sheet generator.
@@ -210,11 +211,16 @@ export default function ContactSheetGenerator({ loadId }: { loadId?: string }) {
     let cancelled = false;
     fetch("/api/icons")
       .then((r) => r.json())
-      .then((cat: { icons?: Array<{ slug: string; name: string; status: string; pngFileId: string | null }> }) => {
+      .then((cat: { icons?: Array<{ slug: string; name: string; status: string; category: string; pngFileId: string | null }> }) => {
         if (cancelled || !cat?.icons) return;
         setPool(
           cat.icons
-            .filter((i) => i.status?.toUpperCase() === "ACTIVE" && i.pngFileId)
+            .filter(
+              (i) =>
+                i.status?.toUpperCase() === "ACTIVE" &&
+                i.pngFileId &&
+                !isPremadeCategory(i.category)
+            )
             .map((i) => ({ slug: i.slug, name: i.name, pngFileId: i.pngFileId as string }))
         );
       })

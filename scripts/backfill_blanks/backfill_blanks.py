@@ -6,6 +6,9 @@ What it does
   * OFM  -> fills blank SMALL/MEDIUM/LARGE OFM cells from "<Icon> <SIZE>.ofm"
   * DST  -> fills blank SMALL/MEDIUM/LARGE DST cells from "<Icon> <SIZE>.dst"
   * PNG  -> fills the blank PNG cell from "<Icon>.png"
+  * Premade Designs are fixed-size: an OFM/DST file with no <SIZE> word whose
+    row is in that category is linked into the MEDIUM cell. For every other
+    category, a missing size word is still flagged as a bad filename.
   Only blank cells are touched. Any cell that already has a link is left alone.
 
 Folders are scanned RECURSIVELY (subfolders included). Pass whichever folders
@@ -57,6 +60,14 @@ TYPES = {
             "headers": {"SMALL": "small dst", "MEDIUM": "medium dst", "LARGE": "large dst"}},
     "PNG": {"ext": "png", "sized": False, "headers": {None: "png"}},
 }
+
+# Premade Designs are fixed-size, so their OFM/DST files won't carry a
+# SMALL/MEDIUM/LARGE token. A sized file with no size word is accepted ONLY when
+# its row is in this category, and its link is routed to the canonical column
+# below. Mirrors PREMADE_CATEGORY in lib/categories.ts. Any other category with
+# a missing size word is still reported as a bad filename (the typo-catch).
+PREMADE_CATEGORY = "Premade Designs"
+PREMADE_FIXED_SIZE = "MEDIUM"
 
 
 def norm(s):
@@ -174,14 +185,26 @@ def main():
     if icon_col < 0:
         sys.exit("ERROR: couldn't find the 'Icon' column header in row 2")
 
-    # rows: norm name -> rownum; and the reverse, and all names for typo matching
-    row_by_norm, name_by_norm = {}, {}
+    # rows: norm name -> rownum; and the reverse, and all names for typo matching.
+    # cat_by_norm remembers each row's Category so sized files with no size word
+    # can be accepted for Premade Designs rows (routed to the MEDIUM column).
+    cat_col = find_col("category")
+    row_by_norm, name_by_norm, cat_by_norm = {}, {}, {}
     for r in range(2, len(grid)):
         nm = ((get(grid[r], icon_col) or {}).get("formattedValue") or "").strip()
         if nm:
-            row_by_norm.setdefault(norm(nm), r + 1)
-            name_by_norm.setdefault(norm(nm), nm)
+            key = norm(nm)
+            row_by_norm.setdefault(key, r + 1)
+            name_by_norm.setdefault(key, nm)
+            if cat_col >= 0:
+                cat = ((get(grid[r], cat_col) or {}).get("formattedValue") or "").strip()
+                cat_by_norm.setdefault(key, cat)
     all_norms = list(row_by_norm.keys())
+
+    premade_norm = norm(PREMADE_CATEGORY)
+
+    def is_premade(base_norm):
+        return bool(base_norm) and norm(cat_by_norm.get(base_norm, "")) == premade_norm
 
     all_writes = []
     png_filled = []  # icon names whose PNG cell was filled this run (for the runner)
@@ -195,8 +218,11 @@ def main():
         if cfg["sized"]:
             fre = re.compile(r"^(?P<name>.+?)\s+(?P<size>SMALL|MEDIUM|LARGE)\." + cfg["ext"] + r"$",
                              re.IGNORECASE)
+            # Fallback for fixed-size Premade files that omit the size word.
+            sizeless_re = re.compile(r"^(?P<name>.+?)\." + cfg["ext"] + r"$", re.IGNORECASE)
         else:
             fre = re.compile(r"^(?P<name>.+?)\." + cfg["ext"] + r"$", re.IGNORECASE)
+            sizeless_re = None
 
         print(f"\n[{t}] scanning folder {folder_id} (recursive)...")
         by_name, dupes = list_files_recursive(drive, folder_id)
@@ -206,16 +232,33 @@ def main():
 
         fills, skipped_filled = [], 0
         unmatched, bad_pattern = [], []
+        premade_sizeless = []  # (cell, fname) sized files routed to MEDIUM for premades
         for fname, fid in sorted(cand.items()):
+            was_premade_sizeless = False
             m = fre.match(fname)
-            if not m:
+            if m:
+                base = m.group("name").strip()
+                size = m.group("size").upper() if cfg["sized"] else None
+                base_norm = norm(base)
+                rownum = row_by_norm.get(base_norm)
+                if not rownum:
+                    unmatched.append((fname, base))
+                    continue
+            elif cfg["sized"] and sizeless_re is not None:
+                # No SMALL/MEDIUM/LARGE token: accept ONLY if it resolves to a
+                # Premade Designs row, and route it to the MEDIUM column. Anything
+                # else with a missing size word stays a flagged bad filename.
+                sm = sizeless_re.match(fname)
+                base = sm.group("name").strip() if sm else ""
+                base_norm = norm(base)
+                rownum = row_by_norm.get(base_norm)
+                if not (sm and rownum and is_premade(base_norm)):
+                    bad_pattern.append(fname)
+                    continue
+                size = PREMADE_FIXED_SIZE
+                was_premade_sizeless = True
+            else:
                 bad_pattern.append(fname)
-                continue
-            base = m.group("name").strip()
-            size = m.group("size").upper() if cfg["sized"] else None
-            rownum = row_by_norm.get(norm(base))
-            if not rownum:
-                unmatched.append((fname, base))
                 continue
             col_idx = cols[size]
             if not cell_is_blank(get(grid[rownum - 1], col_idx)):
@@ -224,10 +267,13 @@ def main():
             formula = ('=HYPERLINK("https://drive.google.com/open?id=' + fid
                        + '", "' + fname.replace('"', '""') + '")')
             rng = f"{args.tab}!{col_letter(col_idx)}{rownum}"
-            fills.append((rng.split('!')[1], fname))
+            cell = rng.split('!')[1]
+            fills.append((cell, fname))
             all_writes.append({"range": rng, "values": [[formula]]})
+            if was_premade_sizeless:
+                premade_sizeless.append((cell, fname))
             if t == "PNG":
-                png_filled.append(name_by_norm.get(norm(base), base))
+                png_filled.append(name_by_norm.get(base_norm, base))
 
         # ---- report ----
         print(f"[{t}] {len(fills)} blank cell(s) to fill ({skipped_filled} already linked):")
@@ -235,6 +281,11 @@ def main():
             print(f"    {where:<6} <- {fname}")
         if len(fills) > 100:
             print(f"    ... and {len(fills) - 100} more")
+        if premade_sizeless:
+            print(f"[{t}] {len(premade_sizeless)} fixed-size Premade file(s) "
+                  f"routed to the {PREMADE_FIXED_SIZE} column (no size word):")
+            for where, fname in premade_sizeless[:50]:
+                print(f"    {where:<6} <- {fname}")
         if unmatched:
             print(f"[{t}] *** {len(unmatched)} file(s) matched NO icon row — check the Icon column for typos:")
             for fname, base in unmatched:
