@@ -1,0 +1,48 @@
+ABBODE ICONS — HEADING OVERLAP FIX (display font line-height)
+============================================================
+
+THE CAUSE
+  The display font "Abbode New York" has tall built-in vertical metrics:
+  ascent 1.10em + descent 0.26em ≈ a 1.36em content box on a 1em body. That's
+  fine on its own, but Tailwind's default line-height collapses to 1.0 at
+  text-5xl and above, and several headings also use leading-none / leading-[1.05].
+  At those tight line-heights the font's tall glyphs spill ~0.18em past the line
+  box on each side and collide with the lines/elements above and below — the
+  overlap you were seeing in a lot of places.
+
+  (Confirmed the font files and @font-face are byte-identical to the sister app,
+  so it was never a font problem — purely line-height.)
+
+THE FIX (one rule, matches your sister app)
+  Added to app/globals.css, after @tailwind utilities:
+
+      .font-display { line-height: 1.25; }
+
+  1.25 is the same safe leading ("leading-tight") your style-guide app pins its
+  display headings to. Because the rule sits after @tailwind utilities and has
+  equal specificity to the size utilities, it wins the cascade and overrides the
+  baked-in line-height:1 on text-5xl+ (and leading-none / leading-[1.05]). Verified
+  in the compiled CSS that our rule lands after those utilities.
+
+  This fixes every display heading at once — page titles, the header wordmark,
+  modal titles, etc. — without touching any component files.
+
+FILE IN THIS ZIP (overwrite in place)
+  app/globals.css
+
+VALIDATED
+  next build ✓  +  compiled-CSS cascade order confirmed
+
+INSTALL — app code, needs a redeploy
+  1. Copy app/globals.css into your repo (overwrite).
+  2. Push (or double-click push_to_git.bat):
+       cd /d "C:\Users\abbod\Dropbox\File Processing (Don't Open)\ICON APP\abbode-icons"
+       git add -A
+       git commit -m "Fix display-heading overlap: pin font-display line-height to 1.25"
+       git push
+  3. Wait ~1 min for Vercel, then hard-refresh (Ctrl+Shift+R).
+
+NOTE
+  This pins ALL display headings to 1.25. If any single oversized hero ever wants
+  its own tighter/looser leading later, that one line is the place to revisit —
+  but 1.25 clears the overlap everywhere and matches your other app.

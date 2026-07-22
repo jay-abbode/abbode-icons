@@ -1,0 +1,36 @@
+[
+  {
+    "slug": "black-jet-setter",
+    "name": "Black Jet Setter",
+    "category": "PREMADE DESIGNS",
+    "file_id": "1Bo00AvPTV6nGM67Bdd_6I-2E8XTSYO7a",
+    "status": "cropped",
+    "original_size": [
+      1258,
+      843
+    ],
+    "new_size": [
+      1215,
+      797
+    ],
+    "saved_bytes": -21526,
+    "error": null
+  },
+  {
+    "slug": "white-jet-setter",
+    "name": "White Jet Setter",
+    "category": "PREMADE DESIGNS",
+    "file_id": "1MNNY6aWevU-L9kxHh5c1RnYdv02w4NQu",
+    "status": "cropped",
+    "original_size": [
+      1258,
+      843
+    ],
+    "new_size": [
+      1215,
+      797
+    ],
+    "saved_bytes": -48448,
+    "error": null
+  }
+]

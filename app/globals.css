@@ -109,3 +109,17 @@
 
 .animate-slide-up { animation: slideUp 240ms cubic-bezier(0.16, 1, 0.3, 1); }
 .animate-fade-in  { animation: fadeIn 180ms ease-out; }
+
+/* ---------- Display-heading leading fix ----------
+   "Abbode New York" (font-display) has tall vertical metrics: ascent 1.10em +
+   descent 0.26em ≈ a 1.36em content box on a 1em body. Tailwind's default
+   line-height collapses to 1 at text-5xl and above (and several headings use
+   leading-none / leading-[1.05]), so those tall glyphs spill past the line box
+   and collide with the lines and elements above/below.
+
+   Pin every display heading to the same safe leading the sister app uses
+   (leading-tight, 1.25). This sits after @tailwind utilities, so on equal
+   specificity it wins over the size utilities' baked-in line-height. */
+.font-display {
+  line-height: 1.25;
+}
