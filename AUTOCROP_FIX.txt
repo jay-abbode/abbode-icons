@@ -1,0 +1,47 @@
+ABBODE ICONS — WHY AUTO-CROP KEPT SKIPPING (and the fix)
+========================================================
+
+WHAT WAS HAPPENING
+  The runner decided WHICH icons to crop indirectly — from what the upload and
+  backfill steps *reported*, not from what you actually pushed. In a real
+  (--apply) portal run it cropped:
+
+        upload_report.png_icons  ∪  backfill_report.png_icons
+
+  If that set came back empty, you got "Auto-crop: nothing to do — no new or
+  changed PNGs this run" and the crop script never even ran. The set comes back
+  empty in a couple of ordinary situations:
+
+    1. The push didn't include a fresh catalog PNG (you re-exported the OFM/DST
+       but not the .png). Auto-crop only trims .png files, so there was nothing
+       for it to do — but the message made it look broken.
+    2. The PNG didn't get surfaced in the reports (e.g. it was skipped as a
+       duplicate-name in Drive, or the upload of it failed).
+
+  Separately, the crop script also skips any PNG that's already ≥95% tight
+  (nothing to trim) — that's by design, not a bug.
+
+THE FIX (portal flow is now deterministic)
+  For a PORTAL push we already know exactly which PNGs you sent, so the runner
+  now crops THOSE directly instead of inferring them from the reports:
+
+        crop targets = reported PNGs  ∪  every .png you put in PORTAL
+
+  So any PNG you push through the portal is always handed to auto-crop. The crop
+  script still skips ones that are already tight, so this never over-crops.
+
+  If a push genuinely has no PNG, the message is now honest about it:
+    "Auto-crop: nothing to do — this push had no catalog PNG to crop"
+
+FILE IN THIS ZIP (overwrite in place)
+  scripts/add_icons/add_icons.py
+
+  (ensure_rows.py from the last drop is unchanged — no need to re-copy it.)
+
+NO VERCEL REDEPLOY — local script only. Copy it in and run.
+
+TO CROP AN ICON RIGHT NOW (works regardless, bypasses the runner)
+  python scripts\crop_pngs\crop_pngs.py --sheet-id 1zP1wTjPpYxhEQ4GnF8pCLdZj1DiyoGIrwEr3VWrLbqo --only "Icon Name" --apply
+
+  Or re-crop the whole catalog:
+  python scripts\add_icons\add_icons.py --portal --apply --crop-all

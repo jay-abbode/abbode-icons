@@ -1,0 +1,72 @@
+ABBODE ICONS — PORTAL AUTO-CREATES SHEET ROWS FOR NEW ICONS
+===========================================================
+
+WHAT CHANGED
+  Pushing icons through the PORTAL now creates the MASTER row for you.
+
+    * NEW icon (root name not already in MASTER)  -> a new row is appended with:
+          - Icon name        (Icon column)
+          - STATUS  = DRAFT  (dropdown)
+          - Col. Var. = NO   (dropdown)
+          - Category + everything else: left BLANK for you to fill in after.
+      Its OFM/DST/PNG links are then filled by the normal backfill step.
+
+    * EXISTING icon (same root name already in MASTER) -> NO new row. The row is
+      kept as-is and your new files overwrite the old ones in place (same Drive
+      file IDs, so the sheet's links keep working). Backfill fills any file cell
+      that was still blank.
+
+  Matching is by the same normalized icon name the backfill uses, and all the
+  files for one icon (Heart.png, Heart SMALL.ofm, ...) collapse to a single row.
+
+STATUS = DRAFT
+  New rows land as DRAFT, so nothing goes live automatically. Your flow:
+  push -> add the Category -> review -> flip STATUS to ACTIVE when you're ready.
+  (The app also hides any row without a Category, so a new row won't show until
+  you categorize it anyway.) Col. Var. defaults to NO.
+  Overrides if ever needed:  --new-status ACTIVE   /   --new-colorvar YES
+
+THE DROPDOWNS
+  Your sheet's dropdown validation only covered rows 3–789, so a freshly-appended
+  row would miss the dropdowns. The new step copies the dropdowns (STATUS =
+  DRAFT/ACTIVE/ARCHIVED, Col. Var. = NO/YES/YES/MC) and the row formatting from
+  the first data row onto each new row, so they behave like every other row.
+
+HOW TO RUN (unchanged from your normal portal flow)
+  Drop the icon's files in PORTAL, then:
+
+    cd scripts/add_icons
+    python add_icons.py --portal            # PREVIEW — shows which rows would be
+                                            #   created; writes nothing
+    python add_icons.py --portal --apply    # do it for real
+
+  The "ensure-rows" step runs automatically, right before backfill. You'll see it
+  in the plan line:  [✓] upload  [✓] ensure-rows  [✓] backfill  ...
+  To turn it off for a run:  --skip-ensure-rows
+
+  Standalone (if you ever want it on its own):
+    python scripts/ensure_rows/ensure_rows.py --name "Rocket Ship" --dry-run
+    python scripts/ensure_rows/ensure_rows.py --from-files "Rocket Ship SMALL.ofm"
+
+FILES IN THIS ZIP (merge into your repo, keeping paths)
+  scripts/ensure_rows/ensure_rows.py   (new)
+  scripts/add_icons/add_icons.py       (updated runner)
+
+VALIDATED
+  py_compile (both) + runner plan/commands + name-matching logic all checked.
+  The live Sheets write (row append + dropdown copy) is exercised the first time
+  you run it — so do a --portal preview first, then --apply.
+
+INSTALL — LOCAL SCRIPTS ONLY, NO VERCEL REDEPLOY
+  1. Copy the two files into your repo (keep the scripts/... paths).
+  2. Commit/push if you want them in git (optional for local scripts):
+       cd /d "C:\Users\abbod\Dropbox\File Processing (Don't Open)\ICON APP\abbode-icons"
+       git add -A
+       git commit -m "Portal: auto-create MASTER rows for new icons (DRAFT + dropdowns)"
+       git push
+  3. Nothing to redeploy — these run on your machine.
+
+SUGGESTED FIRST TEST
+  Put ONE brand-new icon's files in PORTAL and run `python add_icons.py --portal`
+  (preview). Confirm it lists that icon under "New rows to add", then re-run with
+  --apply and check the row appears in MASTER as DRAFT with the dropdowns set.

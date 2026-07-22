@@ -62,6 +62,7 @@ DEFAULT_CREDS = PROJECT_ROOT / "google-credentials.json"
 ENV_LOCAL = PROJECT_ROOT / ".env.local"
 
 BACKFILL = PROJECT_ROOT / "scripts" / "backfill_blanks" / "backfill_blanks.py"
+ENSURE = PROJECT_ROOT / "scripts" / "ensure_rows" / "ensure_rows.py"
 CROP = PROJECT_ROOT / "scripts" / "crop_pngs" / "crop_pngs.py"
 TAGS = PROJECT_ROOT / "scripts" / "icon_tags" / "populate_tags.py"
 AUTOTAG = PROJECT_ROOT / "scripts" / "icon_tags" / "autotag_new.py"
@@ -119,6 +120,16 @@ def build_backfill(cfg: dict, report_path: str | None) -> list[str]:
             argv += [flag, cfg[key]]
     if report_path:
         argv += ["--report-json", report_path]
+    if not cfg["apply"]:
+        argv.append("--dry-run")
+    return argv
+
+
+def build_ensure_rows(cfg: dict, names_file: str) -> list[str]:
+    argv = [cfg["python"], str(ENSURE),
+            "--sheet-id", cfg["sheet_id"], "--creds", cfg["creds"], "--tab", cfg["tab"],
+            "--names-file", names_file,
+            "--status", cfg["new_status"], "--colorvar", cfg["new_colorvar"]]
     if not cfg["apply"]:
         argv.append("--dry-run")
     return argv
@@ -270,6 +281,12 @@ def main() -> None:
     p.add_argument("--skip-upload", action="store_true",
                    help="don't upload local files to Drive first")
     p.add_argument("--skip-backfill", action="store_true")
+    p.add_argument("--skip-ensure-rows", action="store_true",
+                   help="portal: don't create MASTER rows for brand-new icons")
+    p.add_argument("--new-status", default="DRAFT",
+                   help="STATUS dropdown value for auto-created rows (default: DRAFT)")
+    p.add_argument("--new-colorvar", default="NO",
+                   help="Col. Var. dropdown value for auto-created rows (default: NO)")
     p.add_argument("--skip-crop", action="store_true")
     p.add_argument("--skip-autotag", action="store_true",
                    help="don't auto-generate tags for icons missing from tags.csv")
@@ -295,6 +312,7 @@ def main() -> None:
         "local_dst": resolve("LOCAL_DST_DIR", None, env_local, None),
         "overwrite": args.overwrite, "padding": args.padding, "limit": args.limit,
         "no_backup": args.no_backup, "backup_root": args.backup_root,
+        "new_status": args.new_status, "new_colorvar": args.new_colorvar,
     }
     if not cfg["sheet_id"]:
         sys.exit("ERROR: no sheet id. Set GOOGLE_SHEET_ID in .env.local or pass --sheet-id.")
@@ -309,6 +327,7 @@ def main() -> None:
     local_dst = Path(cfg["local_dst"]) if cfg["local_dst"] else lp / LOCAL_DST_SUBDIR
     shared_manifest = str(lp / ".upload_manifest.json")  # PORTAL shares the launchpad's manifest
 
+    pf: list[Path] = []
     if args.portal:
         pf = portal_files(portal_dir)
         if not pf:
@@ -331,6 +350,16 @@ def main() -> None:
         do_backfill, why_bf = False, f"script missing: {BACKFILL}"
     elif not has_folders:
         do_backfill, why_bf = False, "no OFM/DST/PNG folder IDs (set them in .env.local or pass --ofm-folder ...)"
+
+    # Ensure-rows runs in the PORTAL flow only: it creates a MASTER row for any
+    # brand-new icon in the batch so you don't have to add the row by hand first.
+    do_ensure, why_ensure = True, ""
+    if not args.portal:
+        do_ensure, why_ensure = False, "portal flow only"
+    elif args.skip_ensure_rows:
+        do_ensure, why_ensure = False, "--skip-ensure-rows"
+    elif not ENSURE.exists():
+        do_ensure, why_ensure = False, f"script missing: {ENSURE}"
 
     do_crop, why_crop = True, ""
     if args.skip_crop:
@@ -361,17 +390,22 @@ def main() -> None:
     print(f"  Credentials : {cfg['creds']}")
     print(f"  Folders     : OFM={'set' if cfg['ofm'] else '—'}  "
           f"DST={'set' if cfg['dst'] else '—'}  PNG={'set' if cfg['png'] else '—'}")
+    ensure_seg = (f"[{'✓' if do_ensure else '·'}] ensure-rows   " if args.portal else "")
     print(f"  Plan        : "
           f"[{'✓' if do_upload else '·'}] upload   "
+          f"{ensure_seg}"
           f"[{'✓' if do_backfill else '·'}] backfill   "
           f"[{'✓' if do_crop else '·'}] auto-crop ({crop_scope})   "
           f"[{'✓' if do_autotag else '·'}] auto-tag   "
           f"[{'✓' if do_tags else '·'}] tags")
-    for label, ok, why in (("upload", do_upload, why_upload),
-                           ("backfill", do_backfill, why_bf),
-                           ("auto-crop", do_crop, why_crop),
-                           ("auto-tag", do_autotag, why_autotag),
-                           ("tags", do_tags, why_tags)):
+    skip_checks = [("upload", do_upload, why_upload),
+                   ("backfill", do_backfill, why_bf),
+                   ("auto-crop", do_crop, why_crop),
+                   ("auto-tag", do_autotag, why_autotag),
+                   ("tags", do_tags, why_tags)]
+    if args.portal:
+        skip_checks.insert(1, ("ensure-rows", do_ensure, why_ensure))
+    for label, ok, why in skip_checks:
         if not ok:
             print(f"     - {label} will be skipped: {why}")
 
@@ -386,6 +420,9 @@ def main() -> None:
                                                   manifest=shared_manifest)))
             else:
                 print("  1) " + _fmt(build_upload(cfg, "<uploaded.json>" if args.apply else None)))
+        if do_ensure:
+            print("  1.5) " + _fmt(build_ensure_rows(cfg, "<portal_icon_files.json>"))
+                  + "   (names derived from the PORTAL files)")
         if do_backfill:
             print("  2) " + _fmt(build_backfill(cfg, "<report.json>" if show_report else None)))
         if do_crop:
@@ -437,6 +474,18 @@ def main() -> None:
         print(f"\n=== Upload: SKIPPED — {why_upload} ===")
         results.append(("Upload", "skipped"))
 
+    # 1.5) Ensure a MASTER row exists for each NEW icon in the PORTAL batch, so
+    #      you never have to add the row by hand before pushing. Runs before
+    #      backfill so the new rows are present for the link-fill.
+    if do_ensure:
+        names_file = os.path.join(tmpdir, "portal_icon_files.json")
+        Path(names_file).write_text(json.dumps([p.name for p in pf]), encoding="utf-8")
+        results.append(("Ensure rows", run_step(
+            "Ensure sheet rows for new icons", build_ensure_rows(cfg, names_file), child_env)))
+    elif args.portal:
+        print(f"\n=== Ensure rows: SKIPPED — {why_ensure} ===")
+        results.append(("Ensure rows", "skipped"))
+
     # 2) Backfill
     if do_backfill:
         results.append(("Backfill", run_step(
@@ -455,10 +504,21 @@ def main() -> None:
             print("   to preview here. Run with --apply, or use --crop-all to preview the whole catalog.")
             results.append(("Auto-crop", "skipped (dry-run)"))
         else:
-            new_names = sorted(set(read_png_icons(report_path)) | set(read_png_icons(upload_report_path)))
+            new_names = set(read_png_icons(report_path)) | set(read_png_icons(upload_report_path))
+            if args.portal:
+                # Deterministic for the portal flow: always crop the PNGs you actually
+                # sent, instead of inferring them from the upload/backfill reports (which
+                # can leave the set empty and silently skip the crop). Crop still skips any
+                # PNG that's already tight, so this never over-crops.
+                new_names |= {p.stem for p in pf if p.suffix.lower() == ".png"}
+            new_names = sorted(new_names)
             if not new_names:
-                print("\n=== Auto-crop: nothing to do — no new or changed PNGs this run ===")
-                print("   (Use --crop-all to re-crop the whole catalog.)")
+                if args.portal:
+                    print("\n=== Auto-crop: nothing to do — this push had no catalog PNG to crop ===")
+                    print("   (Auto-crop only trims .png files. The OFM/DST were sent, but no PNG was.)")
+                else:
+                    print("\n=== Auto-crop: nothing to do — no new or changed PNGs this run ===")
+                    print("   (Use --crop-all to re-crop the whole catalog.)")
                 results.append(("Auto-crop", "ok (nothing new)"))
             else:
                 only_file = os.path.join(tmpdir, "new_pngs.json")
