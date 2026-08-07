@@ -1,0 +1,60 @@
+WEBSTER ORDER ROUTING — THE FULL PIPELINE
+=========================================
+
+What this is
+------------
+The printout phase, automated. Three pieces:
+
+1. QUEUE WRITER  scripts/webster_queue/webster_queue.py
+   Pulls every OPEN Shopify order tagged `webster-live`, derives each line's
+   thread colors with the SAME pipeline icon_order_stats.py uses (imported,
+   not copied — one derivation, zero drift), and rewrites a WEBSTER_QUEUE tab
+   in the Icon List sheet. Batches = the order's created DATE in
+   America/New_York (change with --batch-tz / WEBSTER_BATCH_TZ if the 3PL
+   cuts differently).
+
+2. SCHEDULE  .github/workflows/webster-queue.yml
+   Runs the writer 5:30am + 11:30am ET, Mon–Sat, plus a manual
+   "Run workflow" button. Uses the SAME five repo secrets as order-stats:
+   GOOGLE_CREDENTIALS_JSON, GOOGLE_SHEET_ID, SHOPIFY_SHOP,
+   SHOPIFY_CLIENT_ID, SHOPIFY_CLIENT_SECRET.
+   >> Setting those secrets unblocks BOTH workflows (and the stale
+      THREAD_STATS data) in one shot.
+
+3. ROUTING PAGE  /machines/routing   (linked from Thread Config)
+   Reads WEBSTER_QUEUE + the ACTIVE thread configuration, resolves every
+   head's loadout with the live engine, and assigns each order to a room:
+     - change-free first, spread evenly across capable rooms
+     - otherwise the fewest-swaps room, with the colors to swap in listed
+     - nothing derivable -> review pile, with the reason
+   ?batch=YYYY-MM-DD picks a day; ?room=3 prints one room's list.
+   Print / Save-as-PDF button, same styling as the day sheet.
+
+Also wired: the "queue" job source in lib/threadAllocationData.ts is now live
+(the Thread Config engine can solve on what's actually waiting, not just
+history) — the seam that was stubbed is filled.
+
+Flags on queue lines (sent to review, never routed on color):
+  photo          Pet Portrait / photo-stitch — colors come from the photo
+  no-attributes  no customizer data on the line
+  no-color       attributes present, nothing resolved to a palette color
+  unmatched: X   icon name the matcher couldn't place (add to ICON_ALIASES)
+Noise lines (insurance, gift cards, fees, samples, Checkout+) are dropped.
+
+First run
+---------
+1. Repo -> Settings -> Secrets and variables -> Actions: set the five secrets.
+2. Actions -> "Webster order queue" -> Run workflow (try dry_run first).
+3. Open /machines/routing. Set an Active config on Thread Config if you
+   haven't — otherwise the page says so and uses the solver default.
+
+Validation done before delivery
+-------------------------------
+- Routing engine: 6/6 regression checks vs the live allocation engine
+  (change-free genuineness, exactly-once assignment, per-step balance
+  invariant replay, change-free ceiling, minimal-swap routing, review
+  pile exactness + determinism), under both fleet and room solve scopes.
+- Writer derivation: unit-tested against fixtures (croc White->Tusk,
+  noise dropping, photo quarantine, overrides, manual aliases, unmatched).
+- Writer<->reader schema drift check passed.
+- tsc --noEmit clean, next build clean.

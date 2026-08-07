@@ -10,8 +10,8 @@
  *            scripts/icon_order_stats), falling back to ORDER_STATS
  *            (rolling-12-month) so the page renders before that job has run.
  *   queue    the open `webster-live` order queue — the jobs actually waiting to
- *            be stitched, rather than a bet on the recent past. Not wired yet;
- *            add a reader to JOB_SOURCES and it lights up everywhere.
+ *            be stitched, rather than a bet on the recent past. Fed by the
+ *            WEBSTER_QUEUE tab that scripts/webster_queue maintains.
  *
  * Everything downstream (the solver, the rooms, the day sheet, saved configs)
  * takes jobs as input and never asks where they came from, so switching the
@@ -23,6 +23,7 @@
  */
 
 import { getSheetsClient } from "./google";
+import { readWebsterQueue } from "./websterQueue";
 import { getThreadBySlot, parseThreadSlots } from "./threadPalette";
 import { getActiveFloors } from "./machineConfigs";
 import {
@@ -107,14 +108,34 @@ async function readHistoryJobs(): Promise<MachineJobs> {
 }
 
 /**
- * The live `webster-live` queue. Not connected yet — this is the seam. When it
- * lands it needs to: read open orders tagged `webster-live`, map each line's
- * icon-one/two/three + color-text-one to palette slots via MASTER, drop the
- * Checkout+ insurance line and any line with no customizer attributes, and emit
+ * The live `webster-live` queue, via the WEBSTER_QUEUE tab that
+ * scripts/webster_queue maintains. The writer already did the derivation
+ * (icon-one/two/three + color-text-one → palette slots via MASTER, noise lines
+ * dropped, photo lines flagged), so this just folds the open order lines into
  * one Job per distinct color-set with weight = how many are waiting.
  */
 async function readQueueJobs(): Promise<MachineJobs> {
-  return { jobs: [], meta: { window: "Open queue", updatedAt: null, source: "" } };
+  const queue = await readWebsterQueue();
+  const byKey = new Map<string, Job>();
+  let lines = 0;
+  for (const order of queue.orders) {
+    for (const line of order.lines) {
+      if (line.flag || line.slots.length === 0) continue; // review-pile lines — colors absent or untrustworthy
+      lines += line.quantity;
+      const key = line.slots.join(",");
+      const hit = byKey.get(key);
+      if (hit) hit.weight += line.quantity;
+      else byKey.set(key, { slots: [...line.slots], weight: line.quantity });
+    }
+  }
+  return {
+    jobs: [...byKey.values()],
+    meta: {
+      window: lines > 0 ? `Open queue · ${lines} designs waiting` : "Open queue",
+      updatedAt: queue.updatedAt,
+      source: queue.tabFound ? "WEBSTER_QUEUE" : "",
+    },
+  };
 }
 
 const JOB_SOURCES: Record<JobSourceKey, () => Promise<MachineJobs>> = {
