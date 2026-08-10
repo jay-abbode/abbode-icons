@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import CategoryCompare, { type SlimIcon } from "@/components/CategoryCompare";
 import { getIconWindows, sortForWindow, type WindowMonths } from "@/lib/iconWindows";
 import { getIconCategories } from "@/lib/iconCategories";
+import { getIconCatalog } from "@/lib/sheets";
 import { normIconName } from "@/lib/orderStats";
 
 export const dynamic = "force-dynamic";
@@ -16,14 +17,16 @@ export const dynamic = "force-dynamic";
  *   ON SITE ONLY   featured but not in the top-N               → drop candidates
  *
  * Then "Generate Suggested Category" builds the replacement list (matches
- * first, then report newcomers, website-only excluded) which can be edited
- * icon by icon before copying it out.
+ * first, then report newcomers) with the website-only icons underneath as
+ * SUGGESTED CUTS — each keepable in one click for brand-identity reasons —
+ * and the whole list editable icon by icon before copying it out.
  *
  *   ?months=3&top=30   the report side (defaults: 3 months, top 30)
  *   ?category=handle   another synced website category (default most-popular)
  *
  * Website side comes from the ICON_CATEGORIES tab, refreshed by the
- * "Icon categories sync" workflow — as fresh as its last run.
+ * "Icon categories sync" workflow — as fresh as its last run. Icon images come
+ * from the catalog's Drive PNGs via /api/image.
  */
 
 const TOP_CHOICES = [10, 20, 30, 50] as const;
@@ -50,6 +53,25 @@ function Swatches({ hexes }: { hexes: string[] }) {
   );
 }
 
+function RowVisual({ img, name, hexes }: { img?: string; name: string; hexes: string[] }) {
+  if (img) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={img}
+        alt={name}
+        loading="lazy"
+        className="h-9 w-9 flex-none rounded-md border border-parchment bg-white object-contain p-0.5"
+      />
+    );
+  }
+  return (
+    <span className="flex h-9 w-9 flex-none items-center justify-center rounded-md border border-parchment bg-white">
+      <Swatches hexes={hexes} />
+    </span>
+  );
+}
+
 function Section({
   tone,
   title,
@@ -59,7 +81,7 @@ function Section({
   tone: "match" | "add" | "drop";
   title: string;
   note: string;
-  rows: { key: string; hexes: string[]; name: string; category: string; detail: string }[];
+  rows: { key: string; hexes: string[]; name: string; category: string; detail: string; img?: string }[];
 }) {
   const border = tone === "match" ? "border-plum/25" : tone === "add" ? "border-berry/30" : "border-cherry/30";
   const heading = tone === "match" ? "text-plum" : tone === "add" ? "text-berry" : "text-cherry";
@@ -77,7 +99,7 @@ function Section({
         <ul className="divide-y divide-parchment/60">
           {rows.map((r) => (
             <li key={r.key} className="flex items-center gap-2.5 py-1.5">
-              <Swatches hexes={r.hexes} />
+              <RowVisual img={r.img} name={r.name} hexes={r.hexes} />
               <span className="font-ui min-w-0 flex-1 truncate text-xs">
                 <span className="font-semibold text-espresso">{r.name}</span>
                 {r.category ? <span className="text-ink-muted"> · {r.category}</span> : null}
@@ -96,9 +118,13 @@ export default async function ComparePage({
 }: {
   searchParams: { months?: string | string[]; top?: string | string[]; category?: string | string[] };
 }) {
-  let snap, cats;
+  let snap, cats, catalog;
   try {
-    [snap, cats] = await Promise.all([getIconWindows(), getIconCategories()]);
+    [snap, cats, catalog] = await Promise.all([
+      getIconWindows(),
+      getIconCategories(),
+      getIconCatalog().catch(() => null),
+    ]);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return (
@@ -117,6 +143,17 @@ export default async function ComparePage({
   const topParam = parseInt(one(searchParams.top) ?? "30", 10);
   const top = Number.isFinite(topParam) && topParam > 0 ? topParam : 30;
   const handle = one(searchParams.category) || "most-popular";
+
+  // Icon PNGs, keyed by normalized name (current and legacy) — the compare
+  // rows and the builder show the actual designs, not just thread swatches.
+  const imgByKey = new Map<string, string>();
+  for (const icon of catalog?.icons ?? []) {
+    if (!icon.pngFileId) continue;
+    const url = `/api/image/${icon.pngFileId}`;
+    imgByKey.set(normIconName(icon.name), url);
+    if (icon.oldName) imgByKey.set(normIconName(icon.oldName), url);
+  }
+  const imgFor = (name: string) => imgByKey.get(normIconName(name));
 
   const website = cats.categories.get(handle);
   const ranked = sortForWindow(snap.stats, months).filter((s) => s.counts[months] > 0);
@@ -196,6 +233,21 @@ export default async function ComparePage({
     count: s.counts[months],
     hexes: s.hexes,
     rank: rankByKey.get(normIconName(s.icon))?.rank ?? 0,
+    img: imgFor(s.icon),
+  });
+
+  // Website-only icons as SlimIcons for the builder's suggested-cuts block.
+  const cutSlim = websiteOnly.map((i): SlimIcon => {
+    const hit = rankByKey.get(normIconName(i.canon));
+    return {
+      icon: i.canon,
+      category: hit?.stat.category ?? "",
+      count: hit?.stat.counts[months] ?? 0,
+      hexes: hit?.stat.hexes ?? [],
+      rank: hit?.rank ?? 0,
+      img: imgFor(i.canon),
+      sitePos: i.position,
+    };
   });
 
   const pillOn = "bg-plum font-semibold text-porcelain";
@@ -250,6 +302,7 @@ export default async function ComparePage({
           rows={matches.map((s) => ({
             key: s.icon,
             hexes: s.hexes,
+            img: imgFor(s.icon),
             name: s.icon,
             category: s.category,
             detail: `#${rankByKey.get(normIconName(s.icon))?.rank} · ${s.counts[months].toLocaleString()} orders · site pos ${sitePosByKey.get(normIconName(s.icon)) ?? "—"}`,
@@ -263,6 +316,7 @@ export default async function ComparePage({
           rows={reportOnly.map((s) => ({
             key: s.icon,
             hexes: s.hexes,
+            img: imgFor(s.icon),
             name: s.icon,
             category: s.category,
             detail: `#${rankByKey.get(normIconName(s.icon))?.rank} · ${s.counts[months].toLocaleString()} orders`,
@@ -278,6 +332,7 @@ export default async function ComparePage({
             return {
               key: `${i.canon}-${i.position}`,
               hexes: hit?.stat.hexes ?? [],
+              img: imgFor(i.canon),
               name: i.canon,
               category: hit?.stat.category ?? "",
               detail: hit
@@ -303,6 +358,7 @@ export default async function ComparePage({
         <CategoryCompare
           matches={matches.map(slim)}
           reportOnly={reportOnly.map(slim)}
+          cuts={cutSlim}
           pool={ranked.map(slim)}
           months={months}
           categoryTitle={website.title}

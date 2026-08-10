@@ -5,11 +5,12 @@ import { useMemo, useState } from "react";
 /**
  * The interactive half of /reports/icons/compare: one click generates the
  * suggested category — intersection icons first (already on the site AND in
- * the report), then the report-only newcomers, with website-only icons left
- * out — and then the list is fully editable: remove, reorder, or swap in any
- * icon from the full ranked pool (seasonality overrides welcome). "Copy list"
- * puts the final names on the clipboard for updating the metaobject in
- * Shopify admin.
+ * the report), then the report-only newcomers — plus a SUGGESTED CUTS block
+ * underneath: the website-only icons the data says to drop, each with a
+ * "Keep" button for the ones staying on brand-identity grounds. The list is
+ * fully editable after that: remove, reorder, or swap in any icon from the
+ * ranked pool. "Copy list" puts the final names on the clipboard for updating
+ * the metaobject in Shopify admin.
  */
 
 export type SlimIcon = {
@@ -20,9 +21,21 @@ export type SlimIcon = {
   hexes: string[];
   /** 1-based rank in the compare window, 0 = unranked (no orders). */
   rank: number;
+  /** Image URL (/api/image/<fileId>) when the catalog has a PNG. */
+  img?: string;
+  /** Position in the current website category (cuts only). */
+  sitePos?: number;
 };
 
-type Tagged = SlimIcon & { tag: "both" | "new" | "added" };
+type Tag = "both" | "new" | "added" | "brand";
+type Tagged = SlimIcon & { tag: Tag };
+
+const TAG_STYLES: Record<Tag, { label: string; cls: string }> = {
+  both: { label: "match", cls: "bg-parchment text-ink-soft" },
+  new: { label: "new", cls: "bg-pink-soft text-cherry" },
+  added: { label: "added", cls: "bg-plum/10 text-plum" },
+  brand: { label: "brand keep", cls: "bg-espresso/10 text-espresso" },
+};
 
 function Swatches({ hexes }: { hexes: string[] }) {
   return (
@@ -42,15 +55,29 @@ function Swatches({ hexes }: { hexes: string[] }) {
   );
 }
 
-const TAG_STYLES: Record<Tagged["tag"], { label: string; cls: string }> = {
-  both: { label: "kept", cls: "bg-parchment text-ink-soft" },
-  new: { label: "new", cls: "bg-pink-soft text-cherry" },
-  added: { label: "added", cls: "bg-plum/10 text-plum" },
-};
+function Thumb({ item, size = "h-9 w-9" }: { item: SlimIcon; size?: string }) {
+  if (!item.img) {
+    return (
+      <span className={`flex ${size} flex-none items-center justify-center rounded-md border border-parchment bg-white`}>
+        <Swatches hexes={item.hexes} />
+      </span>
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={item.img}
+      alt={item.icon}
+      loading="lazy"
+      className={`${size} flex-none rounded-md border border-parchment bg-white object-contain p-0.5`}
+    />
+  );
+}
 
 export default function CategoryCompare({
   matches,
   reportOnly,
+  cuts,
   pool,
   months,
   categoryTitle,
@@ -59,6 +86,8 @@ export default function CategoryCompare({
   matches: SlimIcon[];
   /** Icons in the report but not on the website, in report-rank order. */
   reportOnly: SlimIcon[];
+  /** Website-only icons — the suggested cuts, in site-position order. */
+  cuts: SlimIcon[];
   /** Every ranked icon in the window — the swap-in pool. */
   pool: SlimIcon[];
   months: number;
@@ -69,6 +98,12 @@ export default function CategoryCompare({
   const [copied, setCopied] = useState(false);
 
   const inList = useMemo(() => new Set((list ?? []).map((i) => i.icon.toLowerCase())), [list]);
+
+  /** Cuts still cut: anything kept (or re-added) drops out of this block. */
+  const pendingCuts = useMemo(
+    () => cuts.filter((c) => !inList.has(c.icon.toLowerCase())),
+    [cuts, inList]
+  );
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -104,8 +139,8 @@ export default function CategoryCompare({
     setCopied(false);
   }
 
-  function add(item: SlimIcon) {
-    setList((l) => (l ? [...l, { ...item, tag: "added" as const }] : l));
+  function add(item: SlimIcon, tag: Tag = "added") {
+    setList((l) => (l ? [...l, { ...item, tag }] : l));
     setQuery("");
     setCopied(false);
   }
@@ -133,7 +168,8 @@ export default function CategoryCompare({
         </button>
         <p className="font-ui mt-2 text-xs text-ink-muted">
           Builds an ordered list favoring icons in both sets ({matches.length}), then the report-only newcomers (
-          {reportOnly.length}); website-only icons are left out. You can swap anything in or out afterward.
+          {reportOnly.length}). The {cuts.length} website-only icon{cuts.length === 1 ? "" : "s"} appear underneath as
+          suggested cuts — keep any of them for brand identity with one click, and swap anything else in or out after.
         </p>
       </div>
     );
@@ -170,7 +206,7 @@ export default function CategoryCompare({
         {list.map((i, idx) => (
           <li key={i.icon} className="flex items-center gap-2.5 py-1.5">
             <span className="font-ui w-6 text-right text-xs tabular-nums text-ink-muted">{idx + 1}</span>
-            <Swatches hexes={i.hexes} />
+            <Thumb item={i} />
             <span className="font-ui min-w-0 flex-1 truncate text-xs">
               <span className="font-semibold text-espresso">{i.icon}</span>
               {i.category ? <span className="text-ink-muted"> · {i.category}</span> : null}
@@ -213,6 +249,43 @@ export default function CategoryCompare({
         ))}
       </ol>
 
+      {pendingCuts.length > 0 ? (
+        <div className="mt-4 rounded-lg border border-cherry/25 bg-pink-soft/40 p-3">
+          <p className="font-ui mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-cherry">
+            Suggested cuts — {pendingCuts.length}
+          </p>
+          <p className="font-ui mb-2 text-[11px] text-ink-muted">
+            On the website today, outside the report. Keep any that earn their spot on brand identity alone.
+          </p>
+          <ul className="divide-y divide-cherry/10">
+            {pendingCuts.map((c) => (
+              <li key={c.icon} className="flex items-center gap-2.5 py-1.5">
+                <Thumb item={c} />
+                <span className="font-ui min-w-0 flex-1 truncate text-xs">
+                  <span className="font-semibold text-espresso">{c.icon}</span>
+                  {c.category ? <span className="text-ink-muted"> · {c.category}</span> : null}
+                </span>
+                <span className="font-ui text-right text-xs tabular-nums text-ink-soft">
+                  {c.rank > 0 ? `#${c.rank} · ${c.count.toLocaleString()} orders` : "no orders this window"}
+                  {c.sitePos ? ` · site pos ${c.sitePos}` : ""}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => add(c, "brand")}
+                  className="font-ui ml-1 rounded-full border border-espresso/30 bg-white px-2.5 py-1 text-[10px] font-semibold text-espresso transition-colors hover:bg-parchment focus-ring"
+                >
+                  Keep
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <p className="font-ui mt-4 text-[11px] text-ink-muted">
+          All website-only icons have been kept or there were none to cut.
+        </p>
+      )}
+
       <div className="relative mt-3">
         <input
           type="text"
@@ -230,7 +303,7 @@ export default function CategoryCompare({
                   onClick={() => add(p)}
                   className="flex w-full items-center gap-2.5 px-4 py-1.5 text-left transition-colors hover:bg-cream-50"
                 >
-                  <Swatches hexes={p.hexes} />
+                  <Thumb item={p} size="h-8 w-8" />
                   <span className="font-ui min-w-0 flex-1 truncate text-xs">
                     <span className="font-semibold text-espresso">{p.icon}</span>
                     {p.category ? <span className="text-ink-muted"> · {p.category}</span> : null}
