@@ -160,6 +160,13 @@ export default async function IconReportPage({
                 </svg>
                 Export PDF — {top > 0 ? `top ${Math.min(top, ranked.length)}` : "full list"} · {months}mo
               </a>
+
+              <Link
+                href="/reports/icons/compare"
+                className="inline-flex items-center gap-1.5 rounded-full bg-plum px-3.5 py-1.5 text-[11px] font-semibold text-porcelain transition-colors hover:bg-cherry focus-ring"
+              >
+                Generate comparison report →
+              </Link>
             </div>
 
             <div className="overflow-hidden rounded-xl border border-parchment bg-white">

@@ -1,0 +1,91 @@
+name: Icon categories sync
+
+# Snapshots the website's Custom Icon Categories (Shopify metaobjects) into the
+# ICON_CATEGORIES tab, with each icon label canonicalized to its catalog name.
+# The /reports/icons/compare page reads it. Fast (~15s for most-popular).
+#
+# REQUIRES the read_metaobjects scope on the Dev Dashboard Shopify app —
+# the run fails with instructions if it's missing.
+#
+# Same five repository secrets as the other workflows.
+
+on:
+  schedule:
+    - cron: '15 10 * * *'   # daily, 6:15am ET during EDT
+  workflow_dispatch:
+    inputs:
+      handles:
+        description: 'Comma-separated category handles, or "all"'
+        required: false
+        default: 'most-popular'
+      dry_run:
+        description: 'Preview only — do not write the sheet'
+        type: boolean
+        required: false
+        default: false
+
+concurrency:
+  group: icon-categories
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: scripts/shopify_categories/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r scripts/shopify_categories/requirements.txt
+
+      - name: Write Google service-account credentials
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GOOGLE_CREDENTIALS_JSON:-}" ]; then
+            echo "::error::GOOGLE_CREDENTIALS_JSON secret is empty or not set."
+            exit 1
+          fi
+          printf '%s' "$GOOGLE_CREDENTIALS_JSON" > "$RUNNER_TEMP/google-credentials.json"
+
+      - name: Sync ICON_CATEGORIES
+        env:
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+          SHOPIFY_SHOP: ${{ secrets.SHOPIFY_SHOP }}
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+          HANDLES: ${{ inputs.handles || 'most-popular' }}
+          DRY: ${{ inputs.dry_run && '--dry-run' || '' }}
+        run: |
+          set -euo pipefail
+          EXTRA=""
+          if [ "$HANDLES" = "all" ]; then EXTRA="--all"; else EXTRA="--handles $HANDLES"; fi
+          python scripts/shopify_categories/sync_icon_categories.py \
+            --shop          "$SHOPIFY_SHOP" \
+            --client-id     "$SHOPIFY_CLIENT_ID" \
+            --client-secret "$SHOPIFY_CLIENT_SECRET" \
+            --sheet-id      "$GOOGLE_SHEET_ID" \
+            --creds         "$RUNNER_TEMP/google-credentials.json" \
+            $EXTRA $DRY
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Icon categories sync"
+            echo ""
+            echo "- Handles: ${{ inputs.handles || 'most-popular' }}"
+            echo "- Result: ${{ job.status }}"
+            echo ""
+            echo "The compare page (/reports/icons/compare) reflects a fresh ICON_CATEGORIES within ~60s."
+          } >> "$GITHUB_STEP_SUMMARY"
