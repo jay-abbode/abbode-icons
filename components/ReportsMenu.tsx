@@ -30,6 +30,11 @@ const links: { href: string; label: string; blurb: string }[] = [
     blurb: "Volume, item colors, product mix & seasonality (DTC)",
   },
   {
+    href: "/reports/icons",
+    label: "Icon Report",
+    blurb: "Most-ordered icons — 3/6/12-month windows, top-N, PDF export",
+  },
+  {
     href: "/reports/usage",
     label: "Product Usage",
     blurb: "Top icons, fonts & colors by product or template",

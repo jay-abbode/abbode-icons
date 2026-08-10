@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { OrderStat, OrderStatsSnapshot } from "@/lib/orderStats";
 
@@ -84,6 +85,13 @@ export default function LiveOrderDataMenu({
               {window || "Recent orders"} · {totalOrders.toLocaleString()} icon
               orders{updatedAt ? ` · updated ${updatedAt}` : ""}
             </p>
+            <Link
+              href="/reports/icons"
+              onClick={() => setOpen(false)}
+              className="font-ui mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-berry transition-colors hover:text-cherry"
+            >
+              Open full report — 3/6/12-month windows &amp; top-N →
+            </Link>
           </div>
 
           <ul className="max-h-[420px] overflow-y-auto py-1">

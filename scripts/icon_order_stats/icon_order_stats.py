@@ -59,6 +59,7 @@ MASTER_TAB = "MASTER"
 ALIAS_TAB = "ICON_ALIASES"      # optional: columns "Customizer Name", "Catalog Name"
 OUT_TAB = "ORDER_STATS"
 THREAD_STATS_TAB = "THREAD_STATS"   # rolling-3-month per-design jobs for the Machines page
+ICON_WINDOWS_TAB = "ICON_WINDOWS"   # per-icon 3/6/12-month order counts, side by side
 COMPOSITE_TAB = "COMPOSITE"
 ICON_TRENDS_TAB = "ICON_TRENDS"     # rising/spiking icons (recent vs previous window)
 COLOR_TRENDS_TAB = "COLOR_TRENDS"   # rising/spiking TEXT colors
@@ -597,6 +598,7 @@ def aggregate(order_lines, matcher, catalog, trend_days=TREND_DAYS_DEFAULT, prod
     """
     counts = {}
     counts_3mo = {}   # rolling-3-month subset, for the Machines page (THREAD_STATS)
+    counts_6mo = {}   # rolling-6-month subset, for the icon report (ICON_WINDOWS)
     composite = {w: {} for w in WINDOWS}
     icon_trends = {}
     color_trends = {}
@@ -654,6 +656,8 @@ def aggregate(order_lines, matcher, catalog, trend_days=TREND_DAYS_DEFAULT, prod
             counts[canon] = counts.get(canon, 0) + 1
             if 3 in wins:  # order falls in the rolling-3-month bucket
                 counts_3mo[canon] = counts_3mo.get(canon, 0) + 1
+            if 6 in wins:
+                counts_6mo[canon] = counts_6mo.get(canon, 0) + 1
             line_icons.add(canon)
             if tb:
                 icon_trends.setdefault(canon, {"recent": 0, "previous": 0})[tb] += 1
@@ -715,7 +719,7 @@ def aggregate(order_lines, matcher, catalog, trend_days=TREND_DAYS_DEFAULT, prod
                     merged[lk] = [name, cnt, cnt]
             types["color"] = {v[0]: v[1] for v in merged.values()}
 
-    return counts, counts_3mo, composite, icon_trends, color_trends, usage
+    return counts, counts_3mo, counts_6mo, composite, icon_trends, color_trends, usage
 
 
 def catalog_slots_for(canon, catalog):
@@ -766,6 +770,22 @@ def write_thread_stats(sheets, sheet_id, counts_3mo, catalog, window_label):
         slots, category = catalog_slots_for(canon, catalog)
         rows.append([canon, category, cnt, "; ".join(map(str, slots)), window_label, today])
     return _ensure_clear_update(sheets, sheet_id, THREAD_STATS_TAB, rows)
+
+
+def write_icon_windows(sheets, sheet_id, counts, counts_3mo, counts_6mo, catalog, today):
+    """One row per ordered icon with its 3/6/12-month order counts side by side.
+    Feeds /reports/icons — the window + top-N picker and its PDF export. The
+    windows nest (every 3-month order is also a 6- and 12-month order), so the
+    12-month keys cover every icon that appears in any window."""
+    header = ["Icon", "Category", "Thread Slots", "Orders 3mo", "Orders 6mo",
+              "Orders 12mo", "Updated"]
+    rows = [header]
+    for canon in sorted(counts, key=lambda c: (-counts.get(c, 0), c)):
+        slots, category = catalog_slots_for(canon, catalog)
+        rows.append([canon, category, "; ".join(map(str, slots)),
+                     counts_3mo.get(canon, 0), counts_6mo.get(canon, 0),
+                     counts.get(canon, 0), today])
+    return _ensure_clear_update(sheets, sheet_id, ICON_WINDOWS_TAB, rows)
 
 
 def write_icon_health(sheets, sheet_id, counts, catalog, first_seen, window_label, today):
@@ -1081,7 +1101,7 @@ def main():
     # Materialize once so the same lines feed both the existing per-icon/color
     # aggregate and the new DTC monthly x channel trends — one Shopify scan.
     order_lines = list(scan_orders(shop, token, args.months, state, args.limit))
-    counts, counts_3mo, composite, icon_trends, color_trends, usage = aggregate(
+    counts, counts_3mo, counts_6mo, composite, icon_trends, color_trends, usage = aggregate(
         order_lines, matcher, catalog, args.trend_days, product_map)
     trends = aggregate_trends(order_lines, product_map, catalog)
 
@@ -1193,11 +1213,13 @@ def main():
     n8 = write_trends_timeseries(sheets, args.sheet_id, trends["timeseries"], coverage, today)
     n9 = write_trends_item_colors(sheets, args.sheet_id, trends["colors"], coverage, today)
     n10 = write_trends_categories(sheets, args.sheet_id, trends["categories"], coverage, today)
+    n11 = write_icon_windows(sheets, args.sheet_id, counts, counts_3mo, counts_6mo, catalog, today)
     print(f"\nWrote {n1} rows to {OUT_TAB}, {n2} to {COMPOSITE_TAB}, "
           f"{n3} to {ICON_TRENDS_TAB}, {n4} to {COLOR_TRENDS_TAB}, "
           f"{n5} to {USAGE_TAB}, {n6} to {THREAD_STATS_TAB}, "
           f"{n7} to {ICON_HEALTH_TAB}, {n8} to {TRENDS_TS_TAB}, "
-          f"{n9} to {TRENDS_COLORS_TAB}, {n10} to {TRENDS_CATS_TAB}. "
+          f"{n9} to {TRENDS_COLORS_TAB}, {n10} to {TRENDS_CATS_TAB}, "
+          f"{n11} to {ICON_WINDOWS_TAB}. "
           "The app will show them within ~60s.")
 
 
