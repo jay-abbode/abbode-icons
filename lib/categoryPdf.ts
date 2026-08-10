@@ -51,7 +51,7 @@ const TAG_LABELS: Record<string, string> = {
   both: "MATCH",
   new: "NEW",
   added: "ADDED",
-  brand: "BRAND KEEP",
+  brand: "KEPT",
 };
 
 function tagColor(tag: string | undefined) {
@@ -253,9 +253,9 @@ export async function buildCategoryPdf(opts: CategoryPdfOptions): Promise<Uint8A
     `The report side is the top ${top} most-ordered icons of the ${windowLabel.toLowerCase()}; the website side is the "${categoryTitle}" category as last synced from Shopify.`,
     `Icons in BOTH sets keep their spot (tagged MATCH) and lead the list, ordered by their rank in the window.`,
     `Icons in the top ${top} that the website doesn't feature follow (tagged NEW), in the same rank order.`,
-    `Website icons outside the top ${top} are proposed as cuts. Any kept by hand for brand-identity reasons appear in the list tagged BRAND KEEP${brandKeeps ? ` (${brandKeeps} kept this time)` : ""}; the rest are listed under "Cut from the current category" above.`,
-    `Icons swapped in manually from the full ranked list — seasonality, trends, gut feel — are tagged ADDED${manualAdds ? ` (${manualAdds} this time)` : ""}.`,
-    `Manual judgement overrides the data throughout; every change is recorded in the edit log below.`,
+    `Website icons outside the top ${top} are proposed as cuts. Any kept by hand appear in the list tagged KEPT${brandKeeps ? ` (${brandKeeps} this time)` : ""}; the rest are listed under "Cut from the current category" above.`,
+    `Icons swapped in manually from the ranked list are tagged ADDED${manualAdds ? ` (${manualAdds} this time)` : ""}.`,
+    `Manual edits override the generated list; each one is recorded below.`,
   ]);
 
   // ── Manual edits ───────────────────────────────────────────────────────────

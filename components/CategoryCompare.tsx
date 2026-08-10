@@ -39,15 +39,13 @@ type EditEntry =
 function editText(e: EditEntry): string {
   switch (e.kind) {
     case "keep":
-      return `Kept "${e.icon}" for brand identity${
+      return `Kept "${e.icon}" — was a suggested cut${
         e.rank > 0 ? ` (#${e.rank} · ${e.count.toLocaleString()} orders this window)` : " (no orders this window)"
       }`;
     case "add":
-      return `Added "${e.icon}" from the ranked list${
-        e.rank > 0 ? ` (#${e.rank} · ${e.count.toLocaleString()} orders)` : ""
-      }`;
+      return `Added "${e.icon}"${e.rank > 0 ? ` (#${e.rank} · ${e.count.toLocaleString()} orders)` : ""}`;
     case "remove":
-      return `Removed "${e.icon}" (was ${TAG_STYLES[e.tag].label})`;
+      return `Removed "${e.icon}" (was tagged ${TAG_STYLES[e.tag].label})`;
     case "move":
       return `Moved "${e.icon}" from #${e.from} to #${e.to}`;
   }
@@ -57,7 +55,7 @@ const TAG_STYLES: Record<Tag, { label: string; cls: string }> = {
   both: { label: "match", cls: "bg-parchment text-ink-soft" },
   new: { label: "new", cls: "bg-pink-soft text-cherry" },
   added: { label: "added", cls: "bg-plum/10 text-plum" },
-  brand: { label: "brand keep", cls: "bg-espresso/10 text-espresso" },
+  brand: { label: "kept", cls: "bg-espresso/10 text-espresso" },
 };
 
 function Swatches({ hexes }: { hexes: string[] }) {
@@ -258,7 +256,7 @@ export default function CategoryCompare({
         <p className="font-ui mt-2 text-xs text-ink-muted">
           Builds an ordered list favoring icons in both sets ({matches.length}), then the report-only newcomers (
           {reportOnly.length}). The {cuts.length} website-only icon{cuts.length === 1 ? "" : "s"} appear underneath as
-          suggested cuts — keep any of them for brand identity with one click, and swap anything else in or out after.
+          suggested cuts — keep any of them with one click, and swap anything else in or out after.
         </p>
       </div>
     );
@@ -352,7 +350,7 @@ export default function CategoryCompare({
             Suggested cuts — {pendingCuts.length}
           </p>
           <p className="font-ui mb-2 text-[11px] text-ink-muted">
-            On the website today, outside the report. Keep any that earn their spot on brand identity alone.
+            On the website today, outside the report.
           </p>
           <ul className="divide-y divide-cherry/10">
             {pendingCuts.map((c) => (
@@ -403,7 +401,7 @@ export default function CategoryCompare({
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Swap an icon in — search the ranked list (seasonality, trends, gut feel)…"
+          placeholder="Swap an icon in — search the ranked list…"
           className="font-ui w-full rounded-full border border-parchment bg-cream-50 px-4 py-2 text-xs text-espresso placeholder:text-ink-muted focus:border-pink focus:outline-none"
         />
         {results.length > 0 && (
