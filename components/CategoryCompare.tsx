@@ -30,6 +30,29 @@ export type SlimIcon = {
 type Tag = "both" | "new" | "added" | "brand";
 type Tagged = SlimIcon & { tag: Tag };
 
+type EditEntry =
+  | { kind: "keep"; icon: string; rank: number; count: number }
+  | { kind: "add"; icon: string; rank: number; count: number }
+  | { kind: "remove"; icon: string; tag: Tag }
+  | { kind: "move"; icon: string; from: number; to: number };
+
+function editText(e: EditEntry): string {
+  switch (e.kind) {
+    case "keep":
+      return `Kept "${e.icon}" for brand identity${
+        e.rank > 0 ? ` (#${e.rank} · ${e.count.toLocaleString()} orders this window)` : " (no orders this window)"
+      }`;
+    case "add":
+      return `Added "${e.icon}" from the ranked list${
+        e.rank > 0 ? ` (#${e.rank} · ${e.count.toLocaleString()} orders)` : ""
+      }`;
+    case "remove":
+      return `Removed "${e.icon}" (was ${TAG_STYLES[e.tag].label})`;
+    case "move":
+      return `Moved "${e.icon}" from #${e.from} to #${e.to}`;
+  }
+}
+
 const TAG_STYLES: Record<Tag, { label: string; cls: string }> = {
   both: { label: "match", cls: "bg-parchment text-ink-soft" },
   new: { label: "new", cls: "bg-pink-soft text-cherry" },
@@ -80,7 +103,9 @@ export default function CategoryCompare({
   cuts,
   pool,
   months,
+  top,
   categoryTitle,
+  dataUpdatedAt,
 }: {
   /** Icons in both the website category and the report, in report-rank order. */
   matches: SlimIcon[];
@@ -91,11 +116,17 @@ export default function CategoryCompare({
   /** Every ranked icon in the window — the swap-in pool. */
   pool: SlimIcon[];
   months: number;
+  /** Report depth the comparison ran against (top N) — printed on the PDF. */
+  top: number;
   categoryTitle: string;
+  /** When the order data was last written — printed on the PDF. */
+  dataUpdatedAt?: string | null;
 }) {
   const [list, setList] = useState<Tagged[] | null>(null);
   const [query, setQuery] = useState("");
   const [copied, setCopied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [edits, setEdits] = useState<EditEntry[]>([]);
 
   const inList = useMemo(() => new Set((list ?? []).map((i) => i.icon.toLowerCase())), [list]);
 
@@ -118,11 +149,17 @@ export default function CategoryCompare({
       ...matches.map((i) => ({ ...i, tag: "both" as const })),
       ...reportOnly.map((i) => ({ ...i, tag: "new" as const })),
     ]);
+    setEdits([]);
     setCopied(false);
   }
 
   function remove(icon: string) {
-    setList((l) => (l ? l.filter((i) => i.icon !== icon) : l));
+    setList((l) => {
+      if (!l) return l;
+      const hit = l.find((i) => i.icon === icon);
+      if (hit) setEdits((e) => [...e, { kind: "remove", icon, tag: hit.tag }]);
+      return l.filter((i) => i.icon !== icon);
+    });
     setCopied(false);
   }
 
@@ -132,6 +169,16 @@ export default function CategoryCompare({
       const idx = l.findIndex((i) => i.icon === icon);
       const to = idx + dir;
       if (idx < 0 || to < 0 || to >= l.length) return l;
+      // Coalesce a run of arrow clicks on the same icon into one log entry;
+      // a move that returns to its start drops out of the log entirely.
+      setEdits((e) => {
+        const last = e[e.length - 1];
+        if (last && last.kind === "move" && last.icon === icon) {
+          if (last.from === to + 1) return e.slice(0, -1);
+          return [...e.slice(0, -1), { ...last, to: to + 1 }];
+        }
+        return [...e, { kind: "move", icon, from: idx + 1, to: to + 1 }];
+      });
       const next = [...l];
       [next[idx], next[to]] = [next[to], next[idx]];
       return next;
@@ -141,6 +188,12 @@ export default function CategoryCompare({
 
   function add(item: SlimIcon, tag: Tag = "added") {
     setList((l) => (l ? [...l, { ...item, tag }] : l));
+    setEdits((e) => [
+      ...e,
+      tag === "brand"
+        ? { kind: "keep", icon: item.icon, rank: item.rank, count: item.count }
+        : { kind: "add", icon: item.icon, rank: item.rank, count: item.count },
+    ]);
     setQuery("");
     setCopied(false);
   }
@@ -153,6 +206,42 @@ export default function CategoryCompare({
       setTimeout(() => setCopied(false), 2500);
     } catch {
       // Clipboard can be unavailable (permissions) — the list is still on screen.
+    }
+  }
+
+  async function downloadPdf() {
+    if (!list || downloading) return;
+    setDownloading(true);
+    try {
+      const res = await fetch("/api/category-export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: categoryTitle,
+          months,
+          top,
+          updatedAt: dataUpdatedAt ?? null,
+          items: list,
+          cuts: pendingCuts,
+          edits: edits.map(editText),
+        }),
+      });
+      if (!res.ok) throw new Error(`export failed (${res.status})`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const slug = categoryTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "category";
+      a.href = url;
+      a.download = `abbode-suggested-category-${slug}-${new Date().toISOString().slice(0, 10)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      // Keep it quiet but visible: flip the button label briefly via copied=false noop.
+      alert("PDF export failed — try again, and if it keeps failing send me the /api/category-export log line.");
+    } finally {
+      setDownloading(false);
     }
   }
 
@@ -185,6 +274,14 @@ export default function CategoryCompare({
           </span>
         </h3>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={downloadPdf}
+            disabled={downloading}
+            className="font-ui rounded-full bg-plum px-3.5 py-1.5 text-[11px] font-semibold text-porcelain transition-colors hover:bg-cherry focus-ring disabled:opacity-60"
+          >
+            {downloading ? "Building PDF…" : "Download PDF"}
+          </button>
           <button
             type="button"
             onClick={copy}
@@ -285,6 +382,21 @@ export default function CategoryCompare({
           All website-only icons have been kept or there were none to cut.
         </p>
       )}
+
+      {edits.length > 0 ? (
+        <div className="mt-3 rounded-lg border border-parchment bg-cream-50 p-3">
+          <p className="font-ui mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-soft">
+            Edit log — {edits.length} (prints on the PDF)
+          </p>
+          <ol className="list-decimal space-y-0.5 pl-5">
+            {edits.map((e, i) => (
+              <li key={i} className="font-ui text-[11px] text-ink-soft">
+                {editText(e)}
+              </li>
+            ))}
+          </ol>
+        </div>
+      ) : null}
 
       <div className="relative mt-3">
         <input

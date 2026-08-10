@@ -361,7 +361,9 @@ export default async function ComparePage({
           cuts={cutSlim}
           pool={ranked.map(slim)}
           months={months}
+          top={top}
           categoryTitle={website.title}
+          dataUpdatedAt={snap.updatedAt}
         />
       </main>
     </>

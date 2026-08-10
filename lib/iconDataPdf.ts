@@ -31,7 +31,7 @@ export type IconPdfOptions = {
   updatedAt: string | null;
 };
 
-type Rgb = ReturnType<typeof rgb>;
+export type Rgb = ReturnType<typeof rgb>;
 
 const W = 612;
 const H = 792;
@@ -39,7 +39,7 @@ const MARGIN = 40;
 const FOOTER_Y = 24;
 const TOP_N = 15;
 
-const C = {
+export const C = {
   espresso: rgb(67 / 255, 34 / 255, 34 / 255),
   berry: rgb(187 / 255, 55 / 255, 103 / 255),
   porcelain: rgb(255 / 255, 252 / 255, 247 / 255),
@@ -63,7 +63,7 @@ const BAR_W = W - MARGIN - BAR_X;
 const ROW_H = 18;
 const BOTTOM_Y = 52;
 
-class Report {
+export class Report {
   doc!: PDFDocument;
   page!: PDFPage;
   serif!: PDFFont;
@@ -135,7 +135,7 @@ class Report {
   }
 }
 
-function hexToRgb(hex: string): Rgb {
+export function hexToRgb(hex: string): Rgb {
   const h = hex.replace("#", "");
   return rgb(
     parseInt(h.slice(0, 2), 16) / 255,
@@ -144,7 +144,7 @@ function hexToRgb(hex: string): Rgb {
   );
 }
 
-function drawSwatch(page: PDFPage, x: number, y: number, size: number, hex: string) {
+export function drawSwatch(page: PDFPage, x: number, y: number, size: number, hex: string) {
   page.drawRectangle({
     x,
     y,
