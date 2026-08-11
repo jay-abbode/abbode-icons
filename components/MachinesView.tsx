@@ -368,7 +368,7 @@ function RoomBox({
     >
       <header className="mb-3 flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <button
               type="button"
               role="switch"
@@ -401,7 +401,7 @@ function RoomBox({
                   }
                 }}
                 maxLength={40}
-                className="font-display w-44 rounded-lg border border-cream-200 bg-white px-2 py-0.5 text-lg text-espresso focus-ring"
+                className="font-display w-44 rounded-lg border border-cream-200 bg-white px-2 py-1 text-lg text-espresso focus-ring"
               />
             ) : (
               <button
@@ -411,7 +411,7 @@ function RoomBox({
                   setEditing(true);
                 }}
                 title="Rename this room"
-                className="font-display group flex items-center gap-1.5 text-lg text-espresso focus-ring"
+                className="font-display group flex min-w-0 items-center gap-1.5 text-lg text-espresso focus-ring"
               >
                 <span className="truncate">{room.name}</span>
                 <span className="font-ui text-[10px] text-ink-muted opacity-0 transition-opacity group-hover:opacity-100">

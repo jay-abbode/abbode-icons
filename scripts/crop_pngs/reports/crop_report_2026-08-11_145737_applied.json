@@ -1,0 +1,87 @@
+[
+  {
+    "slug": "abbode-shopping-bag",
+    "name": "Abbode Shopping Bag",
+    "category": "Hobby",
+    "file_id": "1BWdZ_Sxq-ROW5cztHFLJcdVFvnXdkUw5",
+    "status": "cropped",
+    "original_size": [
+      452,
+      509
+    ],
+    "new_size": [
+      408,
+      461
+    ],
+    "saved_bytes": -10420,
+    "error": null
+  },
+  {
+    "slug": "striped-shopping-bag",
+    "name": "Striped Shopping Bag",
+    "category": "Hobby",
+    "file_id": "1lBXXQ_H_NTR_ZI_GoXIVbHmYLU6pMFyW",
+    "status": "cropped",
+    "original_size": [
+      452,
+      508
+    ],
+    "new_size": [
+      408,
+      461
+    ],
+    "saved_bytes": -4220,
+    "error": null
+  },
+  {
+    "slug": "brown-shopping-bag",
+    "name": "Brown Shopping Bag",
+    "category": "Hobby",
+    "file_id": "1TSFGK7XoEd8shtQxad91ATQbL6Di6-0j",
+    "status": "cropped",
+    "original_size": [
+      452,
+      509
+    ],
+    "new_size": [
+      408,
+      461
+    ],
+    "saved_bytes": 14089,
+    "error": null
+  },
+  {
+    "slug": "orange-shopping-bag",
+    "name": "Orange Shopping Bag",
+    "category": "Hobby",
+    "file_id": "1sAR51g7uCxLO_2PL9Hdw4eB6Y_1zA1nP",
+    "status": "cropped",
+    "original_size": [
+      454,
+      510
+    ],
+    "new_size": [
+      409,
+      462
+    ],
+    "saved_bytes": 46221,
+    "error": null
+  },
+  {
+    "slug": "black-shopping-bag",
+    "name": "Black Shopping Bag",
+    "category": "Hobby",
+    "file_id": "1m6v7arbho9LQlHcHy9_JI0OYjbSSgIj0",
+    "status": "cropped",
+    "original_size": [
+      454,
+      502
+    ],
+    "new_size": [
+      408,
+      454
+    ],
+    "saved_bytes": 2938,
+    "error": null
+  }
+]

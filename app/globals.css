@@ -123,3 +123,25 @@
 .font-display {
   line-height: 1.25;
 }
+
+/* ---------- Clip-safe truncation ----------
+   `truncate` clips with overflow:hidden, and overflow clips at the PADDING
+   edge. Both brand fonts draw ink well past their vertical metrics ("Abbode
+   New York" caps reach 1.19em above the baseline, 'k' 1.27em, parens 1.34em,
+   descenders -0.40em — measured from the TTF), so inside the 1.25em display
+   line box above — or any tight leading — a truncated heading gets its
+   ascenders sheared off ("Room 1" reads "Koom 1").
+
+   Give every truncated element em-scaled vertical padding (extra clip
+   headroom) cancelled by equal negative margins: the box the layout sees is
+   unchanged to the pixel, but the clip boundary now clears the ink at any
+   font size and any leading >= 1. Horizontal truncation behaves exactly as
+   before. Safe globally: no truncated element in the app carries its own
+   vertical padding or margin (audited), and none has a background or border
+   that the padding would visibly enlarge. */
+.truncate {
+  padding-top: 0.45em;
+  padding-bottom: 0.4em;
+  margin-top: -0.45em;
+  margin-bottom: -0.4em;
+}
