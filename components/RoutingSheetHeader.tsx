@@ -13,7 +13,7 @@ export default function RoutingSheetHeader({
   metaLine,
   configLine,
   backHref = "/machines",
-  backLabel = "\u2190 Back to Thread Config",
+  backLabel = "\u2190 Machines",
 }: {
   /** e.g. "Batch — Thursday, July 17, 2026". */
   batchLabel: string;

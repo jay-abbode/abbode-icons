@@ -43,7 +43,7 @@ export default function DaySheetHeader({
       <div>
         <div className="font-ui mb-1 print:hidden">
           <Link href="/machines" className="text-xs text-ink-muted hover:text-espresso">
-            ← Back to Thread Config
+            ← Machines
           </Link>
         </div>
         <h1 className="font-display text-2xl text-espresso md:text-3xl">

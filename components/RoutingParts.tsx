@@ -29,11 +29,13 @@ export function colorNames(slots: number[]): string {
     .join(", ");
 }
 
-/** Order-received time in the batch timezone (New York), e.g. "9:14 AM". */
+/** Order-received stamp in New York time, e.g. "Aug 8, 9:14 AM". */
 export function fmtReceived(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleTimeString("en-US", {
+  return d.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
     hour: "numeric",
     minute: "2-digit",
     timeZone: "America/New_York",

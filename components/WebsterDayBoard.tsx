@@ -7,20 +7,22 @@ import { generateWebsterDay } from "@/app/actions/machineConfigs";
 import { getThreadBySlot, rgbToHex } from "@/lib/threadPalette";
 
 /**
- * The morning half of the Webster day board: block off the rooms that aren't
- * running today, hit Generate, and the thread configuration re-solves across
- * the remaining rooms and becomes the ACTIVE config (day sheet and room pages
- * follow automatically). Each live room card then shows its loadouts and its
- * share of the day's orders, and clicks through to the room's list.
+ * The Webster board — the whole daily surface in two controls:
+ *
+ *   1. Turn rooms on or off. Nothing else about the threading is editable
+ *      here (loadouts, locks, scope, and head settings live under Advanced
+ *      configuration).
+ *   2. GENERATE — re-solves the thread allocation across the open rooms
+ *      against every outstanding order and pins the result as the active
+ *      config. Room cards then show what's on each head and how many of the
+ *      outstanding orders land in that room; click through for the list.
  */
 
 export type BoardRoom = {
   id: string;
   name: string;
-  /** Room switched on in the active config. */
   active: boolean;
   headCount: number;
-  /** Active heads with their solved loadouts (empty until a config exists). */
   heads: { id: string; slots: number[]; offColor: boolean }[];
   orders: number;
   changeFree: number;
@@ -41,12 +43,13 @@ function MiniChip({ slot }: { slot: number }) {
 
 export default function WebsterDayBoard({
   rooms,
-  batch,
   hasConfig,
+  lastGenerated,
 }: {
   rooms: BoardRoom[];
-  batch: string;
   hasConfig: boolean;
+  /** e.g. "Aug 11, 7:42 AM by jay@shopabbode.com" — from the active config. */
+  lastGenerated?: string | null;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -78,7 +81,7 @@ export default function WebsterDayBoard({
   function generate() {
     if (pending) return;
     if (blocked.size >= rooms.length) {
-      setError("Every room is blocked — leave at least one on.");
+      setError("Every room is off — leave at least one on.");
       return;
     }
     setError(null);
@@ -94,62 +97,68 @@ export default function WebsterDayBoard({
 
   return (
     <div className="print:hidden">
-      <div className="mb-4 flex flex-wrap items-center gap-3">
+      {/* ── The button ─────────────────────────────────────────────────── */}
+      <div className="mb-6 rounded-2xl border border-parchment bg-white p-5 sm:p-6">
         <button
           type="button"
           onClick={generate}
           disabled={pending}
-          className="font-ui rounded-full bg-plum px-5 py-2.5 text-sm font-semibold text-porcelain transition-colors hover:bg-cherry focus-ring disabled:opacity-60"
+          className="font-display w-full rounded-2xl bg-plum px-8 py-5 text-2xl tracking-wide text-porcelain shadow-[0_10px_30px_-12px_rgba(103,30,48,0.55)] transition-all hover:bg-cherry hover:shadow-[0_14px_36px_-12px_rgba(151,41,69,0.6)] focus-ring disabled:opacity-60 sm:text-3xl"
         >
-          {pending ? "Solving…" : "Generate Thread Config"}
+          {pending ? "Solving…" : "Generate"}
         </button>
-        <p className="font-ui text-xs text-ink-muted">
+        <p className="font-ui mt-3 text-center text-xs text-ink-muted">
           {pending
-            ? "Re-solving loadouts across the open rooms and saving as the active config…"
+            ? "Optimizing the thread allocation across the open rooms for every outstanding order…"
             : dirty
-              ? "Room changes not applied yet — Generate to re-solve and save."
+              ? "Room changes aren't applied yet — Generate to re-solve."
               : hasConfig
-                ? "Tap a room to block it off for today, then Generate."
-                : "No active config yet — set today's rooms and Generate."}
+                ? `Re-solves for all outstanding orders and pins the loadouts.${lastGenerated ? ` Last generated ${lastGenerated}.` : ""}`
+                : "No configuration yet — set the rooms below and Generate."}
         </p>
+        {error ? (
+          <p className="font-ui mt-3 rounded-lg bg-pink-soft px-3 py-2 text-center text-xs text-cherry">{error}</p>
+        ) : null}
       </div>
 
-      {error ? (
-        <p className="font-ui mb-4 rounded-lg bg-pink-soft px-3 py-2 text-xs text-cherry">{error}</p>
-      ) : null}
-
+      {/* ── The rooms ──────────────────────────────────────────────────── */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {rooms.map((room) => {
-          const isBlocked = blocked.has(room.id);
+          const isOff = blocked.has(room.id);
           return (
             <div
               key={room.id}
-              className={`rounded-xl border p-4 transition-colors ${
-                isBlocked ? "border-cream-200 bg-cream-50 opacity-70" : "border-parchment bg-white"
+              className={`flex flex-col rounded-xl border p-4 transition-colors ${
+                isOff ? "border-cream-200 bg-cream-50 opacity-70" : "border-parchment bg-white"
               }`}
             >
               <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="font-display text-lg text-espresso">{room.name}</p>
+                <div className="min-w-0">
+                  <p className="font-display truncate text-xl text-espresso">{room.name}</p>
                   <p className="font-ui text-[11px] text-ink-muted">
                     room {room.id} · {room.headCount} heads
                   </p>
                 </div>
                 <button
                   type="button"
+                  role="switch"
+                  aria-checked={!isOff}
                   onClick={() => toggle(room.id)}
-                  className={`font-ui rounded-full px-3 py-1 text-[11px] font-semibold transition-colors focus-ring ${
-                    isBlocked
-                      ? "bg-espresso/80 text-porcelain hover:bg-espresso"
-                      : "bg-parchment text-ink-soft hover:text-espresso"
+                  aria-label={`Turn ${room.name} ${isOff ? "on" : "off"}`}
+                  className={`relative h-7 w-[52px] flex-none rounded-full transition-colors focus-ring ${
+                    isOff ? "bg-cream-200" : "bg-olive"
                   }`}
                 >
-                  {isBlocked ? "Blocked" : "On"}
+                  <span
+                    className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${
+                      isOff ? "left-1" : "left-[26px]"
+                    }`}
+                  />
                 </button>
               </div>
 
-              {isBlocked ? (
-                <p className="font-ui mt-3 text-xs text-ink-muted">Blocked off for today.</p>
+              {isOff ? (
+                <p className="font-ui mt-3 text-xs text-ink-muted">Off — no orders will be sent here.</p>
               ) : !hasConfig || room.heads.length === 0 ? (
                 <p className="font-ui mt-3 text-xs text-ink-muted">
                   {dirty || !hasConfig ? "Generate to solve this room's loadouts." : "No threaded heads."}
@@ -169,20 +178,18 @@ export default function WebsterDayBoard({
                       </div>
                     ))}
                   </div>
-                  <div className="font-ui mt-3 flex items-center justify-between text-xs">
-                    <span className="text-ink-soft">
-                      <strong className="text-espresso">{room.orders}</strong>{" "}
-                      {room.orders === 1 ? "order" : "orders"}
-                      {room.orders > 0 ? ` · ${room.changeFree} change-free` : ""}
-                      {room.swaps > 0 ? ` · ${room.swaps} swap` : ""}
-                    </span>
-                    <Link
-                      href={`/machines/routing/room/${room.id}?batch=${batch}`}
-                      className="font-semibold text-plum transition-colors hover:text-cherry"
-                    >
-                      Open room →
-                    </Link>
-                  </div>
+                  <p className="font-ui mt-3 text-xs text-ink-soft">
+                    <strong className="font-display text-lg text-espresso">{room.orders}</strong>{" "}
+                    {room.orders === 1 ? "order" : "orders"}
+                    {room.orders > 0 ? ` · ${room.changeFree} change-free` : ""}
+                    {room.swaps > 0 ? ` · ${room.swaps} need a swap` : ""}
+                  </p>
+                  <Link
+                    href={`/machines/routing/room/${room.id}`}
+                    className="font-ui mt-3 block rounded-xl bg-parchment px-4 py-2.5 text-center text-sm font-semibold text-espresso transition-colors hover:bg-pink-soft focus-ring"
+                  >
+                    Open room →
+                  </Link>
                 </>
               )}
             </div>

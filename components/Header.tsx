@@ -112,11 +112,11 @@ export default async function Header({
           <nav className="mt-3 hidden flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-ink-soft lg:flex">
             <Link
               href="/machines"
-              aria-label="Thread Config — machine thread allocation"
+              aria-label="Machines — Webster board and thread allocation"
               className="font-ui inline-flex items-center gap-1.5 rounded-full bg-cherry px-4 py-2 text-sm font-semibold text-porcelain shadow-sm transition-colors hover:bg-berry focus-ring"
             >
               <SpoolsIcon className="h-3.5 w-3.5" />
-              Thread Config
+              Machines
             </Link>
 
             <Link href="/" className="font-medium transition-colors hover:text-espresso focus-ring">

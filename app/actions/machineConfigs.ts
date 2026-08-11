@@ -31,6 +31,7 @@ async function requireUser(): Promise<{ email: string; name: string } | null> {
 
 function refresh() {
   revalidatePath("/machines");
+  revalidatePath("/machines/config");
   revalidatePath("/machines/daysheet");
   revalidatePath("/machines/webster/room/[id]", "page");
   revalidatePath("/machines/routing");
@@ -115,13 +116,16 @@ export async function refreshConfigs(fleet: string): Promise<ConfigResult> {
 }
 
 /**
- * The Webster day board's one button. Takes the set of rooms blocked off for
- * the day, solves the thread configuration across the remaining rooms with the
- * same engine as everywhere else, and saves it as the ACTIVE Webster config —
- * so the day sheet, the room tablet pages, and the board itself all agree.
- * Everything else about the floor (custom room names, off-color heads, locks,
- * solve scope) carries over from the current active config; a floor that has
- * never been configured starts from room scope, where every room stands alone.
+ * The Webster board's one button. Takes the set of rooms blocked off, solves
+ * the thread configuration across the remaining rooms against the OUTSTANDING
+ * ORDER QUEUE (every open `webster-live` order, not a history bet), then PINS
+ * the solved loadouts — every active room is saved locked, with each head's
+ * exact slots frozen. That pin is what keeps every surface honest: the queue
+ * keeps moving all day, but the board, the room lists, the day sheet, and the
+ * tablet pages all recompute to the same frozen loadouts until the next
+ * Generate. Room names, off-color heads, and solve scope carry over from the
+ * previous config; a floor that has never been configured starts from room
+ * scope, where every room stands alone.
  */
 export async function generateWebsterDay(
   inactiveRooms: string[]
@@ -132,29 +136,49 @@ export async function generateWebsterDay(
   try {
     const base = fleetBase("webster");
     const existing = await getActiveFloor("webster");
-    const floor = normalizeFloor(base, {
+
+    // Solve with locks cleared — yesterday's pins must not constrain today's.
+    const floorForSolve = normalizeFloor(base, {
       ...(existing ?? { scope: "room" }),
       inactiveRooms: inactiveRooms.map(String),
+      lockedRooms: [],
+      lockedSlots: {},
     });
 
-    const { jobs, meta } = await getMachineJobs();
-    const alloc = computeAllocation(jobs, { webster: floor }, meta);
+    const { jobs, meta } = await getMachineJobs({ source: "queue", forceRefresh: true });
+    if (jobs.length === 0) {
+      return {
+        ok: false,
+        error: "No outstanding orders in the queue — run the Webster order queue workflow, then Generate.",
+      };
+    }
+
+    const alloc = computeAllocation(jobs, { webster: floorForSolve }, meta);
     const fleet = alloc.fleets.find((f) => f.key === "webster");
     if (!fleet) return { ok: false, error: "Webster fleet not found." };
     if (fleet.activeCount === 0) {
       return { ok: false, error: "Every room is blocked — leave at least one on." };
     }
 
+    // Pin what was just solved: lock every open room, freeze every head.
+    const lockedSlots: Record<string, number[]> = {};
+    for (const m of fleet.machines) {
+      if (m.active && m.slots.length > 0) lockedSlots[m.id] = m.slots;
+    }
+    const lockedRooms = (fleet.rooms ?? []).filter((r) => r.active).map((r) => r.id);
+
+    const floorFinal = normalizeFloor(base, { ...floorForSolve, lockedRooms, lockedSlots });
+
     await setActiveFloor(
       "webster",
-      floor,
+      floorFinal,
       { score: fleet.changeFreeAll, window: meta.window, jobCount: jobs.length },
       user.email
     );
     refresh();
     return { ok: true, score: fleet.changeFreeAll, window: meta.window };
   } catch (err) {
-    console.error("Failed to generate the Webster day config:", err);
+    console.error("Failed to generate the Webster config:", err);
     return {
       ok: false,
       error: "Couldn't generate. The service account may not have edit access to the sheet.",
