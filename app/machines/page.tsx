@@ -42,7 +42,7 @@ export default async function MachinesPage() {
             href="/machines/routing"
             className="ml-auto font-medium text-ink-soft transition-colors hover:text-espresso"
           >
-            Order Routing →
+            Webster Day Board →
           </Link>
         </nav>
         <MachinesView jobs={data.jobs} meta={data.meta} floors={data.floors} configs={configs} />

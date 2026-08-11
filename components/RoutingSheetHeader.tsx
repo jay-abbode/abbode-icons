@@ -12,6 +12,8 @@ export default function RoutingSheetHeader({
   scopeLabel,
   metaLine,
   configLine,
+  backHref = "/machines",
+  backLabel = "\u2190 Back to Thread Config",
 }: {
   /** e.g. "Batch — Thursday, July 17, 2026". */
   batchLabel: string;
@@ -21,13 +23,15 @@ export default function RoutingSheetHeader({
   metaLine?: string;
   /** Which thread configuration the assignments assume. */
   configLine?: string;
+  backHref?: string;
+  backLabel?: string;
 }) {
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-cream-200 pb-4">
       <div>
         <div className="font-ui mb-1 print:hidden">
-          <Link href="/machines" className="text-xs text-ink-muted hover:text-espresso">
-            ← Back to Thread Config
+          <Link href={backHref} className="text-xs text-ink-muted hover:text-espresso">
+            {backLabel}
           </Link>
         </div>
         <h1 className="font-display text-2xl text-espresso md:text-3xl">
