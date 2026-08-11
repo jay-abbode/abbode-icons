@@ -93,3 +93,21 @@ export function parseThreadSlots(raw: string | null | undefined): number[] {
   }
   return slots;
 }
+
+/**
+ * Like `parseThreadSlots`, but preserves order AND repeats — for the
+ * "Color Stops" column, where the same spool can legitimately sew at more
+ * than one stop in the machine sequence (e.g. "7; 28; 37; 34; 37; 17").
+ * Written by scripts/ofm_colormap from the OFM files themselves.
+ */
+export function parseThreadStops(raw: string | null | undefined): number[] {
+  if (!raw) return [];
+  const stops: number[] = [];
+  for (const tok of raw.split(/[;,]/)) {
+    const m = tok.match(/-?\d+/);
+    if (!m) continue;
+    const n = parseInt(m[0], 10);
+    if (Number.isFinite(n)) stops.push(n);
+  }
+  return stops;
+}

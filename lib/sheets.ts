@@ -1,5 +1,5 @@
 import { getSheetsClient } from "./google";
-import { parseThreadSlots } from "./threadPalette";
+import { parseThreadSlots, parseThreadStops } from "./threadPalette";
 import { orderCategories } from "./categories";
 
 /**
@@ -47,6 +47,14 @@ export interface Icon {
    * Empty array if the "Thread Colors" cell is blank for this row.
    */
   threadSlots: number[];
+  /**
+   * The exact as-sewn machine color sequence, parsed out of the OFM file and
+   * written to the optional "Color Stops" column by scripts/ofm_colormap.
+   * One slot number per stop, in stitch order, repeats preserved (the same
+   * spool can sew at two different stops). Empty array when the column is
+   * absent or blank — fall back to `threadSlots` for display.
+   */
+  colorStops: number[];
   sizes: {
     small: IconSize;
     medium: IconSize;
@@ -155,6 +163,7 @@ async function fetchCatalogFromSheet(): Promise<IconCatalog> {
       pngFileId: extractDriveFileId(getCellHyperlink(row, col.png)),
       tags: parseTags(getCellText(row, col.tags)),
       threadSlots: parseThreadSlots(getCellText(row, col.threadColors)),
+      colorStops: parseThreadStops(getCellText(row, col.colorStops)),
       sizes: {
         small: {
           inches: normalizeSizeValue(getCellText(row, col.smallInches)),
@@ -210,6 +219,7 @@ interface ColumnIndex {
   oldName: number;
   png: number;
   threadColors: number;
+  colorStops: number;
   smallDst: number;
   mediumDst: number;
   largeDst: number;
@@ -259,6 +269,8 @@ function buildColumnIndex(headers: string[]): ColumnIndex {
     oldName: findHeader(["OLD NAME", "Old Name"]),
     png: findHeader(["PNG"]),
     threadColors: findHeader(["Thread Colors", "THREAD COLORS", "Thread Color", "Threads"]),
+    // Optional — the exact OFM sew sequence. Missing column just means no stops.
+    colorStops: findHeader(["Color Stops", "COLOR STOPS", "Color Sequence", "Stops"]),
     smallDst: findHeader(["SMALL DST", "Small DST"]),
     mediumDst: findHeader(["MEDIUM DST", "Medium DST"]),
     largeDst: findHeader(["LARGE DST", "Large DST"]),

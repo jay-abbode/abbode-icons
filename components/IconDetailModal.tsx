@@ -162,6 +162,13 @@ export default function IconDetailModal({
               </section>
             )}
 
+            {icon.colorStops.length > 0 && (
+              <section>
+                <SectionLabel>Color sequence</SectionLabel>
+                <ColorStopStrip stops={icon.colorStops} />
+              </section>
+            )}
+
             {icon.hasColorVariation && icon.pngFileId ? (
               <section>
                 <SectionLabel>Thread colors</SectionLabel>
@@ -180,6 +187,7 @@ export default function IconDetailModal({
                 </p>
               </section>
             ) : (
+              icon.colorStops.length === 0 &&
               icon.threadSlots.length > 0 && (
                 <section>
                   <SectionLabel>Thread colors</SectionLabel>
@@ -515,6 +523,53 @@ function ThreadColorChips({ slots }: { slots: number[] }) {
         );
       })}
     </ul>
+  );
+}
+
+function ColorStopStrip({ stops }: { stops: number[] }) {
+  // As-sewn machine order — do NOT sort. Repeats are real (the same spool can
+  // sew at two different stops), so the key includes the position.
+  return (
+    <ol
+      className="flex flex-wrap items-center gap-2"
+      aria-label="Machine color sequence for this design"
+    >
+      {stops.map((slot, idx) => {
+        const thread = getThreadBySlot(slot);
+        const hex = thread ? rgbToHex(thread.rgb) : null;
+        return (
+          <li
+            key={`stop-${idx}-${slot}`}
+            aria-label={
+              thread
+                ? `Stop ${idx + 1}: slot ${slot}, ${thread.name}`
+                : `Stop ${idx + 1}: slot ${slot}, not in palette`
+            }
+            className="group relative flex items-center gap-1.5 rounded-full border border-parchment bg-white px-2 py-1 transition-shadow hover:shadow-sm"
+          >
+            <span className="font-ui text-[10px] font-bold tabular-nums text-ink-muted">
+              {idx + 1}
+            </span>
+            {hex ? (
+              <span
+                className="h-4 w-4 rounded-full ring-1 ring-black/10"
+                style={{ backgroundColor: hex }}
+                aria-hidden
+              />
+            ) : (
+              <span
+                className="h-4 w-4 rounded-full border border-dashed border-ink-muted bg-parchment"
+                aria-hidden
+              />
+            )}
+            <span className="font-ui text-xs font-semibold text-espresso">{slot}</span>
+            <ChipTooltip>
+              {thread ? `${thread.name} · Madeira ${thread.code}` : "Not in palette"}
+            </ChipTooltip>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
