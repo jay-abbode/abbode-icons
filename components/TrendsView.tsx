@@ -81,8 +81,7 @@ export default function TrendsView({ snapshot }: { snapshot: TrendsSnapshot }) {
         Trend compares the recent window to the window just before it. &ldquo;New&rdquo;
         means it had no orders in the previous window; &ldquo;Spiking&rdquo; means real
         volume that at least doubled. Text colors are the thread color customers
-        choose for their custom text (croc White → Tusk applied; retired colors
-        dropped).
+        choose for their custom text (retired colors dropped).
       </p>
     </div>
   );

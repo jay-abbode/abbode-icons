@@ -15,7 +15,6 @@ subset in its own tab.
 Pipeline rules (locked with the team):
   - Window: rolling 12 months (configurable with --months).
   - Count: all placed orders (gross). No refund/cancel subtraction.
-  - Croc pouches: White (35) -> Tusk (37), for text AND icons.
   - Retired colors (not in the 24-spool palette) are dropped from color tallies.
   - Icon matching: manual OVERRIDES -> exact -> catalog OLD NAME -> ICON_ALIASES
     tab -> fuzzy (rapidfuzz token-set). Color-prefixed variants you defined
@@ -492,26 +491,19 @@ def line_is_noise(sku, handle):
     return any(s in h for s in HANDLE_SKIP_SUBSTR)
 
 
-def is_croc(sku, handle):
-    return "croc" in (handle or "").lower() or (sku or "").upper().startswith("CRCP")
-
-
-def parse_color_slot(raw, croc):
+def parse_color_slot(raw):
     m = re.match(r"\s*(\d+)", raw or "")
     if not m:
         return None
     slot = int(m.group(1))
-    if croc and slot == 35:
-        slot = 37
     return slot if slot in PALETTE else None   # drop retired
 
 
-def adjust_slots(slots, croc):
-    """Croc -> White(35) becomes Tusk(37); drop any retired (non-palette) slot."""
+def adjust_slots(slots):
+    """Drop any retired (non-palette) slot. (White and Tusk are separate,
+    freely selectable colors — the old croc White->Tusk default is gone.)"""
     out = []
     for s in slots:
-        if croc and s == 35:
-            s = 37
         if s in PALETTE:
             out.append(s)
     return out
@@ -593,7 +585,7 @@ def aggregate(order_lines, matcher, catalog, trend_days=TREND_DAYS_DEFAULT, prod
     Trend windows: recent = orders in the last `trend_days`; previous = the
     `trend_days` before that (so both fit inside the ~60-day order window we can
     currently read, and give a real rise/spike signal today).
-    Icon colors come from the catalog (croc-adjusted), the text color from the
+    Icon colors come from the catalog, the text color from the
     customizer attribute; both counted once per line, bucketed by order age.
     """
     counts = {}
@@ -628,7 +620,6 @@ def aggregate(order_lines, matcher, catalog, trend_days=TREND_DAYS_DEFAULT, prod
         if line_is_noise(sku, handle):
             continue
         attrs = {a["key"]: a["value"] for a in (li.get("customAttributes") or [])}
-        croc = is_croc(sku, handle)
         wins = windows_for(created_at, now)
         tb = trend_bucket(created_at)
 
@@ -637,7 +628,7 @@ def aggregate(order_lines, matcher, catalog, trend_days=TREND_DAYS_DEFAULT, prod
         line_icons = set()
 
         # text thread color (once per line)
-        tslot = parse_color_slot(attrs.get("color-text-one") or attrs.get("font_color"), croc)
+        tslot = parse_color_slot(attrs.get("color-text-one") or attrs.get("font_color"))
         if tslot is not None:
             for w in wins:
                 d = composite[w].setdefault(tslot, {"icons": 0, "text": 0})
@@ -662,7 +653,7 @@ def aggregate(order_lines, matcher, catalog, trend_days=TREND_DAYS_DEFAULT, prod
             if tb:
                 icon_trends.setdefault(canon, {"recent": 0, "previous": 0})[tb] += 1
             slots, _cat = catalog_slots_for(canon, catalog)
-            for s in adjust_slots(slots, croc):
+            for s in adjust_slots(slots):
                 for w in wins:
                     d = composite[w].setdefault(s, {"icons": 0, "text": 0})
                     d["icons"] += 1

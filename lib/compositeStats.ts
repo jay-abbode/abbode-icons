@@ -5,7 +5,7 @@
  * real orders, combining TWO sources of usage per ordered line:
  *   1. Icon colors  — every thread color that makes up each ordered icon.
  *   2. Text color   — the thread color the customer chose for their text.
- * Both are croc->tusk adjusted and mapped to the 24-spool palette by the
+ * Both are mapped to the 24-spool palette by the
  * stats script before they ever reach the sheet.
  *
  * Reads a precomputed `COMPOSITE` tab (written by

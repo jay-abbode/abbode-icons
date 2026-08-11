@@ -178,34 +178,32 @@ NAME_TO_SLOT = {
 TEXT_COLOR_KEYS = ("color-text-one", "font_color")
 
 
-def resolve_text_slot(attrs, croc, has_text):
+def resolve_text_slot(attrs, has_text):
     """The monogram thread slot, from whichever key/format this template
-    generation used: numbered values ("20 — Navy"), bare names ("Royal Blue"),
-    and — only on lines that actually carry text — the plain `color` key.
-    (`color` can also mean an item colorway, so icon-only lines never consult
-    it.) Croc's White→Tusk swap applies on every path."""
+    generation used: numbered values ("20 — Navy"), bare names ("Royal Blue",
+    "Tusk"), and — only on lines that actually carry text — the plain `color`
+    key. (`color` can also mean an item colorway, so icon-only lines never
+    consult it.) White and Tusk are separate colors; nothing is substituted."""
     keys = TEXT_COLOR_KEYS + (("color",) if has_text else ())
     for key in keys:
         raw = (attrs.get(key) or "").strip()
         if not raw:
             continue
-        slot = ios.parse_color_slot(raw, croc)
+        slot = ios.parse_color_slot(raw)
         if slot is None:
             _num, name = ios.split_color(raw)
             if name:
-                cand = NAME_TO_SLOT.get(name.lower())
-                if cand is not None:
-                    adjusted = ios.adjust_slots([cand], croc)
-                    slot = adjusted[0] if adjusted else None
+                slot = NAME_TO_SLOT.get(name.lower())
         if slot is not None:
             return slot
     return None
 
 
 def derive_line(li, matcher, catalog):
-    """One order line -> a queue row dict, or None when the line is pure noise.
-    Color derivation is byte-for-byte the stats pipeline: OVERRIDES / aliases /
-    fuzzy matching, catalog slots, croc White->Tusk, retired slots dropped."""
+    """One order line -> a queue row dict, or None when the line is pure noise
+    or has no work remaining. Color derivation is byte-for-byte the stats
+    pipeline: OVERRIDES / aliases / fuzzy matching, catalog slots, retired
+    slots dropped."""
     sku = li.get("sku")
     variant = li.get("variant") or {}
     product = variant.get("product") or {}
@@ -225,7 +223,6 @@ def derive_line(li, matcher, catalog):
     # Underscore keys (_template_id, _gid, _images, …) are customizer plumbing,
     # not customization — a line with only those has no attributes that matter.
     meaningful = {k for k in attrs if not k.startswith("_")}
-    croc = ios.is_croc(sku, handle)
 
     text = " / ".join(dict.fromkeys(
         v.strip() for k in TEXT_KEYS if (v := (attrs.get(k) or "")).strip()
@@ -251,9 +248,9 @@ def derive_line(li, matcher, catalog):
                 continue
             icons.append(canon)
             s, _cat = ios.catalog_slots_for(canon, catalog)
-            slots.extend(ios.adjust_slots(s, croc))
+            slots.extend(ios.adjust_slots(s))
 
-        tslot = resolve_text_slot(attrs, croc, bool(text))
+        tslot = resolve_text_slot(attrs, bool(text))
         if tslot is not None:
             slots.append(tslot)
 
@@ -271,7 +268,7 @@ def derive_line(li, matcher, catalog):
         raw = (attrs.get(key) or "").strip()
         if raw:
             _num, name = ios.split_color(raw)
-            color_name = name or ios.PALETTE.get(ios.parse_color_slot(raw, croc) or -1, "") or raw
+            color_name = name or ios.PALETTE.get(ios.parse_color_slot(raw) or -1, "") or raw
             break
 
     return {

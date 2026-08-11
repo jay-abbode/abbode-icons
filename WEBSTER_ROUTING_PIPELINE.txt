@@ -54,7 +54,7 @@ Validation done before delivery
   (change-free genuineness, exactly-once assignment, per-step balance
   invariant replay, change-free ceiling, minimal-swap routing, review
   pile exactness + determinism), under both fleet and room solve scopes.
-- Writer derivation: unit-tested against fixtures (croc White->Tusk,
+- Writer derivation: unit-tested against fixtures (name-only colors,
   noise dropping, photo quarantine, overrides, manual aliases, unmatched).
 - Writer<->reader schema drift check passed.
 - tsc --noEmit clean, next build clean.

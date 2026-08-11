@@ -9,7 +9,6 @@ thread colors), and writes an `ORDER_STATS` tab the app reads.
 - **Window:** rolling 12 months (`--months` to change).
 - **Count:** all placed orders (gross). No refund/cancel subtraction.
 - **Icons:** `icon-one` / `icon-two` / `icon-three` line-item attributes.
-- **Croc pouches:** White (35) is counted as Tusk (37), for text and icons.
 - **Retired colors** (anything not in the 24-spool palette) are dropped.
 - **Matching:** manual overrides → exact → catalog `OLD NAME` → `ICON_ALIASES`
   tab → fuzzy. Color-prefixed variants (Red Heart, Blue Cowboy Boot, Pink Claw,

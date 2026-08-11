@@ -151,8 +151,8 @@ export default function CompositeView({
 
       <p className="font-ui mt-4 text-[11px] leading-relaxed text-ink-muted">
         Total = thread colors that make up each ordered icon, plus the thread
-        color chosen for the custom text, counted once per order. White → Tusk
-        is applied on croc pouches; retired colors are dropped.
+        color chosen for the custom text, counted once per order. Retired
+        colors are dropped.
       </p>
     </div>
   );

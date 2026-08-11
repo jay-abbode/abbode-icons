@@ -259,7 +259,7 @@ function drawWindowPage(
   // Footnote
   page.drawText(
     "Total = icon thread colors + chosen text color, counted once per order. " +
-      "White \u2192 Tusk on croc pouches; retired colors dropped.",
+      "Retired colors dropped.",
     { x: MARGIN, y: y - 6, font: sans, size: 7.5, color: C.inkMuted },
   );
 }
