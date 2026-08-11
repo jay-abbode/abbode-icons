@@ -50,6 +50,32 @@ from googleapiclient.http import MediaIoBaseDownload
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parents[1]
+ENV_LOCAL = PROJECT_ROOT / ".env.local"
+
+
+def load_env_local(path: Path) -> dict:
+    """Parse simple KEY=VALUE lines from .env.local (quotes stripped)."""
+    out: dict = {}
+    if not path.exists():
+        return out
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, v = line.split("=", 1)
+        out[k.strip()] = v.strip().strip('"').strip("'")
+    return out
+
+
+def resolve(name, cli_value, env_local, default=None):
+    """CLI flag > real env var > .env.local > default."""
+    if cli_value:
+        return cli_value
+    if os.environ.get(name):
+        return os.environ[name]
+    if env_local.get(name):
+        return env_local[name]
+    return default
 DEFAULT_CREDS = PROJECT_ROOT / "google-credentials.json"
 LOCAL_PALETTE = PROJECT_ROOT / "scripts" / "extract_colors" / "madeira_polyneon.json"
 SCOPES = [
@@ -229,18 +255,22 @@ def main():
     p = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    p.add_argument("--sheet-id", default=os.environ.get("GOOGLE_SHEET_ID"))
-    p.add_argument("--tab", default=os.environ.get("GOOGLE_SHEET_TAB", "MASTER"))
+    p.add_argument("--sheet-id", default=None)
+    p.add_argument("--tab", default=None)
     p.add_argument("--creds", default=str(DEFAULT_CREDS))
-    p.add_argument("--menu-sheet-id", default=os.environ.get("MENU_SHEET_ID", DEFAULT_MENU_SHEET_ID))
+    p.add_argument("--menu-sheet-id", default=None)
     p.add_argument("--dry-run", action="store_true", help="parse + report, write nothing")
     p.add_argument("--only-missing", action="store_true",
                    help="skip rows that already have a Color Stops value")
     p.add_argument("--limit", type=int, default=0, help="process at most N rows (testing)")
     args = p.parse_args()
 
+    env_local = load_env_local(ENV_LOCAL)
+    args.sheet_id = resolve("GOOGLE_SHEET_ID", args.sheet_id, env_local)
+    args.tab = resolve("GOOGLE_SHEET_TAB", args.tab, env_local, "MASTER")
+    args.menu_sheet_id = resolve("MENU_SHEET_ID", args.menu_sheet_id, env_local, DEFAULT_MENU_SHEET_ID)
     if not args.sheet_id:
-        sys.exit("ERROR: GOOGLE_SHEET_ID not set (or pass --sheet-id)")
+        sys.exit("ERROR: GOOGLE_SHEET_ID not set (checked --sheet-id, env, .env.local)")
 
     creds_path = Path(args.creds)
     if not creds_path.exists():
@@ -287,21 +317,35 @@ def main():
           f"{' (new — header will be created)' if create_stops_header else ''}, "
           f"Thread Colors -> {thread_l}")
 
-    # --- rows (FORMULA render so =HYPERLINK cells expose their file ids) ---
+    # --- rows -------------------------------------------------------------
+    # spreadsheets.get with the `hyperlink` field — the same read the app's
+    # lib/sheets.ts does — so OFM links resolve whether the cell holds an
+    # =HYPERLINK() formula, a rich-text link, or a bare URL.
     data_resp = (
         sheets.spreadsheets()
-        .values()
         .get(
             spreadsheetId=args.sheet_id,
-            range=f"{args.tab}!A3:BZ5000",
-            valueRenderOption="FORMULA",
+            ranges=[f"{args.tab}!A3:BZ5000"],
+            fields="sheets.data.rowData.values(formattedValue,hyperlink,userEnteredValue)",
         )
         .execute()
     )
-    rows = data_resp.get("values", [])
+    rows = (data_resp.get("sheets") or [{}])[0].get("data", [{}])[0].get("rowData", [])
 
     def cell(row, idx):
-        return row[idx] if idx < len(row) else ""
+        vals = row.get("values") or []
+        c = vals[idx] if idx < len(vals) else None
+        return (c or {}).get("formattedValue") or ""
+
+    def cell_link(row, idx):
+        vals = row.get("values") or []
+        c = vals[idx] if idx < len(vals) else None
+        if not c:
+            return None
+        if c.get("hyperlink"):
+            return c["hyperlink"]
+        ue = c.get("userEnteredValue") or {}
+        return ue.get("formulaValue") or ue.get("stringValue")
 
     updates = []          # (range, value)
     report = {"ok": 0, "no_ofm": [], "fallback": [], "errors": [], "unmapped": [],
@@ -310,6 +354,8 @@ def main():
 
     for r, row in enumerate(rows):
         sheet_row = r + 3
+        if not row:
+            continue
         name = str(cell(row, i_icon)).strip()
         if not name:
             continue
@@ -322,7 +368,7 @@ def main():
         for idx, label in ((i_med, "MEDIUM"), (i_lrg, "LARGE"), (i_sml, "SMALL")):
             if idx < 0:
                 continue
-            fid = cell_file_id(cell(row, idx))
+            fid = cell_file_id(cell_link(row, idx))
             if fid:
                 file_id, size_used = fid, label
                 break
@@ -423,6 +469,8 @@ def main():
         print(f"  wrote {min(i + CHUNK, len(updates))}/{len(updates)} cells")
 
     print("Done.")
+    print("Refresh MASTER to see the new 'Color Stops' column, then")
+    print("hard-refresh the app (Ctrl+Shift+R) — no redeploy needed for data.")
 
 
 if __name__ == "__main__":
