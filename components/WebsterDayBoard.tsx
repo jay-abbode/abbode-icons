@@ -185,7 +185,7 @@ export default function WebsterDayBoard({
                     {room.swaps > 0 ? ` · ${room.swaps} need a swap` : ""}
                   </p>
                   <Link
-                    href={`/machines/routing/room/${room.id}`}
+                    href={`/webster/room/${room.id}`}
                     className="font-ui mt-3 block rounded-xl bg-parchment px-4 py-2.5 text-center text-sm font-semibold text-espresso transition-colors hover:bg-pink-soft focus-ring"
                   >
                     Open room →

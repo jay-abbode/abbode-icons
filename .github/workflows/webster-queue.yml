@@ -11,10 +11,11 @@ name: Webster order queue
 
 on:
   schedule:
-    # 09:30 + 15:30 UTC = 5:30am + 11:30am New York during EDT
-    # (6:30am + 12:30pm during EST — fine either way).
-    - cron: '30 9 * * 1-6'
-    - cron: '30 15 * * 1-6'
+    # Hourly through the workday: 09:30–21:30 UTC = 5:30am–5:30pm New York
+    # during EDT (6:30am–6:30pm EST). Keeps the board within an hour of
+    # Shopify as Webster fulfills — a fulfilled line leaves the queue on the
+    # next run. Each run is ~2 minutes of Actions time.
+    - cron: '30 9-21 * * 1-6'
   workflow_dispatch:
     inputs:
       days:

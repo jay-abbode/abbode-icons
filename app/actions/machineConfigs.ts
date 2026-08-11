@@ -31,11 +31,10 @@ async function requireUser(): Promise<{ email: string; name: string } | null> {
 
 function refresh() {
   revalidatePath("/machines");
-  revalidatePath("/machines/config");
   revalidatePath("/machines/daysheet");
   revalidatePath("/machines/webster/room/[id]", "page");
-  revalidatePath("/machines/routing");
-  revalidatePath("/machines/routing/room/[id]", "page");
+  revalidatePath("/webster");
+  revalidatePath("/webster/room/[id]", "page");
 }
 
 /** Set what a fleet is actually threaded to right now. The config it replaces is

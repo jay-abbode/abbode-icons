@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-/** The board moved to /machines — this route only forwards old links. */
+/** The Webster board lives at /webster now — this route only forwards. */
 export default function LegacyRoutingPage() {
-  redirect("/machines");
+  redirect("/webster");
 }

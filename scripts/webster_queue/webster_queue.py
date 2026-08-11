@@ -9,10 +9,12 @@ not copied — one derivation, zero drift), and rewrites the WEBSTER_QUEUE tab:
   Batch | Order | Order Id | Created At | Line | Qty | Product | Variant |
   Icons | Text | Text Color | Slots | Flag | Preview | Updated
 
-One row per order line. `Batch` is the order's created DATE in --batch-tz
-(default America/New_York) — the same way Webster's 3PL batches. `Slots` is
-the design's color set ("20; 35; 8"). `Flag` marks lines the router must send
-to review instead of trusting the colors:
+One row per order line with WORK REMAINING: `Qty` is the line's UNFULFILLED
+quantity, lines fully fulfilled are dropped, and an order with nothing left to
+stitch is dropped entirely — so a fresh run shrinks the queue as Webster
+fulfills. `Batch` is the order's created DATE in --batch-tz (default
+America/New_York). `Slots` is the design's color set ("20; 35; 8"). `Flag`
+marks lines the router must send to review instead of trusting the colors:
 
   photo          Pet Portrait / photo-stitch products (colors come from the
                  photo, not the palette)
@@ -38,6 +40,7 @@ Then for real:
 """
 
 import argparse
+import json
 import os
 import sys
 import time
@@ -86,6 +89,7 @@ query($q: String!, $after: String) {
         sku
         title
         quantity
+        unfulfilledQuantity
         variantTitle
         customAttributes { key value }
         variant { product { id handle title } }
@@ -151,6 +155,53 @@ def title_is_noise(title):
     return any(s in t for s in TITLE_NOISE_SUBSTR)
 
 
+# The 24 production spool colors, keyed by lowercase name — newer customizer
+# templates store `color-text-one` as a bare name ("Royal Blue") with no slot
+# number, which parse_color_slot alone can't place. The customizer's display
+# names differ from the Python palette's Madeira-ish names for seven colors,
+# so both naming systems resolve (source of the customizer names:
+# lib/threadPalette.ts — the same 24 slots).
+CUSTOMIZER_SYNONYMS = {
+    "red": 1,          # palette: Dark Red
+    "rust": 4,         # palette: Rust Orange
+    "olive": 10,       # palette: Olive Green
+    "matcha": 13,      # palette: Matcha Green
+    "light blue": 17,  # palette: Cool Periwinkle
+    "royal blue": 19,  # palette: Dark Royal
+    "pink": 27,        # palette: Dusty Pink
+}
+NAME_TO_SLOT = {
+    **{name.lower(): slot for slot, name in ios.PALETTE.items()},
+    **CUSTOMIZER_SYNONYMS,
+}
+
+TEXT_COLOR_KEYS = ("color-text-one", "font_color")
+
+
+def resolve_text_slot(attrs, croc, has_text):
+    """The monogram thread slot, from whichever key/format this template
+    generation used: numbered values ("20 — Navy"), bare names ("Royal Blue"),
+    and — only on lines that actually carry text — the plain `color` key.
+    (`color` can also mean an item colorway, so icon-only lines never consult
+    it.) Croc's White→Tusk swap applies on every path."""
+    keys = TEXT_COLOR_KEYS + (("color",) if has_text else ())
+    for key in keys:
+        raw = (attrs.get(key) or "").strip()
+        if not raw:
+            continue
+        slot = ios.parse_color_slot(raw, croc)
+        if slot is None:
+            _num, name = ios.split_color(raw)
+            if name:
+                cand = NAME_TO_SLOT.get(name.lower())
+                if cand is not None:
+                    adjusted = ios.adjust_slots([cand], croc)
+                    slot = adjusted[0] if adjusted else None
+        if slot is not None:
+            return slot
+    return None
+
+
 def derive_line(li, matcher, catalog):
     """One order line -> a queue row dict, or None when the line is pure noise.
     Color derivation is byte-for-byte the stats pipeline: OVERRIDES / aliases /
@@ -164,8 +215,21 @@ def derive_line(li, matcher, catalog):
     if ios.line_is_noise(sku, handle) or title_is_noise(title):
         return None
 
+    # Only what's left to stitch: fully fulfilled lines drop out of the queue.
+    unfulfilled = li.get("unfulfilledQuantity")
+    qty = int(unfulfilled if unfulfilled is not None else (li.get("quantity") or 1))
+    if qty <= 0:
+        return None
+
     attrs = {a["key"]: a["value"] for a in (li.get("customAttributes") or [])}
+    # Underscore keys (_template_id, _gid, _images, …) are customizer plumbing,
+    # not customization — a line with only those has no attributes that matter.
+    meaningful = {k for k in attrs if not k.startswith("_")}
     croc = ios.is_croc(sku, handle)
+
+    text = " / ".join(dict.fromkeys(
+        v.strip() for k in TEXT_KEYS if (v := (attrs.get(k) or "")).strip()
+    ))
 
     icons, slots, unmatched = [], [], []
     flag = ""
@@ -173,7 +237,8 @@ def derive_line(li, matcher, catalog):
     if is_photo(handle, title):
         flag = "photo"
     else:
-        for key in ("icon-one", "icon-two", "icon-three"):
+        # `icon` (singular) is the newer template generation's key.
+        for key in ("icon", "icon-one", "icon-two", "icon-three"):
             name = (attrs.get(key) or "").strip()
             if not name:
                 continue
@@ -182,17 +247,19 @@ def derive_line(li, matcher, catalog):
                 if how != "ignored":
                     unmatched.append(name)
                 continue
+            if canon in icons:
+                continue
             icons.append(canon)
             s, _cat = ios.catalog_slots_for(canon, catalog)
             slots.extend(ios.adjust_slots(s, croc))
 
-        tslot = ios.parse_color_slot(attrs.get("color-text-one") or attrs.get("font_color"), croc)
+        tslot = resolve_text_slot(attrs, croc, bool(text))
         if tslot is not None:
             slots.append(tslot)
 
         if unmatched:
             flag = "unmatched: " + ", ".join(unmatched)
-        elif not attrs:
+        elif not meaningful:
             flag = "no-attributes"
         elif not slots:
             flag = "no-color"
@@ -207,12 +274,8 @@ def derive_line(li, matcher, catalog):
             color_name = name or ios.PALETTE.get(ios.parse_color_slot(raw, croc) or -1, "") or raw
             break
 
-    text = " / ".join(dict.fromkeys(
-        v.strip() for k in TEXT_KEYS if (v := (attrs.get(k) or "")).strip()
-    ))
-
     return {
-        "qty": int(li.get("quantity") or 1),
+        "qty": qty,
         "product": title,
         "variant": (li.get("variantTitle") or "").strip(),
         "icons": ", ".join(icons),
@@ -220,8 +283,25 @@ def derive_line(li, matcher, catalog):
         "text_color": color_name,
         "slots": sorted(set(slots)),
         "flag": flag,
-        "preview": (attrs.get("_screenshot") or "").strip(),
+        "preview": line_preview(attrs),
     }
+
+
+def line_preview(attrs):
+    """Best available proof link: _screenshot, else the first _images entry
+    (a JSON array on newer templates), else the _preview_pdf page."""
+    shot = (attrs.get("_screenshot") or "").strip()
+    if shot:
+        return shot
+    raw = (attrs.get("_images") or "").strip()
+    if raw:
+        try:
+            imgs = json.loads(raw)
+            if isinstance(imgs, list) and imgs and str(imgs[0]).strip():
+                return str(imgs[0]).strip()
+        except (ValueError, TypeError):
+            pass
+    return (attrs.get("_preview_pdf") or "").strip()
 
 
 def order_sort_key(name):

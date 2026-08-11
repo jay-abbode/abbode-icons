@@ -54,6 +54,7 @@ export default function MobileNav({
   }, [open]);
 
   const primary: Item[] = [
+    { href: "/webster", label: "Webster" },
     { href: "/machines", label: "Thread Config" },
     { href: "/", label: "Categories" },
     { href: "/browse", label: "All icons" },
