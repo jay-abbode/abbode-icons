@@ -29,13 +29,26 @@ function parseMonths(v: string | undefined): WindowMonths {
   return v === "3" ? 3 : v === "6" ? 6 : 12;
 }
 
+/**
+ * Depth param. Absent = the default Top 30; "all" (what the All pill emits, or
+ * "0") = the whole list; junk = back to the default. The All state must be an
+ * explicit URL value — omitting the param is indistinguishable from a fresh
+ * visit and used to snap the page back to Top 30.
+ */
+function parseTop(v: string | undefined): number {
+  if (v === undefined) return 30;
+  if (v === "all" || v === "0") return 0; // 0 = all
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) && n > 0 ? n : 30;
+}
+
 /** Case/space-insensitive form for category matching (same spirit as lib/categories). */
 function canon(s: string): string {
   return (s || "").trim().toLowerCase();
 }
 
 function href(months: WindowMonths, top: number, category: string): string {
-  return `/reports/icons?months=${months}${top > 0 ? `&top=${top}` : ""}${
+  return `/reports/icons?months=${months}&top=${top > 0 ? top : "all"}${
     category ? `&category=${encodeURIComponent(category)}` : ""
   }`;
 }
@@ -68,8 +81,7 @@ export default async function IconReportPage({
       ? 12
       : (snap.available[0] ?? 12);
 
-  const topParam = parseInt(one(searchParams.top) ?? "30", 10);
-  const top = Number.isFinite(topParam) && topParam > 0 ? topParam : 0; // 0 = all
+  const top = parseTop(one(searchParams.top)); // 0 = all
 
   // Category list is derived live from the stats rows (same convention as the
   // catalog: alphabetical, Premade Designs pinned last). The param is matched
