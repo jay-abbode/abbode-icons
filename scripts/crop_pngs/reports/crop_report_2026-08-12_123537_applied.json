@@ -1,0 +1,53 @@
+[
+  {
+    "slug": "crab",
+    "name": "Crab",
+    "category": "Food",
+    "file_id": "1KjUwHTUN9uqvbXOMS8YAJn_G4pX8HAnL",
+    "status": "cropped",
+    "original_size": [
+      510,
+      422
+    ],
+    "new_size": [
+      465,
+      373
+    ],
+    "saved_bytes": 14909,
+    "error": null
+  },
+  {
+    "slug": "ski-tan-frenchie",
+    "name": "Ski Tan Frenchie",
+    "category": "Ski Dogs",
+    "file_id": "15yGqk87xeNez90Yd7OEskKyQpC5GMqZW",
+    "status": "cropped",
+    "original_size": [
+      813,
+      618
+    ],
+    "new_size": [
+      765,
+      572
+    ],
+    "saved_bytes": 26267,
+    "error": null
+  },
+  {
+    "slug": "ski-corgi",
+    "name": "Ski Corgi",
+    "category": "Ski Dogs",
+    "file_id": "1QssaAjX0Cd-gAvQDOBSMyQf0ZZpKn8VB",
+    "status": "cropped",
+    "original_size": [
+      1029,
+      520
+    ],
+    "new_size": [
+      980,
+      476
+    ],
+    "saved_bytes": 42336,
+    "error": null
+  }
+]

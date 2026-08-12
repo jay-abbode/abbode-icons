@@ -1,0 +1,240 @@
+[
+  {
+    "slug": "pink-lighter",
+    "name": "Pink Lighter",
+    "category": "Hobby",
+    "file_id": "17xeDE6G4AWGZdpFRUPrSHN4oDlirE7YR",
+    "status": "cropped",
+    "original_size": [
+      182,
+      509
+    ],
+    "new_size": [
+      138,
+      463
+    ],
+    "saved_bytes": 14451,
+    "error": null
+  },
+  {
+    "slug": "ice-skater",
+    "name": "Ice Skater",
+    "category": "Holiday",
+    "file_id": "1KhLD-Gkh_D3bOYOo-D5LchGVfUDe0yQ1",
+    "status": "cropped",
+    "original_size": [
+      392,
+      509
+    ],
+    "new_size": [
+      345,
+      463
+    ],
+    "saved_bytes": 6596,
+    "error": null
+  },
+  {
+    "slug": "torii-gate",
+    "name": "Torii Gate",
+    "category": "Japan",
+    "file_id": "11JzgoMFNIVM5eilnS5ahQoAU5WCKBdzc",
+    "status": "cropped",
+    "original_size": [
+      510,
+      417
+    ],
+    "new_size": [
+      460,
+      372
+    ],
+    "saved_bytes": 14939,
+    "error": null
+  },
+  {
+    "slug": "japan-flag",
+    "name": "Japan Flag",
+    "category": "Japan",
+    "file_id": "19shjZBvBHWM3gW9YGFw4-tZaG0U0msa6",
+    "status": "cropped",
+    "original_size": [
+      509,
+      347
+    ],
+    "new_size": [
+      467,
+      303
+    ],
+    "saved_bytes": -17447,
+    "error": null
+  },
+  {
+    "slug": "three-olives-on-toothpick",
+    "name": "Three Olives on Toothpick",
+    "category": "Most Popular",
+    "file_id": "1LhsHlXV-sTEPM9hzYk4UQFXwQytKyDUY",
+    "status": "cropped",
+    "original_size": [
+      314,
+      502
+    ],
+    "new_size": [
+      269,
+      451
+    ],
+    "saved_bytes": 8714,
+    "error": null
+  },
+  {
+    "slug": "two-olives-on-toothpick",
+    "name": "Two Olives on Toothpick",
+    "category": "Most Popular",
+    "file_id": "1_DRqKDMQhRGb7z3JDx_OD5cJPktk0ttC",
+    "status": "cropped",
+    "original_size": [
+      253,
+      509
+    ],
+    "new_size": [
+      207,
+      453
+    ],
+    "saved_bytes": 9766,
+    "error": null
+  },
+  {
+    "slug": "envelope",
+    "name": "Envelope",
+    "category": "Romance",
+    "file_id": "1SDSmXTeW451wvZIHb1X-f_QoSbnO-DbA",
+    "status": "cropped",
+    "original_size": [
+      508,
+      343
+    ],
+    "new_size": [
+      464,
+      297
+    ],
+    "saved_bytes": -11505,
+    "error": null
+  },
+  {
+    "slug": "ski-tan-frenchie",
+    "name": "Ski Tan Frenchie",
+    "category": "Ski Dogs",
+    "file_id": "15yGqk87xeNez90Yd7OEskKyQpC5GMqZW",
+    "status": "cropped",
+    "original_size": [
+      813,
+      618
+    ],
+    "new_size": [
+      765,
+      572
+    ],
+    "saved_bytes": 26616,
+    "error": null
+  },
+  {
+    "slug": "ski-corgi",
+    "name": "Ski Corgi",
+    "category": "Ski Dogs",
+    "file_id": "1QssaAjX0Cd-gAvQDOBSMyQf0ZZpKn8VB",
+    "status": "cropped",
+    "original_size": [
+      1029,
+      520
+    ],
+    "new_size": [
+      980,
+      476
+    ],
+    "saved_bytes": 42879,
+    "error": null
+  },
+  {
+    "slug": "pickleball-paddles",
+    "name": "Pickleball Paddles",
+    "category": "Sports",
+    "file_id": "1odYx6nBjbNsNnezj83s-HKTR071Eohxm",
+    "status": "cropped",
+    "original_size": [
+      509,
+      312
+    ],
+    "new_size": [
+      465,
+      267
+    ],
+    "saved_bytes": -18879,
+    "error": null
+  },
+  {
+    "slug": "light-blue-pickleball-paddles",
+    "name": "Light Blue Pickleball Paddles",
+    "category": "Sports",
+    "file_id": "1WV3NlMSsWwWmkCwi4YvtQjZtRTRLk5uJ",
+    "status": "cropped",
+    "original_size": [
+      510,
+      313
+    ],
+    "new_size": [
+      465,
+      268
+    ],
+    "saved_bytes": -8590,
+    "error": null
+  },
+  {
+    "slug": "red-rolling-suitcase",
+    "name": "Red Rolling Suitcase",
+    "category": "Travel",
+    "file_id": "1rv7sl9dRvidFUxqWV8tjoVqIWGP4PiMF",
+    "status": "cropped",
+    "original_size": [
+      283,
+      515
+    ],
+    "new_size": [
+      239,
+      464
+    ],
+    "saved_bytes": 18498,
+    "error": null
+  },
+  {
+    "slug": "bronco",
+    "name": "Bronco",
+    "category": "Travel",
+    "file_id": "1KMiwqO2Y6FFW-qi8-Y5dCneXSD1qvHoP",
+    "status": "cropped",
+    "original_size": [
+      659,
+      392
+    ],
+    "new_size": [
+      615,
+      345
+    ],
+    "saved_bytes": -1394,
+    "error": null
+  },
+  {
+    "slug": "yacht-flag-n",
+    "name": "Yacht Flag N",
+    "category": "Yacht Flags",
+    "file_id": "13Hn1izHWcj78hfsWz--gC8N2AMJEH3Ak",
+    "status": "cropped",
+    "original_size": [
+      509,
+      514
+    ],
+    "new_size": [
+      468,
+      469
+    ],
+    "saved_bytes": 46810,
+    "error": null
+  }
+]

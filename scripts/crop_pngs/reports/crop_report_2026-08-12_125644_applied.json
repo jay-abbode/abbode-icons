@@ -1,0 +1,19 @@
+[
+  {
+    "slug": "gelato",
+    "name": "Gelato",
+    "category": "Food",
+    "file_id": "1DoZRmyfAKV6YLkxTo6ohPfcX8webaWj-",
+    "status": "cropped",
+    "original_size": [
+      416,
+      509
+    ],
+    "new_size": [
+      373,
+      462
+    ],
+    "saved_bytes": -18829,
+    "error": null
+  }
+]

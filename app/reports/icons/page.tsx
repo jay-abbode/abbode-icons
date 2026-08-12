@@ -1,15 +1,18 @@
 import Link from "next/link";
 import Header from "@/components/Header";
+import ReportCategorySelect from "@/components/ReportCategorySelect";
 import { getIconWindows, sortForWindow, ALL_WINDOWS, type WindowMonths } from "@/lib/iconWindows";
+import { orderCategories } from "@/lib/categories";
 
 export const dynamic = "force-dynamic";
 
 /**
  * /reports/icons — the Icon Data dropdown, grown into a full report.
  *
- * Pick a rolling window (3 / 6 / 12 months) and a depth (top 10–100 or the
- * whole list); the ranked table re-sorts on the chosen window and the Export
- * button downloads the same view as a branded PDF (/api/icon-data-export).
+ * Pick a rolling window (3 / 6 / 12 months), a depth (top 10–100 or the whole
+ * list), and optionally a category; the ranked table re-filters and re-sorts,
+ * and the Export button downloads the same view as a branded PDF
+ * (/api/icon-data-export, which honors the same ?category= param).
  *
  * Data: the ICON_WINDOWS tab (all three windows side by side, written by the
  * order-stats script). Until that tab exists, the page stitches 3- and
@@ -26,14 +29,21 @@ function parseMonths(v: string | undefined): WindowMonths {
   return v === "3" ? 3 : v === "6" ? 6 : 12;
 }
 
-function href(months: WindowMonths, top: number): string {
-  return `/reports/icons?months=${months}${top > 0 ? `&top=${top}` : ""}`;
+/** Case/space-insensitive form for category matching (same spirit as lib/categories). */
+function canon(s: string): string {
+  return (s || "").trim().toLowerCase();
+}
+
+function href(months: WindowMonths, top: number, category: string): string {
+  return `/reports/icons?months=${months}${top > 0 ? `&top=${top}` : ""}${
+    category ? `&category=${encodeURIComponent(category)}` : ""
+  }`;
 }
 
 export default async function IconReportPage({
   searchParams,
 }: {
-  searchParams: { months?: string | string[]; top?: string | string[] };
+  searchParams: { months?: string | string[]; top?: string | string[]; category?: string | string[] };
 }) {
   let snap;
   try {
@@ -61,10 +71,22 @@ export default async function IconReportPage({
   const topParam = parseInt(one(searchParams.top) ?? "30", 10);
   const top = Number.isFinite(topParam) && topParam > 0 ? topParam : 0; // 0 = all
 
-  const ranked = sortForWindow(snap.stats, months).filter((s) => s.counts[months] > 0);
+  // Category list is derived live from the stats rows (same convention as the
+  // catalog: alphabetical, Premade Designs pinned last). The param is matched
+  // case/space-insensitively; an unknown value just means "no filter".
+  const categories = orderCategories(
+    Array.from(new Set(snap.stats.map((s) => s.category).filter(Boolean)))
+  );
+  const catParam = one(searchParams.category) ?? "";
+  const category = categories.find((c) => canon(c) === canon(catParam)) ?? "";
+
+  const rankedAll = sortForWindow(snap.stats, months).filter((s) => s.counts[months] > 0);
+  const ranked = category ? rankedAll.filter((s) => canon(s.category) === canon(category)) : rankedAll;
   const shown = top > 0 ? ranked.slice(0, top) : ranked;
   const maxCount = Math.max(1, ...shown.map((s) => s.counts[months]));
-  const total = snap.totals[months];
+  const total = category
+    ? ranked.reduce((sum, s) => sum + s.counts[months], 0)
+    : snap.totals[months];
 
   const pillOn = "bg-plum font-semibold text-porcelain";
   const pillOff = "bg-parchment text-ink-soft hover:text-espresso";
@@ -84,6 +106,7 @@ export default async function IconReportPage({
           </p>
           <p className="font-ui mt-3 text-xs text-ink-muted">
             {total.toLocaleString()} icon orders · rolling {months} months
+            {category ? ` · ${category}` : ""}
             {snap.updatedAt ? ` · data updated ${snap.updatedAt}` : ""}
           </p>
         </div>
@@ -104,7 +127,7 @@ export default async function IconReportPage({
                   snap.available.includes(w) ? (
                     <Link
                       key={w}
-                      href={href(w, top)}
+                      href={href(w, top, category)}
                       className={`rounded-full px-2.5 py-1 transition-colors ${w === months ? pillOn : pillOff}`}
                     >
                       {w} months
@@ -126,22 +149,29 @@ export default async function IconReportPage({
                 {TOP_CHOICES.map((n) => (
                   <Link
                     key={n}
-                    href={href(months, n)}
+                    href={href(months, n, category)}
                     className={`rounded-full px-2.5 py-1 transition-colors ${top === n ? pillOn : pillOff}`}
                   >
                     Top {n}
                   </Link>
                 ))}
                 <Link
-                  href={href(months, 0)}
+                  href={href(months, 0, category)}
                   className={`rounded-full px-2.5 py-1 transition-colors ${top === 0 ? pillOn : pillOff}`}
                 >
                   All {ranked.length.toLocaleString()}
                 </Link>
               </span>
 
+              <span className="flex flex-wrap items-center gap-1.5">
+                <span className="text-ink-muted">Category:</span>
+                <ReportCategorySelect categories={categories} current={category} />
+              </span>
+
               <a
-                href={`/api/icon-data-export?months=${months}${top > 0 ? `&top=${top}` : ""}`}
+                href={`/api/icon-data-export?months=${months}${top > 0 ? `&top=${top}` : ""}${
+                  category ? `&category=${encodeURIComponent(category)}` : ""
+                }`}
                 download
                 className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-pink bg-white px-3.5 py-1.5 text-[11px] font-semibold text-cherry transition-colors hover:bg-pink-soft focus-ring"
               >
@@ -182,6 +212,14 @@ export default async function IconReportPage({
                   </tr>
                 </thead>
                 <tbody>
+                  {shown.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-6 text-center text-xs text-ink-muted">
+                        No {category ? `${category} ` : ""}orders in the last {months} months — try a longer
+                        window or another category.
+                      </td>
+                    </tr>
+                  )}
                   {shown.map((s, i) => (
                     <tr
                       key={s.icon}

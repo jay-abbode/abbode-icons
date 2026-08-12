@@ -27,6 +27,11 @@ function parseMonths(v: string | null): WindowMonths {
   return v === "3" ? 3 : v === "6" ? 6 : 12;
 }
 
+/** Case/space-insensitive form for category matching (mirrors /reports/icons). */
+function canon(s: string): string {
+  return (s || "").trim().toLowerCase();
+}
+
 export async function GET(request: Request) {
   const session = await auth();
   if (!session?.user) {
@@ -45,7 +50,15 @@ export async function GET(request: Request) {
         ? 12
         : (snap.available[0] ?? 12);
 
-    const ranked = sortForWindow(snap.stats, months).filter((s) => s.counts[months] > 0);
+    // Optional ?category= filter, matched case/space-insensitively against the
+    // categories actually present (mirrors /reports/icons — the export must
+    // stay the same view the page shows). Unknown value = no filter.
+    const catRaw = url.searchParams.get("category") || "";
+    const category =
+      snap.stats.map((s) => s.category).find((c) => c && canon(c) === canon(catRaw)) ?? "";
+
+    let ranked = sortForWindow(snap.stats, months).filter((s) => s.counts[months] > 0);
+    if (category) ranked = ranked.filter((s) => canon(s.category) === canon(category));
     const top = topRaw > 0 ? Math.min(topRaw, ranked.length) : ranked.length;
     const rows = ranked.slice(0, top).map((s) => ({
       icon: s.icon,
@@ -54,19 +67,24 @@ export async function GET(request: Request) {
       hexes: s.hexes,
     }));
 
+    const totalOrders = category
+      ? ranked.reduce((sum, s) => sum + s.counts[months], 0)
+      : snap.totals[months];
+
     const bytes = await buildIconDataPdf({
       rows,
       windowLabel: `Rolling ${months} months`,
       scopeLabel:
-        top < ranked.length
+        (top < ranked.length
           ? `Top ${top} of ${ranked.length.toLocaleString()} icons`
-          : `${ranked.length.toLocaleString()} icons`,
-      totalOrders: snap.totals[months],
+          : `${ranked.length.toLocaleString()} icons`) + (category ? ` \u00B7 ${category}` : ""),
+      totalOrders,
       updatedAt: snap.updatedAt,
     });
 
     const today = new Date().toISOString().slice(0, 10);
-    const name = `abbode-icon-order-frequency-${months}mo${top < ranked.length ? `-top${top}` : ""}-${today}.pdf`;
+    const catSlug = category ? `-${category.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}` : "";
+    const name = `abbode-icon-order-frequency-${months}mo${top < ranked.length ? `-top${top}` : ""}${catSlug}-${today}.pdf`;
     return new NextResponse(new Uint8Array(bytes), {
       headers: {
         "Content-Type": "application/pdf",
