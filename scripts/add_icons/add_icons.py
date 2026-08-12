@@ -6,19 +6,27 @@ Abbode Icon Library — Add Icons (one command runs all three steps)
 Every time you add new icons you normally run three scripts. This runs them
 for you, in the right order, from a single command:
 
-  1. Upload     sends your locally-processed files from ICON LAUNCHPAD to the
-                right Drive folders (overwrites in place, never duplicates).
+  1. Upload      sends your locally-processed files from ICON LAUNCHPAD to the
+                 right Drive folders (overwrites in place, never duplicates).
   2. Backfill    links the new OFM / DST / PNG files into the MASTER sheet
                  (fills only blank cells, matched by icon name).
-  3. Auto-crop   trims empty space around the catalog PNGs in Drive
+  3. Color stops reads the as-sewn color sequence out of each OFM in the push
+                 and writes Color Stops + Thread Colors for exactly those
+                 icons. Re-sent OFMs are recomputed (overwritten), so an edit
+                 refreshes its sequence in the same push. Also refreshes the
+                 whole-catalog CSV at scripts/ofm_colormap/output/
+                 color_stops.csv (COLOR_STOPS_CSV in .env.local to move it).
+                 Apply runs only.
+  4. Auto-crop   trims empty space around the catalog PNGs in Drive
                  (in place; originals backed up locally first).
-  4. Auto-tag    generates thematic tags for any icon missing from tags.csv
+  5. Auto-tag    generates thematic tags for any icon missing from tags.csv
                  and appends them (so new icons are never left untagged).
-  5. Tags        writes the MASTER "Tags" column from tags.csv for search.
+  6. Tags        writes the MASTER "Tags" column from tags.csv for search.
 
-Order matters: upload runs first so the files exist in Drive, then backfill
-links them, auto-crop trims the new/changed PNGs, and auto-tag runs before the
-tags write so new rows reach the sheet in the same run.
+Order matters: upload runs first so the files exist in Drive, backfill links
+them, color stops reads those just-linked OFMs, auto-crop trims the new/changed
+PNGs, and auto-tag runs before the tags write so new rows reach the sheet in
+the same run.
 
 SAFE BY DEFAULT. With no flags this previews all three (a dry run) and writes
 nothing. Add --apply to actually make changes; you're asked to confirm once.
@@ -67,6 +75,7 @@ CROP = PROJECT_ROOT / "scripts" / "crop_pngs" / "crop_pngs.py"
 TAGS = PROJECT_ROOT / "scripts" / "icon_tags" / "populate_tags.py"
 AUTOTAG = PROJECT_ROOT / "scripts" / "icon_tags" / "autotag_new.py"
 UPLOAD = PROJECT_ROOT / "scripts" / "upload_icons" / "upload_icons.py"
+COLORMAP = PROJECT_ROOT / "scripts" / "ofm_colormap" / "ofm_colormap.py"
 DEFAULT_LAUNCHPAD = r"C:\Users\abbod\Dropbox\File Processing (Don't Open)\ICON LAUNCHPAD"
 # Subfolders of the launchpad, used by the PORTAL edit flow.
 PORTAL_SUBDIR = "PORTAL"          # the edit outbox (empty until you send a change)
@@ -172,6 +181,36 @@ def build_upload(cfg: dict, report_path: str | None,
     if not cfg["apply"]:
         argv.append("--dry-run")
     return argv
+
+
+def build_colormap(cfg: dict, names_file: str) -> list[str]:
+    argv = [cfg["python"], str(COLORMAP),
+            "--sheet-id", cfg["sheet_id"], "--creds", cfg["creds"], "--tab", cfg["tab"],
+            "--only-names-file", names_file,
+            "--csv-out", cfg["stops_csv"]]
+    if not cfg["apply"]:
+        argv.append("--dry-run")
+    return argv
+
+
+def _icon_name(fname: str) -> str:
+    """Filename -> icon name (strips SMALL/MEDIUM/LARGE + extension). Imported
+    from ensure-rows lazily so the derivation lives in exactly one place."""
+    ens_dir = str(PROJECT_ROOT / "scripts" / "ensure_rows")
+    if ens_dir not in sys.path:
+        sys.path.insert(0, ens_dir)
+    from ensure_rows import name_from_filename
+    return name_from_filename(fname)
+
+
+def read_ofm_icons(path: str) -> list[str]:
+    """Icon names whose OFM was uploaded/replaced this run (from the upload report)."""
+    try:
+        d = json.loads(Path(path).read_text(encoding="utf-8"))
+        files = list(d.get("uploaded", [])) + list(d.get("replaced", []))
+        return sorted({_icon_name(str(n)) for n in files if str(n).lower().endswith(".ofm")})
+    except Exception:
+        return []
 
 
 def build_autotag(cfg: dict) -> list[str]:
@@ -287,6 +326,8 @@ def main() -> None:
                    help="STATUS dropdown value for auto-created rows (default: DRAFT)")
     p.add_argument("--new-colorvar", default="NO",
                    help="Col. Var. dropdown value for auto-created rows (default: NO)")
+    p.add_argument("--skip-color-stops", action="store_true",
+                   help="don't read Color Stops / Thread Colors out of the pushed OFMs")
     p.add_argument("--skip-crop", action="store_true")
     p.add_argument("--skip-autotag", action="store_true",
                    help="don't auto-generate tags for icons missing from tags.csv")
@@ -313,6 +354,9 @@ def main() -> None:
         "overwrite": args.overwrite, "padding": args.padding, "limit": args.limit,
         "no_backup": args.no_backup, "backup_root": args.backup_root,
         "new_status": args.new_status, "new_colorvar": args.new_colorvar,
+        # Where the whole-catalog Color Stops CSV lands after every push.
+        "stops_csv": resolve("COLOR_STOPS_CSV", None, env_local,
+                             str(PROJECT_ROOT / "scripts" / "ofm_colormap" / "output" / "color_stops.csv")),
     }
     if not cfg["sheet_id"]:
         sys.exit("ERROR: no sheet id. Set GOOGLE_SHEET_ID in .env.local or pass --sheet-id.")
@@ -361,6 +405,12 @@ def main() -> None:
     elif not ENSURE.exists():
         do_ensure, why_ensure = False, f"script missing: {ENSURE}"
 
+    do_colormap, why_colormap = True, ""
+    if args.skip_color_stops:
+        do_colormap, why_colormap = False, "--skip-color-stops"
+    elif not COLORMAP.exists():
+        do_colormap, why_colormap = False, f"script missing: {COLORMAP}"
+
     do_crop, why_crop = True, ""
     if args.skip_crop:
         do_crop, why_crop = False, "--skip-crop"
@@ -395,11 +445,13 @@ def main() -> None:
           f"[{'✓' if do_upload else '·'}] upload   "
           f"{ensure_seg}"
           f"[{'✓' if do_backfill else '·'}] backfill   "
+          f"[{'✓' if do_colormap else '·'}] color-stops   "
           f"[{'✓' if do_crop else '·'}] auto-crop ({crop_scope})   "
           f"[{'✓' if do_autotag else '·'}] auto-tag   "
           f"[{'✓' if do_tags else '·'}] tags")
     skip_checks = [("upload", do_upload, why_upload),
                    ("backfill", do_backfill, why_bf),
+                   ("color-stops", do_colormap, why_colormap),
                    ("auto-crop", do_crop, why_crop),
                    ("auto-tag", do_autotag, why_autotag),
                    ("tags", do_tags, why_tags)]
@@ -425,6 +477,15 @@ def main() -> None:
                   + "   (names derived from the PORTAL files)")
         if do_backfill:
             print("  2) " + _fmt(build_backfill(cfg, "<report.json>" if show_report else None)))
+        if do_colormap:
+            if args.portal:
+                print("  2.5) " + _fmt(build_colormap(cfg, "<colormap_names.json>"))
+                      + "   (OFM icons in this push; recomputes on edits)")
+            elif args.apply:
+                print("  2.5) " + _fmt(build_colormap(cfg, "<colormap_names.json>"))
+                      + "   (OFM icons from the upload report)")
+            else:
+                print("  2.5) color-stops skipped in dry-run (needs the OFM links written); runs with --apply")
         if do_crop:
             if args.crop_all:
                 print("  3) " + _fmt(build_crop(cfg, None)))
@@ -440,7 +501,7 @@ def main() -> None:
             print(f"  6) file PORTAL files -> {LOCAL_PNG_OFM_SUBDIR} (png/ofm) + {LOCAL_DST_SUBDIR} (dst); clear PORTAL")
         return
 
-    if not (do_upload or do_backfill or do_crop or do_autotag or do_tags):
+    if not (do_upload or do_backfill or do_colormap or do_crop or do_autotag or do_tags):
         sys.exit("Nothing to run.")
 
     # One confirmation for the whole run.
@@ -458,16 +519,18 @@ def main() -> None:
     report_path = os.path.join(tmpdir, "backfill_report.json")
     upload_report_path = os.path.join(tmpdir, "upload_report.json")
     # Auto-crop's "new" set = newly-linked PNGs (backfill) + changed PNGs (upload).
+    # Color stops (regular flow) also needs the upload report for its OFM set.
     want_report = do_crop and not args.crop_all and args.apply
+    want_upload_report = want_report or (do_colormap and not args.portal and args.apply)
 
     # 1) Upload local files to Drive
     upload_status = "skipped"
     if do_upload:
         if args.portal:
-            upload_argv = build_upload(cfg, upload_report_path if want_report else None,
+            upload_argv = build_upload(cfg, upload_report_path if want_upload_report else None,
                                        launchpad=str(portal_dir), force=True, manifest=shared_manifest)
         else:
-            upload_argv = build_upload(cfg, upload_report_path if want_report else None)
+            upload_argv = build_upload(cfg, upload_report_path if want_upload_report else None)
         upload_status = run_step("Upload to Drive", upload_argv, child_env)
         results.append(("Upload", upload_status))
     else:
@@ -493,6 +556,37 @@ def main() -> None:
     else:
         print(f"\n=== Backfill: SKIPPED — {why_bf} ===")
         results.append(("Backfill", "skipped"))
+
+    # 2.5) Color stops: read the as-sewn sequence out of the OFMs in this push
+    #      and write Color Stops + Thread Colors for exactly those icons. New
+    #      icons get stops in the same push; a re-sent OFM is recomputed, so an
+    #      edit refreshes its sequence too. Runs after backfill because it
+    #      resolves each OFM through its (just-written) MASTER link.
+    if do_colormap:
+        if not args.apply:
+            print("\n=== Color stops: SKIPPED in dry-run ===")
+            print("   New OFM links aren't on the sheet until we actually write, so there's")
+            print("   nothing to scope to yet. Runs automatically with --apply.")
+            results.append(("Color stops", "skipped (dry-run)"))
+        else:
+            if args.portal:
+                # Deterministic for the portal flow: exactly the OFMs you sent.
+                cm_names = sorted({_icon_name(p.name) for p in pf if p.suffix.lower() == ".ofm"})
+            else:
+                cm_names = read_ofm_icons(upload_report_path)
+            if not cm_names:
+                print("\n=== Color stops: nothing to do — this push had no OFM ===")
+                results.append(("Color stops", "ok (nothing new)"))
+            else:
+                cm_file = os.path.join(tmpdir, "colormap_names.json")
+                Path(cm_file).write_text(json.dumps(cm_names), encoding="utf-8")
+                print(f"\n  Color stops will process {len(cm_names)} icon(s): "
+                      + ", ".join(cm_names[:8]) + (" ..." if len(cm_names) > 8 else ""))
+                results.append(("Color stops", run_step(
+                    "Color stops from OFM", build_colormap(cfg, cm_file), child_env)))
+    else:
+        print(f"\n=== Color stops: SKIPPED — {why_colormap} ===")
+        results.append(("Color stops", "skipped"))
 
     # 3) Auto-crop
     if do_crop:

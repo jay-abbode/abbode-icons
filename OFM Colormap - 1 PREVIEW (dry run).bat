@@ -9,7 +9,8 @@ pip install -q -r scripts\ofm_colormap\requirements.txt
 python scripts\ofm_colormap\ofm_colormap.py --dry-run
 echo.
 echo ==================================================
-echo   Preview finished - no changes were made.
+echo   Preview finished - no sheet changes were made.
+echo   Full CSV report: scripts\ofm_colormap\output\color_stops.csv
 echo   Happy with it? Run the "2 RUN (apply)" file.
 echo ==================================================
 echo.

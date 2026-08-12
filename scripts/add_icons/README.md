@@ -10,15 +10,26 @@ them for you, in the right order, from a single command:
    that's already duplicated in Drive is skipped with a warning.
 2. **Backfill** — links the new OFM / DST / PNG files into the MASTER sheet
    (fills only blank cells, matched by icon name).
-3. **Auto-crop** — trims empty space around the new/changed PNGs in Drive.
-4. **Auto-tag** — for any icon on the sheet that has no row in `tags.csv`, it
+3. **Color stops** — reads the as-sewn color sequence straight out of each OFM
+   in the push and writes **Color Stops** + **Thread Colors** for exactly those
+   icons (runs `scripts/ofm_colormap` scoped to the push). New icons get stops
+   immediately; a re-sent OFM is recomputed, so an edit refreshes its sequence
+   in the same push. Only the pushed OFMs are downloaded — never the rest of
+   the catalog. It also refreshes a **whole-catalog CSV** (Icon / Color Stops /
+   Thread Colors) at `scripts/ofm_colormap/output/color_stops.csv` after the
+   sheet write (path overridable with `COLOR_STOPS_CSV` in `.env.local`; folder
+   is gitignored). Apply runs only — skipped in dry-run because the links
+   aren't on the sheet yet. Skip with `--skip-color-stops`.
+4. **Auto-crop** — trims empty space around the new/changed PNGs in Drive.
+5. **Auto-tag** — for any icon on the sheet that has no row in `tags.csv`, it
    generates thematic search tags and appends a row. Existing rows are never
    touched. Edit any auto-generated tags in `tags.csv` whenever you like.
-5. **Tags** — writes the MASTER "Tags" column from `tags.csv`.
+6. **Tags** — writes the MASTER "Tags" column from `tags.csv`.
 
-Order matters: upload puts the files in Drive, backfill links them, auto-crop
-trims the new/changed PNGs, and auto-tag runs before the tags write so new rows
-reach the sheet in the same run.
+Order matters: upload puts the files in Drive, backfill links them, color stops
+reads those just-linked OFMs, auto-crop trims the new/changed PNGs, and
+auto-tag runs before the tags write so new rows reach the sheet in the same
+run.
 
 **Launchpad path:** by default it uploads from
 `C:\Users\abbod\Dropbox\File Processing (Don't Open)\ICON LAUNCHPAD`. If your

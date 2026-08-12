@@ -12,6 +12,7 @@ python scripts\ofm_colormap\ofm_colormap.py
 echo.
 echo ==================================================
 echo   All done. Hard-refresh the app: Ctrl + Shift + R
+echo   Full CSV report: scripts\ofm_colormap\output\color_stops.csv
 echo ==================================================
 echo.
 pause

@@ -31,3 +31,6 @@ yarn-error.log*
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# OFM colormap CSV export (regenerated on every add_icons push)
+scripts/ofm_colormap/output/

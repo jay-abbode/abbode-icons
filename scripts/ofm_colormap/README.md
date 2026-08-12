@@ -13,7 +13,23 @@ python ofm_colormap.py --dry-run          # parse + report only
 python ofm_colormap.py --limit 10         # small test slice
 python ofm_colormap.py                    # apply (type "yes" to confirm)
 python ofm_colormap.py --only-missing     # later runs: only fill new rows
+python ofm_colormap.py --only-names-file f.json
+                                          # only these icons (filenames or bare
+                                          # names); recomputes existing stops
 ```
+
+`--only-names-file` is how `add_icons.py` runs this automatically inside every
+push: the pipeline writes the pushed OFM icon names to a temp JSON and scopes
+this script to exactly those rows, so new icons get stops immediately and a
+re-sent OFM refreshes its sequence in the same push.
+
+`--csv-out <path>` additionally exports the **whole catalog** (Icon / Color
+Stops / Thread Colors, sheet order, Excel-friendly utf-8-sig) after the sheet
+write — no extra downloads, it's built from the same sheet read plus the values
+just written. `add_icons` passes it on every push, landing at
+`scripts/ofm_colormap/output/color_stops.csv` (override with `COLOR_STOPS_CSV`
+in `.env.local`; the folder is gitignored). Skipped in `--dry-run` and on
+abort, so the file always mirrors the sheet.
 
 Service account needs: Editor on MASTER, Viewer on the OFM files/folder,
 optional Viewer on the Icon Color Master List (falls back to the local

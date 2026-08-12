@@ -20,6 +20,17 @@ Safe workflow (same as scripts/dst_backfill):
   python ofm_colormap.py                    # apply (asks you to type "yes")
   python ofm_colormap.py --limit 10         # test slice
   python ofm_colormap.py --only-missing     # skip rows that already have stops
+  python ofm_colormap.py --only-names-file f.json
+                                            # only these icons (JSON list of
+                                            # filenames or bare names); always
+                                            # recomputes, even if stops exist —
+                                            # this is how add_icons scopes the
+                                            # portal push to the OFMs just sent
+  python ofm_colormap.py --csv-out output/color_stops.csv
+                                            # also export the whole catalog's
+                                            # Icon / Color Stops / Thread Colors
+                                            # to a CSV after the sheet write —
+                                            # add_icons passes this on every push
 
 Needs:
   GOOGLE_SHEET_ID          env var (or --sheet-id)
@@ -33,6 +44,7 @@ Needs:
 from __future__ import annotations
 
 import argparse
+import csv
 import io
 import json
 import os
@@ -51,6 +63,11 @@ from googleapiclient.http import MediaIoBaseDownload
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parents[1]
 ENV_LOCAL = PROJECT_ROOT / ".env.local"
+
+# Filename -> icon name (strips the SMALL/MEDIUM/LARGE suffix + extension).
+# Imported from ensure-rows so the derivation lives in exactly one place.
+sys.path.insert(0, str(PROJECT_ROOT / "scripts" / "ensure_rows"))
+from ensure_rows import name_from_filename  # noqa: E402
 
 
 def load_env_local(path: Path) -> dict:
@@ -237,6 +254,26 @@ def cell_file_id(value) -> str | None:
     return m.group(1) if m else None
 
 
+def load_only_names(path: str) -> set:
+    """--only-names-file: JSON list of filenames or bare icon names ->
+    casefolded icon-name set (filenames get size suffix + extension stripped)."""
+    items = json.loads(Path(path).read_text(encoding="utf-8"))
+    return {name_from_filename(str(n)).casefold() for n in items if str(n).strip()}
+
+
+def write_catalog_csv(path: str, csv_rows: dict) -> None:
+    """Full-catalog export: one row per named MASTER row, in sheet order.
+    utf-8-sig so Excel opens it cleanly on Windows."""
+    p = Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with open(p, "w", newline="", encoding="utf-8-sig") as fh:
+        w = csv.writer(fh)
+        w.writerow(["Icon", "Color Stops", "Thread Colors"])
+        for r in sorted(csv_rows):
+            w.writerow(csv_rows[r])
+    print(f"CSV: wrote {len(csv_rows)} icon(s) -> {p}")
+
+
 def download_drive_file(drive, file_id: str) -> bytes:
     buf = io.BytesIO()
     request = drive.files().get_media(fileId=file_id, supportsAllDrives=True)
@@ -262,6 +299,14 @@ def main():
     p.add_argument("--dry-run", action="store_true", help="parse + report, write nothing")
     p.add_argument("--only-missing", action="store_true",
                    help="skip rows that already have a Color Stops value")
+    p.add_argument("--only-names-file", default=None,
+                   help="JSON list of filenames or icon names — process only those "
+                        "Icon rows, recomputing even if stops already exist "
+                        "(how add_icons scopes the portal push)")
+    p.add_argument("--csv-out", default=None,
+                   help="after the sheet write, export the whole catalog's Icon / "
+                        "Color Stops / Thread Colors to this CSV (skipped in "
+                        "--dry-run and on abort, so the file always matches the sheet)")
     p.add_argument("--limit", type=int, default=0, help="process at most N rows (testing)")
     args = p.parse_args()
 
@@ -271,6 +316,17 @@ def main():
     args.menu_sheet_id = resolve("MENU_SHEET_ID", args.menu_sheet_id, env_local, DEFAULT_MENU_SHEET_ID)
     if not args.sheet_id:
         sys.exit("ERROR: GOOGLE_SHEET_ID not set (checked --sheet-id, env, .env.local)")
+
+    only_names = None
+    if args.only_names_file:
+        try:
+            only_names = load_only_names(args.only_names_file)
+        except Exception as e:  # noqa: BLE001
+            sys.exit(f"ERROR: couldn't read --only-names-file {args.only_names_file}: {e}")
+        if not only_names:
+            sys.exit(f"ERROR: --only-names-file {args.only_names_file} has no usable names")
+        print(f"Scope: {len(only_names)} icon(s) from {Path(args.only_names_file).name} "
+              "(recomputes even if stops already exist)")
 
     creds_path = Path(args.creds)
     if not creds_path.exists():
@@ -349,8 +405,10 @@ def main():
 
     updates = []          # (range, value)
     report = {"ok": 0, "no_ofm": [], "fallback": [], "errors": [], "unmapped": [],
-              "inconsistent": [], "skipped_existing": 0}
+              "inconsistent": [], "not_on_sheet": [], "skipped_existing": 0}
     processed = 0
+    matched = set()       # casefolded scoped names actually found on the sheet
+    csv_rows = {}         # sheet_row -> [name, stops, threads] (whole catalog)
 
     for r, row in enumerate(rows):
         sheet_row = r + 3
@@ -359,6 +417,16 @@ def main():
         name = str(cell(row, i_icon)).strip()
         if not name:
             continue
+
+        # Snapshot the current sheet values first — every named row lands in the
+        # CSV; rows we colormap below get their fresh values overlaid.
+        csv_rows[sheet_row] = [name, str(cell(row, i_stp)).strip(),
+                               str(cell(row, i_thr)).strip()]
+
+        if only_names is not None:
+            if name.casefold() not in only_names:
+                continue
+            matched.add(name.casefold())
 
         if args.only_missing and str(cell(row, i_stp)).strip():
             report["skipped_existing"] += 1
@@ -415,10 +483,14 @@ def main():
         print(f"  row {sheet_row:>4}  {name:<32} {stops_str}")
         updates.append((f"{args.tab}!{stops_l}{sheet_row}", stops_str))
         updates.append((f"{args.tab}!{thread_l}{sheet_row}", thread_str))
+        csv_rows[sheet_row] = [name, stops_str, thread_str]
         report["ok"] += 1
         time.sleep(0.05)  # stay well under Drive per-second quotas
 
     # --- report -----------------------------------------------------------
+    if only_names is not None:
+        report["not_on_sheet"] = sorted(only_names - matched)
+
     print("\n================ REPORT ================")
     print(f"colormapped: {report['ok']}")
     if report["skipped_existing"]:
@@ -429,6 +501,7 @@ def main():
         ("errors", "download/parse errors"),
         ("unmapped", "Madeira number not in menu"),
         ("inconsistent", "internal consistency check failed"),
+        ("not_on_sheet", "scoped icon not found on the sheet"),
     ):
         items = report[key]
         if items:
@@ -438,14 +511,20 @@ def main():
 
     if args.dry_run:
         print("\nDRY RUN — nothing written.")
+        if args.csv_out:
+            print("(--csv-out skipped in dry-run — the CSV always mirrors the sheet.)")
         return
     if not updates:
         print("\nNothing to write.")
+        if args.csv_out:
+            write_catalog_csv(args.csv_out, csv_rows)
         return
 
     answer = input(f"\nWrite {len(updates)} cells to '{args.tab}'? Type yes to apply: ")
     if answer.strip().lower() != "yes":
         print("Aborted — nothing written.")
+        if args.csv_out:
+            print("(--csv-out skipped on abort — the CSV always mirrors the sheet.)")
         return
 
     if create_stops_header:
@@ -467,6 +546,9 @@ def main():
             },
         ).execute()
         print(f"  wrote {min(i + CHUNK, len(updates))}/{len(updates)} cells")
+
+    if args.csv_out:
+        write_catalog_csv(args.csv_out, csv_rows)
 
     print("Done.")
     print("Refresh MASTER to see the new 'Color Stops' column, then")
