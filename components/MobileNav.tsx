@@ -53,8 +53,11 @@ export default function MobileNav({
     };
   }, [open]);
 
+  // The banner only carries "Webster Thread Config" now — the Webster board and
+  // the full Thread Config page moved in here, so nothing is unreachable.
   const primary: Item[] = [
-    { href: "/webster", label: "Webster" },
+    { href: "/webster/thread-config", label: "Webster Thread Config" },
+    { href: "/webster", label: "Webster Board" },
     { href: "/machines", label: "Thread Config" },
     { href: "/", label: "Categories" },
     { href: "/browse", label: "All icons" },

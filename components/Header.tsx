@@ -110,22 +110,17 @@ export default async function Header({
             same destinations on smaller screens, so nothing is lost when this hides. */}
         {user && (
           <nav className="mt-3 hidden flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-ink-soft lg:flex">
+            {/* One banner button. The Webster board (/webster) and the full
+                interactive Thread Config (/machines) used to sit here as their
+                own pills; they now live in the hamburger menu, and this page
+                links to both. */}
             <Link
-              href="/webster"
-              aria-label="Webster — room board and order allocation"
-              className="font-ui inline-flex items-center gap-1.5 rounded-full bg-plum px-4 py-2 text-sm font-semibold text-porcelain shadow-sm transition-colors hover:bg-cherry focus-ring"
-            >
-              <SpoolsIcon className="h-3.5 w-3.5" />
-              Webster
-            </Link>
-
-            <Link
-              href="/machines"
-              aria-label="Thread Config — machine thread allocation"
+              href="/webster/thread-config"
+              aria-label="Webster Thread Config — standard thread tree and color ranking"
               className="font-ui inline-flex items-center gap-1.5 rounded-full bg-cherry px-4 py-2 text-sm font-semibold text-porcelain shadow-sm transition-colors hover:bg-berry focus-ring"
             >
               <SpoolsIcon className="h-3.5 w-3.5" />
-              Thread Config
+              Webster Thread Config
             </Link>
 
             <Link href="/" className="font-medium transition-colors hover:text-espresso focus-ring">
