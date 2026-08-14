@@ -1,7 +1,9 @@
 import Link from "next/link";
 import Header from "@/components/Header";
 import WebsterThreadTreeView from "@/components/WebsterThreadTreeView";
+import ThreadTreeLog from "@/components/ThreadTreeLog";
 import { getWebsterThreadTree, type WebsterThreadTree } from "@/lib/websterThreadTree";
+import { recordTreeIfChanged, type TreeLogEntry } from "@/lib/threadTreeLog";
 import { fleetBase } from "@/lib/threadAllocation";
 
 /**
@@ -20,11 +22,27 @@ export default async function WebsterThreadConfigPage() {
   const base = fleetBase("webster");
   let tree: WebsterThreadTree | null = null;
   let error: string | null = null;
+  let history: TreeLogEntry[] = [];
+  let writeFailed = false;
 
   try {
     tree = await getWebsterThreadTree();
   } catch (e) {
     error = e instanceof Error ? e.message : "Unknown error";
+  }
+
+  // Recording happens on view: compare this tree to the last one logged and
+  // append an entry if it moved. Best-effort by design — the log is a record of
+  // the page, so it must never be able to break the page.
+  if (tree) {
+    try {
+      const res = await recordTreeIfChanged(tree);
+      history = res.history;
+      writeFailed = res.writeFailed;
+    } catch {
+      history = [];
+      writeFailed = true;
+    }
   }
 
   return (
@@ -72,7 +90,10 @@ export default async function WebsterThreadConfigPage() {
             </pre>
           </div>
         ) : tree ? (
-          <WebsterThreadTreeView tree={tree} />
+          <>
+            <WebsterThreadTreeView tree={tree} />
+            <ThreadTreeLog history={history} writeFailed={writeFailed} />
+          </>
         ) : null}
       </main>
     </>

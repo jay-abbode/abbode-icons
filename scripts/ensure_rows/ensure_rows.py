@@ -8,6 +8,12 @@ none exists, append a new row containing:
     * the icon name              -> Icon column
     * a STATUS dropdown value     -> STATUS column   (default: DRAFT)
     * a Col. Var. dropdown value  -> Col. Var. column (default: NO)
+    * today's date                -> Date Added column, if that column exists
+
+The Date Added stamp is what the app's "New Icons" page reads. It is optional:
+if MASTER has no such column nothing is written and the app falls back to the
+Drive creation time of each icon's PNG. Pass --no-date to skip the stamp, or
+--date YYYY-MM-DD to backdate a batch.
 
 Category and every other column are left blank for you to fill in later. The
 file-link columns (OFM / DST / PNG) get filled afterwards by the backfill step.
@@ -27,6 +33,7 @@ Needs:
   google-credentials.json  service account with Edit access to the sheet.
 """
 import argparse
+import datetime
 import json
 import os
 import re
@@ -50,6 +57,11 @@ HEADER_CANDS = {
     "icon": ["icon"],
     "status": ["status"],
     "colorvar": ["col. var.", "col var", "color variation"],
+    # Must stay in step with buildColumnIndex() in lib/sheets.ts — same
+    # candidates, same order, so the script and the app agree on which column
+    # holds the date.
+    "dateadded": ["date added", "added", "added on", "date created", "created",
+                  "created on"],
 }
 
 
@@ -107,6 +119,10 @@ def main():
                    help="STATUS value written to new rows (default: DRAFT)")
     p.add_argument("--colorvar", default="NO",
                    help="Col. Var. value written to new rows (default: NO)")
+    p.add_argument("--date", default=None,
+                   help="Date Added value for new rows as YYYY-MM-DD (default: today)")
+    p.add_argument("--no-date", action="store_true",
+                   help="don't write a Date Added value even if the column exists")
     p.add_argument("--dry-run", action="store_true", help="preview only; write nothing")
     args = p.parse_args()
     if not args.sheet_id:
@@ -158,8 +174,23 @@ def main():
     icon_col = find_col("icon")
     status_col = find_col("status")
     cv_col = find_col("colorvar")
+    date_col = -1 if args.no_date else find_col("dateadded")
     if icon_col < 0:
         sys.exit("ERROR: couldn't find the 'Icon' column header in row 2")
+
+    # Resolve the stamp once so every row in a batch gets the same date.
+    date_value = ""
+    if date_col >= 0:
+        if args.date:
+            try:
+                date_value = datetime.date.fromisoformat(args.date).isoformat()
+            except ValueError:
+                sys.exit("ERROR: --date must be YYYY-MM-DD")
+        else:
+            date_value = datetime.date.today().isoformat()
+    elif not args.no_date:
+        print("NOTE: no 'Date Added' column found in row 2 — new rows won't be "
+              "date-stamped, and the app will fall back to Drive creation times.")
 
     # existing names + last populated Icon row (rows are 1-based; header on row 2)
     existing = set()
@@ -187,7 +218,8 @@ def main():
     # ---- build the new rows ----
     width = max(icon_col,
                 status_col if status_col >= 0 else 0,
-                cv_col if cv_col >= 0 else 0) + 1
+                cv_col if cv_col >= 0 else 0,
+                date_col if date_col >= 0 else 0) + 1
     start = last_row + 1
     end = start + len(new) - 1
     rows_values = []
@@ -198,11 +230,14 @@ def main():
             row[status_col] = args.status
         if cv_col >= 0:
             row[cv_col] = args.colorvar
+        if date_col >= 0 and date_value:
+            row[date_col] = date_value
         rows_values.append(row)
 
     rng = f"{args.tab}!A{start}:{col_letter(width - 1)}{end}"
-    print(f"\nWould write rows {start}..{end}  (STATUS='{args.status}', Col. Var.='{args.colorvar}', "
-          f"Category left blank):")
+    date_note = f", Date Added='{date_value}'" if date_value else ""
+    print(f"\nWould write rows {start}..{end}  (STATUS='{args.status}', Col. Var.='{args.colorvar}'"
+          f"{date_note}, Category left blank):")
     for i, ((_k, disp), rv) in enumerate(list(zip(new, rows_values))[:12]):
         cells = {col_letter(j): v for j, v in enumerate(rv) if v}
         print(f"    row {start + i}: {cells}")

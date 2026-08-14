@@ -1,0 +1,145 @@
+THREAD TREE CHANGE LOG  +  NEW ICONS
+====================================
+
+Includes the previous thread-config delivery's files, so this drops on top of
+whatever state the repo is in.
+
+
+1. THREAD TREE CHANGE LOG  (bottom of /webster/thread-config)
+-------------------------------------------------------------
+Every time the top 15 changes, it's recorded and shown at the bottom of the
+page as a timeline, newest first. Each entry shows:
+
+  - colors that came ON the tree (+ green chip)
+  - colors that came OFF (- red chip)
+  - colors that stayed but moved needle (Navy n7 -> n4)
+  - coverage %, total uses, and the full needle order at that moment
+
+Backed by a new THREAD_TREE_LOG tab, auto-created on first write — same
+pattern as COMMENTS and MACHINE_CONFIGS. No new infrastructure, and the rows
+stay readable in the sheet.
+
+  A Recorded At | B Window | C Signature | D Coverage | E Total Uses
+  F Summary | G Detail (JSON)
+
+HOW "CHANGED" IS DEFINED: the signature is the needle-ORDERED slot list, so a
+color moving from needle 2 to needle 5 counts as a change. That's deliberate —
+it's a change you'd re-thread for. Same 15 in the same order = no entry.
+
+Recording happens on page view (there's no cron for this page). Two people
+loading at the same second could both append; identical consecutive rows are
+collapsed on read, so a race shows as one entry. The write is best-effort and
+wrapped — if the sheet write fails the page still renders and shows a small
+warning banner instead of breaking.
+
+First load with data writes a "Baseline recorded" entry, so there's always
+something to diff against.
+
+
+2. NEW ICONS  (/new)
+--------------------
+Everything added in the last 60 days, grouped This week / Last 30 / 31-60,
+newest first, with a day count per icon. 30/60/90 day toggle at the top
+(?days=N, capped at 365). Linked from the top nav and the hamburger.
+
+WHERE THE DATE COMES FROM — this is the part worth reading, because the
+catalog had no "added" date at all:
+
+  1. SHEET — an optional "Date Added" column in MASTER. Authoritative when
+     present. Also accepts headers: Added, Added On, Date Created, Created,
+     Created On. Deliberately NOT a bare "Date" — too generic to guess at, and
+     a wrong match would mis-date the whole catalog.
+  2. DRIVE — the creation time of the icon's PNG, for every row that predates
+     the column.
+
+Sheet always wins, so re-uploading an old icon's PNG can't make it look new.
+
+The Drive lookup does NOT ask per icon (that would be ~1000 round trips). It
+asks a handful of icons which FOLDER their PNG is in, lists those folders once
+(1000 files per call), and builds an id -> createdTime map — typically 3-5
+calls for the whole catalog, cached 30 minutes. Stragglers get individual
+lookups, hard-capped at 40 so a messy Drive can't stall a render.
+
+The page states its own data coverage ("Dated 812 of 1,140 icons - 40 from the
+sheet, 772 from Drive, 328 undated"), so an empty result is never mistakable
+for a broken page.
+
+GOING FORWARD: scripts/ensure_rows/ensure_rows.py now stamps today's date into
+the Date Added column when that column exists. New flags: --date YYYY-MM-DD to
+backdate a batch, --no-date to skip. If the column doesn't exist the script
+prints a note and writes nothing — no behaviour change.
+
+RECOMMENDED (optional, 30 seconds): add a "Date Added" column to MASTER row 2.
+Everything works without it via the Drive fallback; adding it makes the dates
+exact and removes the Drive dependency for new icons.
+
+
+3. DOWNLOADS PAGE CRITERION  (/assets)
+--------------------------------------
+New "Scope" card above Categories: "Only icons added in the last 60 days".
+Off by default — existing behaviour unchanged.
+
+When on, it narrows the entire export: file counts, the ZIP contents, and each
+category now shows how many of its icons qualify, with empty categories greyed
+out and unselectable (so you can't tick a category and get an empty zip). The
+scoped list feeds the same single code path the export already used, so the
+checkbox can't drift from what actually lands in the ZIP.
+
+The slug list is resolved server-side and passed in — dating an icon can need
+a Drive call, which has no business running in the browser. If that resolution
+fails the checkbox is disabled with an explanation rather than silently
+producing wrong results.
+
+
+FILES
+-----
+  lib/threadTreeLog.ts              NEW  diff/summary logic + THREAD_TREE_LOG I/O
+  lib/iconDates.ts                  NEW  date resolution (sheet -> Drive), pure filters
+  components/ThreadTreeLog.tsx      NEW  the change-history timeline
+  app/new/page.tsx                  NEW  the New Icons page
+  lib/sheets.ts                          Icon.addedAt + "Date Added" column + date parsing
+  components/AssetDownloader.tsx         the recently-added scope
+  app/assets/page.tsx                    resolves newSlugs server-side
+  app/webster/thread-config/page.tsx     records + renders the log
+  components/Header.tsx                  "New Icons" nav link
+  components/MobileNav.tsx               "New Icons" menu item
+  scripts/ensure_rows/ensure_rows.py     stamps Date Added on new rows
+  lib/websterThreadTree.ts               (unchanged, included for completeness)
+  components/WebsterThreadTreeView.tsx   (from the layout fix)
+  components/MachineParts.tsx            (from the layout fix)
+
+
+ASSUMPTIONS FLAGGED
+-------------------
+  1. "Changes" includes reordering, not just membership. See above.
+  2. 60 days is the default everywhere, defined once as NEW_WINDOW_DAYS in
+     lib/iconDates.ts.
+  3. The log records on page view rather than on a schedule — the page is the
+     only thing that computes this tree today. If you'd rather it be recorded
+     daily regardless of whether anyone looks, that's a small GitHub Action and
+     I can add it.
+  4. Icons with no resolvable date can't appear on /new. The page says how many
+     those are rather than hiding it.
+
+
+VALIDATION
+----------
+  49-assertion unit suite on the new pure logic, all passing:
+    - diffTrees: swaps, reorder-only (must register), move magnitudes and
+      sort order, 1-based needle numbers, empty previous tree
+    - summarize: names colors, collapses long move lists
+    - dedupeConsecutive: the double-append race, and a signature legitimately
+      recurring later
+    - parseLooseDate: ISO / US month-first / 2-digit years / month names,
+      and the rejections that matter (bare numbers, 2026-02-31, 13/14/2026)
+    - daysSince / isWithinWindow: exact 60-day boundary, future dates, garbage
+    - filterNewIcons / bucketByAge: undated excluded, sort order, bucket edges
+  Then tsc --noEmit clean, next build clean, /new at 215 B in the route table.
+  ensure_rows.py: syntax-checked and CLI smoke-tested (--help).
+
+
+REDEPLOY
+--------
+  App-code change — Vercel redeploy required (auto on push).
+  The service account needs EDIT access on the sheet for the log tab (it
+  already has it — that's how MACHINE_CONFIGS is written).

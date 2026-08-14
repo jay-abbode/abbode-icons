@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import { getIconCatalog } from "@/lib/sheets";
 import AssetDownloader from "@/components/AssetDownloader";
+import { NEW_WINDOW_DAYS, filterNewIcons, getIconAgeIndex } from "@/lib/iconDates";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,14 @@ export const dynamic = "force-dynamic";
  */
 export default async function AssetsPage() {
   const catalog = await getIconCatalog();
+
+  // Resolve which icons count as "recently added" here, on the server — dating
+  // an icon can need a Drive call, which has no business in the browser. If it
+  // fails the exporter just shows the criterion as unavailable.
+  const index = await getIconAgeIndex(catalog.icons).catch(() => null);
+  const newSlugs = index
+    ? filterNewIcons(catalog.icons, index, NEW_WINDOW_DAYS).map((e) => e.icon.slug)
+    : [];
 
   return (
     <>
@@ -32,7 +41,12 @@ export default async function AssetsPage() {
           </p>
         </header>
 
-        <AssetDownloader icons={catalog.icons} categories={catalog.categories} />
+        <AssetDownloader
+          icons={catalog.icons}
+          categories={catalog.categories}
+          newSlugs={newSlugs}
+          newWindowDays={NEW_WINDOW_DAYS}
+        />
       </main>
     </>
   );

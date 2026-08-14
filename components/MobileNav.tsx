@@ -61,6 +61,7 @@ export default function MobileNav({
     { href: "/machines", label: "Thread Config" },
     { href: "/", label: "Categories" },
     { href: "/browse", label: "All icons" },
+    { href: "/new", label: "New Icons" },
     { href: "/assets", label: "Downloads" },
     { href: "/contact-sheet", label: "Generate Contact Sheet" },
     { href: "/comments", label: "Notes", badge: commentTotal },

@@ -55,6 +55,16 @@ export interface Icon {
    * absent or blank — fall back to `threadSlots` for display.
    */
   colorStops: number[];
+  /**
+   * When this icon was added to the catalog, as an ISO date (YYYY-MM-DD), or
+   * null when the sheet has no date for it.
+   *
+   * Read from an optional "Date Added" column in MASTER. That column is the
+   * authoritative answer when present; lib/iconDates falls back to the Drive
+   * creation time of the icon's PNG for rows that predate it. See that module
+   * for why there are two sources.
+   */
+  addedAt: string | null;
   sizes: {
     small: IconSize;
     medium: IconSize;
@@ -164,6 +174,7 @@ async function fetchCatalogFromSheet(): Promise<IconCatalog> {
       tags: parseTags(getCellText(row, col.tags)),
       threadSlots: parseThreadSlots(getCellText(row, col.threadColors)),
       colorStops: parseThreadStops(getCellText(row, col.colorStops)),
+      addedAt: getCellDate(row, col.dateAdded),
       sizes: {
         small: {
           inches: normalizeSizeValue(getCellText(row, col.smallInches)),
@@ -220,6 +231,7 @@ interface ColumnIndex {
   png: number;
   threadColors: number;
   colorStops: number;
+  dateAdded: number;
   smallDst: number;
   mediumDst: number;
   largeDst: number;
@@ -276,6 +288,18 @@ function buildColumnIndex(headers: string[]): ColumnIndex {
     largeDst: findHeader(["LARGE DST", "Large DST"]),
     // Optional — added for thematic search. Missing column just means no tags.
     tags: findHeader(["Tags", "TAGS", "Search Tags", "Theme Tags"]),
+    // Optional — when the icon joined the catalog. Deliberately NOT matched on a
+    // bare "Date": too generic to guess at, and a wrong match would quietly
+    // mis-date the whole catalog. Missing column falls back to Drive.
+    dateAdded: findHeader([
+      "Date Added",
+      "DATE ADDED",
+      "Added",
+      "Added On",
+      "Date Created",
+      "Created",
+      "Created On",
+    ]),
   };
 }
 
@@ -300,6 +324,7 @@ interface CellLike {
   userEnteredValue?: {
     stringValue?: string | null;
     formulaValue?: string | null;
+    numberValue?: number | null;
   } | null;
 }
 
@@ -310,8 +335,85 @@ function getCellText(row: CellLike[], colIndex: number): string {
   return (cell.formattedValue || "").trim();
 }
 
-function getCellHyperlink(row: CellLike[], colIndex: number): string | null {
+/**
+ * Read a date cell as an ISO date string (YYYY-MM-DD), or null.
+ *
+ * Two shapes have to work, because a Google Sheets date cell is a NUMBER that
+ * merely *displays* as a date:
+ *   - a real date cell  -> userEnteredValue.numberValue is a serial (days since
+ *                          1899-12-30, Sheets' epoch), formattedValue is
+ *                          whatever the user's locale renders.
+ *   - a typed-in string -> only formattedValue, in any of a few formats.
+ *
+ * The serial is preferred whenever it's there: it's locale-independent, so
+ * "3/4/2026" can't be silently read as April 3rd.
+ */
+function getCellDate(row: CellLike[], colIndex: number): string | null {
   if (colIndex < 0) return null;
+  const cell = row[colIndex];
+  if (!cell) return null;
+
+  const serial = cell.userEnteredValue?.numberValue;
+  if (typeof serial === "number" && Number.isFinite(serial) && serial > 0) {
+    return serialToIsoDate(serial);
+  }
+  return parseLooseDate(cell.formattedValue || "");
+}
+
+/** Sheets serial -> ISO date. Epoch is 1899-12-30 (Lotus 1-2-3 compatibility). */
+function serialToIsoDate(serial: number): string | null {
+  const ms = Math.floor(serial) * 86_400_000 + Date.UTC(1899, 11, 30);
+  const d = new Date(ms);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Best-effort parse of a hand-typed date. Handles ISO (2026-08-14), US
+ * (8/14/2026, 08-14-26) and month-name forms (Aug 14, 2026 / 14 Aug 2026).
+ * Anything else returns null rather than guessing — a wrong date is worse than
+ * no date, because it would put an old icon on the New Icons page.
+ */
+export function parseLooseDate(raw: string): string | null {
+  const s = (raw || "").trim();
+  if (!s) return null;
+
+  // ISO first — unambiguous.
+  const iso = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (iso) return buildIso(+iso[1], +iso[2], +iso[3]);
+
+  // US numeric: M/D/YYYY or M-D-YY. Sheets' default locale here is en-US, so
+  // month-first is the right reading of a typed string.
+  const us = s.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
+  if (us) {
+    let year = +us[3];
+    if (year < 100) year += year < 70 ? 2000 : 1900;
+    return buildIso(year, +us[1], +us[2]);
+  }
+
+  // Month-name forms. Date.parse handles these consistently enough, but only
+  // trust it when the string actually contains a month name — otherwise it
+  // happily "parses" things like a bare number.
+  if (/[a-z]{3}/i.test(s)) {
+    const t = Date.parse(s);
+    if (!Number.isNaN(t)) {
+      const d = new Date(t);
+      return buildIso(d.getFullYear(), d.getMonth() + 1, d.getDate());
+    }
+  }
+  return null;
+}
+
+function buildIso(year: number, month: number, day: number): string | null {
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null;
+  if (year < 1970 || year > 2200 || month < 1 || month > 12 || day < 1 || day > 31) return null;
+  const d = new Date(Date.UTC(year, month - 1, day));
+  // Rejects impossible dates like 2026-02-31, which would otherwise roll over.
+  if (d.getUTCMonth() !== month - 1 || d.getUTCDate() !== day) return null;
+  return d.toISOString().slice(0, 10);
+}
+
+function getCellHyperlink(row: CellLike[], colIndex: number): string | null {  if (colIndex < 0) return null;
   const cell = row[colIndex];
   if (!cell) return null;
 
