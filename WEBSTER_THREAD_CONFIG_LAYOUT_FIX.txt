@@ -1,0 +1,60 @@
+WEBSTER THREAD CONFIG — layout fix
+==================================
+
+ROOT CAUSE
+----------
+ThreadTree built its wrapper class as:
+
+    `${widthClass ?? layout.widthClass} max-w-full flex-none`
+
+so a caller-supplied "w-full max-w-[20rem]" became
+"w-full max-w-[20rem] max-w-full flex-none". Same specificity, so source
+order in the compiled stylesheet decides — and Tailwind emits .max-w-full
+AFTER .max-w-[20rem]. max-width:100% won, the SVG stretched to the full card
+width, and the text column got crushed to a sliver, which is what made the
+three stat boxes overlap into unreadable mush.
+
+Now:
+
+    `${widthClass ?? `${layout.widthClass} max-w-full`} flex-none`
+
+max-w-full is only the guard on the DEFAULT width; an explicit widthClass is
+respected as written.
+
+NOTE: this bug also affected MachineDetail / MachineModal, which pass
+"w-full max-w-[40rem]" and "w-full max-w-[24rem]" — those diagrams were
+rendering full-container-width too. Both are fixed by the same one-liner.
+
+ALSO CHANGED
+------------
+  - Graphic is much smaller: w-36 (144px) on mobile, w-40 (160px) from sm up,
+    fixed and flex-none so it can never grow into the copy again. Was rendering
+    ~1080px wide.
+  - Stat cells: font-ui instead of font-display (the serif's figures are wide
+    enough that a 6-digit total overflowed), text-lg instead of text-2xl,
+    min-w-0 + truncate, short labels (Coverage / On tree / Palette), and a
+    single 3-up strip with hairline dividers.
+  - Card is now a clean two-column flex (tree | copy) with min-w-0 on the copy,
+    so nothing overflows at any width.
+  - Threads list is responsive instead of a fixed 8-column grid: mobile shows
+    Needle / swatch / Color / Total / Share; Icons, Text and the distribution
+    bar appear from md up. No horizontal scroll on a floor tablet.
+
+FILES
+-----
+  components/MachineParts.tsx           the max-w-full fix (one line)
+  components/WebsterThreadTreeView.tsx  smaller tree + rebuilt stats + responsive list
+
+Only these two files changed — the rest of the previous delivery is untouched,
+so this drops straight on top of it.
+
+VALIDATION
+----------
+  tsc --noEmit clean; next build clean; /webster/thread-config at 2.4 kB.
+  Verified in the compiled CSS that both responsive grid templates and w-36 /
+  sm:w-40 were generated, and in the built server chunk that an explicit
+  widthClass no longer has max-w-full appended.
+
+REDEPLOY
+--------
+  App-code change — Vercel redeploy required (auto on push).

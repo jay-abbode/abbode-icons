@@ -74,7 +74,11 @@ export function ThreadTree({
     .map(Number)
     .sort((a, b) => a - b);
   return (
-    <div className={`${widthClass ?? layout.widthClass} max-w-full flex-none`}>
+    // `max-w-full` is only a guard for the DEFAULT width. Appending it to a
+    // caller-supplied widthClass silently beat any max-w-* in that class —
+    // Tailwind emits .max-w-full after .max-w-[Nrem], so the last one wins and
+    // the diagram grew to fill its container.
+    <div className={`${widthClass ?? `${layout.widthClass} max-w-full`} flex-none`}>
       <svg
         viewBox={`0 0 ${layout.w} ${layout.h}`}
         className="block h-auto w-full"
