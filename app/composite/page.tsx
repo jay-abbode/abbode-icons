@@ -1,9 +1,15 @@
 import Header from "@/components/Header";
 import CompositeView from "@/components/CompositeView";
+import CompositeChartView from "@/components/CompositeChartView";
 import {
   getCompositeStats,
   type CompositeSnapshot,
 } from "@/lib/compositeStats";
+import {
+  getCompositeDaily,
+  EMPTY_DAILY,
+  type CompositeDailySnapshot,
+} from "@/lib/compositeDaily";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +29,13 @@ export default async function CompositePage() {
     snapshot = await getCompositeStats();
   } catch {
     snapshot = EMPTY;
+  }
+
+  let daily: CompositeDailySnapshot;
+  try {
+    daily = await getCompositeDaily();
+  } catch {
+    daily = EMPTY_DAILY;
   }
 
   return (
@@ -48,6 +61,13 @@ export default async function CompositePage() {
           )}
         </div>
 
+        <CompositeChartView daily={daily} />
+
+        <div className="mb-4 border-t border-parchment pt-8">
+          <h2 className="font-display text-2xl font-medium tracking-tight text-espresso">
+            Rolling windows
+          </h2>
+        </div>
         <CompositeView snapshot={snapshot} />
       </main>
     </>

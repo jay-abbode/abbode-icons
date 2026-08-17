@@ -60,6 +60,7 @@ OUT_TAB = "ORDER_STATS"
 THREAD_STATS_TAB = "THREAD_STATS"   # rolling-3-month per-design jobs for the Machines page
 ICON_WINDOWS_TAB = "ICON_WINDOWS"   # per-icon 3/6/12-month order counts, side by side
 COMPOSITE_TAB = "COMPOSITE"
+COMPOSITE_DAILY_TAB = "COMPOSITE_DAILY"  # Date | Slot | Icons | Text | Total — feeds the range chart
 ICON_TRENDS_TAB = "ICON_TRENDS"     # rising/spiking icons (recent vs previous window)
 COLOR_TRENDS_TAB = "COLOR_TRENDS"   # rising/spiking TEXT colors
 USAGE_TAB = "PRODUCT_USAGE"         # most-common icons/fonts/colors per product & template
@@ -592,6 +593,7 @@ def aggregate(order_lines, matcher, catalog, trend_days=TREND_DAYS_DEFAULT, prod
     counts_3mo = {}   # rolling-3-month subset, for the Machines page (THREAD_STATS)
     counts_6mo = {}   # rolling-6-month subset, for the icon report (ICON_WINDOWS)
     composite = {w: {} for w in WINDOWS}
+    composite_daily = {}  # "YYYY-MM-DD" -> {slot: {"icons": n, "text": n}}
     icon_trends = {}
     color_trends = {}
     usage = {w: {} for w in USAGE_WINDOWS}
@@ -612,6 +614,14 @@ def aggregate(order_lines, matcher, catalog, trend_days=TREND_DAYS_DEFAULT, prod
             return "previous"
         return None
 
+    def day_key(created_at_iso):
+        """UTC calendar day of the order, or None if unparseable."""
+        try:
+            dt = datetime.fromisoformat((created_at_iso or "").replace("Z", "+00:00"))
+            return dt.astimezone(timezone.utc).date().isoformat()
+        except Exception:
+            return None
+
     for created_at, li in order_lines:
         sku = li.get("sku")
         variant = li.get("variant") or {}
@@ -626,6 +636,7 @@ def aggregate(order_lines, matcher, catalog, trend_days=TREND_DAYS_DEFAULT, prod
         # Usage cell for this line, if its product is a mapped template product.
         cell = product_map.get(product.get("id"))
         line_icons = set()
+        day = day_key(created_at)
 
         # text thread color (once per line)
         tslot = parse_color_slot(attrs.get("color-text-one") or attrs.get("font_color"))
@@ -633,6 +644,10 @@ def aggregate(order_lines, matcher, catalog, trend_days=TREND_DAYS_DEFAULT, prod
             for w in wins:
                 d = composite[w].setdefault(tslot, {"icons": 0, "text": 0})
                 d["text"] += 1
+            if day:
+                dd = composite_daily.setdefault(day, {}).setdefault(
+                    tslot, {"icons": 0, "text": 0})
+                dd["text"] += 1
             if tb:
                 color_trends.setdefault(tslot, {"recent": 0, "previous": 0})[tb] += 1
 
@@ -657,6 +672,10 @@ def aggregate(order_lines, matcher, catalog, trend_days=TREND_DAYS_DEFAULT, prod
                 for w in wins:
                     d = composite[w].setdefault(s, {"icons": 0, "text": 0})
                     d["icons"] += 1
+                if day:
+                    dd = composite_daily.setdefault(day, {}).setdefault(
+                        s, {"icons": 0, "text": 0})
+                    dd["icons"] += 1
 
         # Product Usage report: tally icons/fonts/text colors into this line's
         # (base product, template) cell — once each per line, in each window the
@@ -710,7 +729,8 @@ def aggregate(order_lines, matcher, catalog, trend_days=TREND_DAYS_DEFAULT, prod
                     merged[lk] = [name, cnt, cnt]
             types["color"] = {v[0]: v[1] for v in merged.values()}
 
-    return counts, counts_3mo, counts_6mo, composite, icon_trends, color_trends, usage
+    return (counts, counts_3mo, counts_6mo, composite, composite_daily,
+            icon_trends, color_trends, usage)
 
 
 def catalog_slots_for(canon, catalog):
@@ -864,6 +884,27 @@ def write_composite(sheets, sheet_id, composite, coverage, today):
         spreadsheetId=sheet_id, range=f"{COMPOSITE_TAB}!A1",
         valueInputOption="RAW", body={"values": rows}).execute()
     return len(rows) - 1
+
+
+def write_composite_daily(sheets, sheet_id, composite_daily, coverage, today):
+    """Sparse per-day per-slot tallies for the range chart on /composite.
+
+    One row per (date, slot) with any usage. Updated/Coverage are written on
+    the first data row only. ~24 slots x 366 days worst case fits well under
+    the 20k clear range.
+    """
+    header = ["Date", "Slot", "Icons", "Text", "Total", "Updated", "Coverage"]
+    rows = [header]
+    first = True
+    for day in sorted(composite_daily.keys()):
+        for slot in sorted(composite_daily[day].keys()):
+            d = composite_daily[day][slot]
+            row = [day, slot, d["icons"], d["text"], d["icons"] + d["text"]]
+            row += [today, coverage] if first else ["", ""]
+            first = False
+            rows.append(row)
+    return _ensure_clear_update(sheets, sheet_id, COMPOSITE_DAILY_TAB, rows,
+                                clear_range="A1:Z20000")
 
 
 def _ensure_clear_update(sheets, sheet_id, tab, rows, clear_range="A1:Z5000"):
@@ -1092,7 +1133,8 @@ def main():
     # Materialize once so the same lines feed both the existing per-icon/color
     # aggregate and the new DTC monthly x channel trends — one Shopify scan.
     order_lines = list(scan_orders(shop, token, args.months, state, args.limit))
-    counts, counts_3mo, counts_6mo, composite, icon_trends, color_trends, usage = aggregate(
+    (counts, counts_3mo, counts_6mo, composite, composite_daily,
+     icon_trends, color_trends, usage) = aggregate(
         order_lines, matcher, catalog, args.trend_days, product_map)
     trends = aggregate_trends(order_lines, product_map, catalog)
 
@@ -1117,6 +1159,11 @@ def main():
 
     if args.dry_run:
         print("\n--dry-run: nothing written.")
+        if composite_daily:
+            days = sorted(composite_daily.keys())
+            n_rows = sum(len(v) for v in composite_daily.values())
+            print(f"  Daily composite: {len(days)} days ({days[0]} → {days[-1]}), "
+                  f"{n_rows} (date, slot) rows for {COMPOSITE_DAILY_TAB}")
         health = {"SELLS": 0, "TOO NEW": 0, "DEAD": 0, "ZERO (age unknown)": 0}
         dead = []
         for name, row in catalog.items():
@@ -1205,12 +1252,13 @@ def main():
     n9 = write_trends_item_colors(sheets, args.sheet_id, trends["colors"], coverage, today)
     n10 = write_trends_categories(sheets, args.sheet_id, trends["categories"], coverage, today)
     n11 = write_icon_windows(sheets, args.sheet_id, counts, counts_3mo, counts_6mo, catalog, today)
+    n12 = write_composite_daily(sheets, args.sheet_id, composite_daily, coverage, today)
     print(f"\nWrote {n1} rows to {OUT_TAB}, {n2} to {COMPOSITE_TAB}, "
           f"{n3} to {ICON_TRENDS_TAB}, {n4} to {COLOR_TRENDS_TAB}, "
           f"{n5} to {USAGE_TAB}, {n6} to {THREAD_STATS_TAB}, "
           f"{n7} to {ICON_HEALTH_TAB}, {n8} to {TRENDS_TS_TAB}, "
           f"{n9} to {TRENDS_COLORS_TAB}, {n10} to {TRENDS_CATS_TAB}, "
-          f"{n11} to {ICON_WINDOWS_TAB}. "
+          f"{n11} to {ICON_WINDOWS_TAB}, {n12} to {COMPOSITE_DAILY_TAB}. "
           "The app will show them within ~60s.")
 
 
