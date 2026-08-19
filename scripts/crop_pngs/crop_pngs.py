@@ -148,7 +148,10 @@ def read_icon_catalog(sheet_id: str, creds) -> list[IconRow]:
         values = row.get("values", [])
         name = _cell_text(values, col_icon)
         category = _cell_text(values, col_cat)
-        if not name or not category:
+        # NOTE: Category may be blank — new portal rows are created name-only and
+        # categorized later. Requiring it here silently hid every NEW icon from
+        # auto-crop. Only the name is required.
+        if not name:
             continue
         file_id = _extract_drive_id(_cell_hyperlink(values, col_png))
         slug = _make_slug(name, seen)
@@ -344,6 +347,14 @@ def crop_png_bytes(
         }
 
     padded = expand_bbox(bbox, padding, original_size)
+    if padded == (0, 0, original_size[0], original_size[1]):
+        # Nothing outside the padded bbox to trim — file is exactly tight
+        # already, even if the design's area ratio is below the skip threshold.
+        return None, {
+            "status": "already_tight",
+            "original_size": original_size,
+            "foreground_ratio": ratio,
+        }
     cropped = img.crop(padded)
 
     out = BytesIO()
@@ -511,11 +522,17 @@ def main():
     print(f"  Found {len(icons)} icons")
 
     only_names = _load_only_names(args.only, args.only_file)
+    missing_requested: list[str] = []
     if only_names is not None:
         before = len(icons)
         icons = [i for i in icons if _norm_name(i.name) in only_names]
+        matched_norm = {_norm_name(i.name) for i in icons}
+        missing_requested = sorted(only_names - matched_norm)
         print(f"  --only filter: {len(icons)} of {before} icon(s) match "
               f"({len(only_names)} name(s) requested)")
+        if missing_requested:
+            for n in missing_requested:
+                print(f"    !! requested but NOT in the sheet: \"{n}\"")
 
     if args.limit:
         icons = icons[: args.limit]
@@ -565,8 +582,72 @@ def main():
         kb = total_saved / 1024
         print(f"  bytes_saved        {kb:.1f} KB ({total_saved} bytes)")
 
+    # Per-icon visibility on targeted runs — a skip must never look like a crop.
+    if only_names is not None and results:
+        print()
+        print("Per-icon outcome:")
+        for r in results:
+            if r.status == "cropped":
+                print(f"  CROPPED        {r.icon.name}  {r.original_size} -> {r.new_size}")
+            elif r.status == "already_tight":
+                print(f"  ALREADY TIGHT  {r.icon.name}  (>= {SKIP_IF_FOREGROUND_RATIO_ABOVE:.0%} foreground — nothing to trim)")
+            else:
+                print(f"  {r.status.upper():14s} {r.icon.name}" + (f"  ({r.error})" if r.error else ""))
+
+    # Verification: after applying, re-download every cropped file and prove the
+    # bytes now sitting in Drive are tight. The run only says OK if this passes.
+    verify_failures: list[str] = []
+    if args.apply:
+        cropped = [r for r in results if r.status == "cropped"]
+        if cropped:
+            print(f"\n  Verifying {len(cropped)} cropped file(s) in Drive...")
+            for r in cropped:
+                try:
+                    data = download_png(drive, r.icon.png_file_id)
+                    img = Image.open(BytesIO(data))
+                    img.load()
+                    bbox = compute_crop_bbox(img)
+                    ok = (bbox is not None and
+                          expand_bbox(bbox, args.padding, img.size)
+                          == (0, 0, img.size[0], img.size[1]))
+                    if ok:
+                        print(f"    VERIFIED  {r.icon.name}")
+                    else:
+                        verify_failures.append(
+                            f'"{r.icon.name}" — Drive file is NOT tight after crop')
+                except Exception as e:
+                    verify_failures.append(
+                        f'"{r.icon.name}" — verify re-download failed: {e}')
+
     report_path = write_report(results, DEFAULT_REPORT_DIR, args.apply)
     print(f"\n  Wrote report: {report_path}")
+
+    # Hard-fail gate: any requested icon that did not end up verifiably cropped
+    # (or confirmed already tight) fails the run loudly. No silent outcomes.
+    failures: list[str] = []
+    for n in missing_requested:
+        failures.append(f'"{n}" — not found in the {SHEET_TAB} sheet (no row with that Icon name)')
+    for r in results:
+        if r.status == "no_png":
+            failures.append(f'"{r.icon.name}" — sheet row has no PNG link (backfill never linked it)')
+        elif r.status == "no_foreground":
+            failures.append(f'"{r.icon.name}" — no design detected in the PNG (blank or fully-background image)')
+        elif r.status == "error":
+            failures.append(f'"{r.icon.name}" — {r.error}')
+    failures.extend(verify_failures)
+
+    if failures:
+        print()
+        print("!" * 64)
+        print("  AUTO-CROP FAILED — the following were NOT cropped:")
+        for f in failures:
+            print(f"    !! {f}")
+        print("!" * 64)
+        sys.exit(2)
+
+    if only_names is not None:
+        print(f"\n  AUTO-CROP OK — all {len(results)} requested icon(s) accounted for"
+              + (" and verified tight in Drive." if args.apply else " (dry run)."))
 
     if not args.apply:
         print()

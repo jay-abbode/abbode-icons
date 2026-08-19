@@ -656,6 +656,14 @@ def main() -> None:
     if not args.apply:
         print("\nThis was a preview. Re-run with --apply to make the changes.")
 
+    failed = [name for name, status in results if str(status).startswith("FAILED")]
+    if failed:
+        print("\n" + "!" * 64)
+        print(f"  RUN FAILED — step(s) did not complete: {', '.join(failed)}")
+        print("  Scroll up to that step's output for the exact icon + reason.")
+        print("!" * 64)
+        sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
