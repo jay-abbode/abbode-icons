@@ -138,10 +138,19 @@ def parse_ofm(data: bytes) -> OfmColormap:
     ncol = struct.unpack_from("<I", status, 0x2C)[0]
     if not (1 <= ncol <= 64):
         raise ValueError(f"implausible stop count {ncol}")
-    blocks = struct.unpack_from(f"<{ncol}I", status, 0x32)
+
+    # DesignShop caps this stream's per-stop stitch table at 20 entries, so a
+    # design with more stops ships a truncated table (first seen: Red Christmas
+    # Tree Land Rover, 23 stops / 130-byte stream). Read what the stream holds;
+    # the stitch-sum check only runs on complete tables — on truncated ones it
+    # would always fail for the wrong reason. The color-change count check
+    # below still gates every file.
+    avail = max(0, (len(status) - 0x32) // 4)
+    nblocks = min(ncol, avail)
+    blocks = struct.unpack_from(f"<{nblocks}I", status, 0x32)
 
     warnings = []
-    if sum(blocks) != total:
+    if nblocks == ncol and sum(blocks) != total:
         warnings.append(
             f"block stitch counts {sum(blocks)} != total {total} — header layout may differ"
         )

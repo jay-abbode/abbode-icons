@@ -1,0 +1,121 @@
+[
+  {
+    "slug": "eight-point-stars",
+    "name": "Eight Point Stars",
+    "category": "Holiday 26",
+    "file_id": "1Aa8A8SZhMGeJpIkUbkseW_JVgo5MSdc7",
+    "status": "cropped",
+    "original_size": [
+      509,
+      490
+    ],
+    "new_size": [
+      466,
+      446
+    ],
+    "saved_bytes": 13542,
+    "error": null
+  },
+  {
+    "slug": "black-cab",
+    "name": "Black Cab",
+    "category": "Holiday 26",
+    "file_id": "1ilNWSJX_v4LLwF2ZpNvb5karJtDX4KBx",
+    "status": "cropped",
+    "original_size": [
+      660,
+      322
+    ],
+    "new_size": [
+      616,
+      276
+    ],
+    "saved_bytes": -19541,
+    "error": null
+  },
+  {
+    "slug": "champagne-coup",
+    "name": "Champagne Coup",
+    "category": "Holiday 26",
+    "file_id": "1YK2jkPgHa1G9UDFRR-doTLbC-gC3Swpy",
+    "status": "cropped",
+    "original_size": [
+      397,
+      509
+    ],
+    "new_size": [
+      350,
+      460
+    ],
+    "saved_bytes": -19437,
+    "error": null
+  },
+  {
+    "slug": "champagne-tower",
+    "name": "Champagne Tower",
+    "category": "Holiday 26",
+    "file_id": "1JUSO8pLGx1ZVG5P1LkxDs2u_aMbG5LV6",
+    "status": "cropped",
+    "original_size": [
+      399,
+      509
+    ],
+    "new_size": [
+      355,
+      465
+    ],
+    "saved_bytes": -6936,
+    "error": null
+  },
+  {
+    "slug": "cocktail-shaker",
+    "name": "Cocktail Shaker",
+    "category": "Holiday 26",
+    "file_id": "1tMhqc6eX0wcsUjrL3vDX2IRxVJGVPV72",
+    "status": "cropped",
+    "original_size": [
+      276,
+      511
+    ],
+    "new_size": [
+      232,
+      465
+    ],
+    "saved_bytes": -21934,
+    "error": null
+  },
+  {
+    "slug": "ribbon-candy",
+    "name": "Ribbon Candy",
+    "category": "Holiday 26",
+    "file_id": "1V_9_wuApgJHzBpyNWKv2iXhmc9FrloxM",
+    "status": "cropped",
+    "original_size": [
+      510,
+      276
+    ],
+    "new_size": [
+      466,
+      231
+    ],
+    "saved_bytes": 10260,
+    "error": null
+  },
+  {
+    "slug": "tassel-key",
+    "name": "Tassel Key",
+    "category": "Holiday 26",
+    "file_id": "1SKqcDQdlKwMXqBDFGKEgcZsr0xYUJqxp",
+    "status": "cropped",
+    "original_size": [
+      450,
+      510
+    ],
+    "new_size": [
+      401,
+      461
+    ],
+    "saved_bytes": 13172,
+    "error": null
+  }
+]

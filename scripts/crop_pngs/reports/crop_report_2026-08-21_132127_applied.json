@@ -1,0 +1,172 @@
+[
+  {
+    "slug": "black-claw",
+    "name": "Black Claw",
+    "category": "",
+    "file_id": "1EntfkUztTXfpw92CnNGtK71og30G9gpg",
+    "status": "cropped",
+    "original_size": [
+      510,
+      477
+    ],
+    "new_size": [
+      468,
+      430
+    ],
+    "saved_bytes": -1048,
+    "error": null
+  },
+  {
+    "slug": "black-cross-stitch-heart",
+    "name": "Black Cross Stitch Heart",
+    "category": "",
+    "file_id": "1bFdXGn9bEZUjVzncyBmr9kdIk3UrfGO3",
+    "status": "cropped",
+    "original_size": [
+      435,
+      387
+    ],
+    "new_size": [
+      389,
+      340
+    ],
+    "saved_bytes": -27688,
+    "error": null
+  },
+  {
+    "slug": "blue-bow",
+    "name": "Blue Bow",
+    "category": "",
+    "file_id": "1EHTBdNN1jjSD_h9tqczXVswSBTAKCTxZ",
+    "status": "cropped",
+    "original_size": [
+      510,
+      417
+    ],
+    "new_size": [
+      467,
+      373
+    ],
+    "saved_bytes": -4292,
+    "error": null
+  },
+  {
+    "slug": "blue-cowboy-boot",
+    "name": "Blue Cowboy Boot",
+    "category": "",
+    "file_id": "1a96T73_ljQKoK-Qkm5kQOHypZQSmO7oz",
+    "status": "cropped",
+    "original_size": [
+      399,
+      521
+    ],
+    "new_size": [
+      355,
+      466
+    ],
+    "saved_bytes": 17082,
+    "error": null
+  },
+  {
+    "slug": "pink-bow",
+    "name": "Pink Bow",
+    "category": "",
+    "file_id": "1dnZc338IBS0RwLsDtf_MEZ9ojcGUneiq",
+    "status": "cropped",
+    "original_size": [
+      510,
+      417
+    ],
+    "new_size": [
+      467,
+      373
+    ],
+    "saved_bytes": -17388,
+    "error": null
+  },
+  {
+    "slug": "pink-claw",
+    "name": "Pink Claw",
+    "category": "",
+    "file_id": "1duZ3WB1JRLI_n6qGVzJBNWgPy8SxnmDp",
+    "status": "cropped",
+    "original_size": [
+      510,
+      477
+    ],
+    "new_size": [
+      468,
+      430
+    ],
+    "saved_bytes": 10402,
+    "error": null
+  },
+  {
+    "slug": "pink-heart",
+    "name": "Pink Heart",
+    "category": "",
+    "file_id": "1OoqEpwQrRlJcXFcYQuXljC1BihyG-1sY",
+    "status": "cropped",
+    "original_size": [
+      378,
+      359
+    ],
+    "new_size": [
+      334,
+      312
+    ],
+    "saved_bytes": -9083,
+    "error": null
+  },
+  {
+    "slug": "red-bikini",
+    "name": "Red Bikini",
+    "category": "",
+    "file_id": "12Bpo6Hj9jaWkJIepSPuj1uAcGUN8hYkv",
+    "status": "cropped",
+    "original_size": [
+      299,
+      509
+    ],
+    "new_size": [
+      254,
+      464
+    ],
+    "saved_bytes": 3502,
+    "error": null
+  },
+  {
+    "slug": "red-claw",
+    "name": "Red Claw",
+    "category": "",
+    "file_id": "17UOJPMnUjk8LO_sAUL8SYCfEC9oxjPLd",
+    "status": "cropped",
+    "original_size": [
+      510,
+      477
+    ],
+    "new_size": [
+      468,
+      430
+    ],
+    "saved_bytes": 23742,
+    "error": null
+  },
+  {
+    "slug": "white-heart",
+    "name": "White Heart",
+    "category": "",
+    "file_id": "1-1Ae04qtRLXqOQJpLlmCbSYDmTyet3NV",
+    "status": "cropped",
+    "original_size": [
+      378,
+      359
+    ],
+    "new_size": [
+      334,
+      312
+    ],
+    "saved_bytes": -17487,
+    "error": null
+  }
+]

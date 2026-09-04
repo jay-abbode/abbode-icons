@@ -1,0 +1,325 @@
+[
+  {
+    "slug": "bear",
+    "name": "Bear",
+    "category": "Fall 26",
+    "file_id": "1U-inZrdtXPkJ0JAJn-WOQjOl_uXMFOgt",
+    "status": "cropped",
+    "original_size": [
+      289,
+      513
+    ],
+    "new_size": [
+      247,
+      468
+    ],
+    "saved_bytes": 14905,
+    "error": null
+  },
+  {
+    "slug": "cow",
+    "name": "Cow",
+    "category": "Fall 26",
+    "file_id": "1oyMUFaXdfJRdJpcC070nEZpSpQXtN0ex",
+    "status": "cropped",
+    "original_size": [
+      508,
+      343
+    ],
+    "new_size": [
+      461,
+      297
+    ],
+    "saved_bytes": -14978,
+    "error": null
+  },
+  {
+    "slug": "rugby-shirt",
+    "name": "Rugby Shirt",
+    "category": "Fall 26",
+    "file_id": "1vd3rhBSuIUU53nFFp8nKhHBs0BwjvfbH",
+    "status": "cropped",
+    "original_size": [
+      494,
+      509
+    ],
+    "new_size": [
+      450,
+      463
+    ],
+    "saved_bytes": 26680,
+    "error": null
+  },
+  {
+    "slug": "fig",
+    "name": "Fig",
+    "category": "Fall 26",
+    "file_id": "1zNrAiFQg--UTYayUVYhDa5TZUyWwIagr",
+    "status": "cropped",
+    "original_size": [
+      451,
+      509
+    ],
+    "new_size": [
+      408,
+      464
+    ],
+    "saved_bytes": 18816,
+    "error": null
+  },
+  {
+    "slug": "phone-booth",
+    "name": "Phone Booth",
+    "category": "Holiday 26",
+    "file_id": "1UCq3NK3FVP8HjCnQwsLV1L0sMeeXVYJS",
+    "status": "cropped",
+    "original_size": [
+      228,
+      510
+    ],
+    "new_size": [
+      182,
+      465
+    ],
+    "saved_bytes": 23430,
+    "error": null
+  },
+  {
+    "slug": "trophy",
+    "name": "Trophy",
+    "category": "Holiday 26",
+    "file_id": "1wqjI9MOpi8yeSpKw6CsDdGQf64kDnWeq",
+    "status": "cropped",
+    "original_size": [
+      508,
+      500
+    ],
+    "new_size": [
+      465,
+      453
+    ],
+    "saved_bytes": 45255,
+    "error": null
+  },
+  {
+    "slug": "blue-moon",
+    "name": "Blue Moon",
+    "category": "Holiday 26",
+    "file_id": "1Sa33rWkGQsMU-GabhN9-iow8NiQppPBN",
+    "status": "cropped",
+    "original_size": [
+      435,
+      431
+    ],
+    "new_size": [
+      391,
+      384
+    ],
+    "saved_bytes": 39534,
+    "error": null
+  },
+  {
+    "slug": "disco-ball",
+    "name": "Disco Ball",
+    "category": "Holiday 26",
+    "file_id": "1VkArpjVoE0lTzBBKDkt9B2_YGv9rakAe",
+    "status": "cropped",
+    "original_size": [
+      435,
+      429
+    ],
+    "new_size": [
+      391,
+      380
+    ],
+    "saved_bytes": -2546,
+    "error": null
+  },
+  {
+    "slug": "spool-of-thread",
+    "name": "Spool of Thread",
+    "category": "Holiday 26",
+    "file_id": "1w1rWtoWXE0cKdPQ_RaBkHso8CwBxL-G_",
+    "status": "cropped",
+    "original_size": [
+      508,
+      458
+    ],
+    "new_size": [
+      463,
+      413
+    ],
+    "saved_bytes": 19444,
+    "error": null
+  },
+  {
+    "slug": "crescent-moon",
+    "name": "Crescent Moon",
+    "category": "Holiday 26",
+    "file_id": "1TL9-5Iim3YRaZH3xugkvTuKBzldvLv0D",
+    "status": "cropped",
+    "original_size": [
+      445,
+      511
+    ],
+    "new_size": [
+      400,
+      467
+    ],
+    "saved_bytes": 10507,
+    "error": null
+  },
+  {
+    "slug": "bird-scissors",
+    "name": "Bird Scissors",
+    "category": "Holiday 26",
+    "file_id": "1BiZN2YZIWgLi8r4ZJwLjSODLTsKhomOh",
+    "status": "cropped",
+    "original_size": [
+      262,
+      514
+    ],
+    "new_size": [
+      219,
+      468
+    ],
+    "saved_bytes": 1477,
+    "error": null
+  },
+  {
+    "slug": "face-sun",
+    "name": "Face Sun",
+    "category": "Holiday 26",
+    "file_id": "15tSGngY2Z5jlyyw_OwxkA9VcmXp4g6jU",
+    "status": "cropped",
+    "original_size": [
+      507,
+      510
+    ],
+    "new_size": [
+      463,
+      464
+    ],
+    "saved_bytes": 30467,
+    "error": null
+  },
+  {
+    "slug": "face-star",
+    "name": "Face Star",
+    "category": "Holiday 26",
+    "file_id": "1Ck-WZn1IxOq-V_3jC2rRSM9qG5kBpp7j",
+    "status": "cropped",
+    "original_size": [
+      509,
+      487
+    ],
+    "new_size": [
+      465,
+      440
+    ],
+    "saved_bytes": 59576,
+    "error": null
+  },
+  {
+    "slug": "yellow-moon",
+    "name": "Yellow Moon",
+    "category": "Holiday 26",
+    "file_id": "1ckBoPY3mo3eGpxXv3-lRHmeD0aJg5YSy",
+    "status": "cropped",
+    "original_size": [
+      435,
+      431
+    ],
+    "new_size": [
+      391,
+      384
+    ],
+    "saved_bytes": 34253,
+    "error": null
+  },
+  {
+    "slug": "uk-heart",
+    "name": "UK Heart",
+    "category": "Holiday 26",
+    "file_id": "1WYeY4r_jQO8qCrJdS6Or1YOob2IGySaT",
+    "status": "cropped",
+    "original_size": [
+      436,
+      399
+    ],
+    "new_size": [
+      387,
+      351
+    ],
+    "saved_bytes": 28759,
+    "error": null
+  },
+  {
+    "slug": "green-rugby-shirt",
+    "name": "Green Rugby Shirt",
+    "category": "Holiday 26",
+    "file_id": "1fgGBX3akGvWi1BP9DYMsOu8etzVG9Wl-",
+    "status": "cropped",
+    "original_size": [
+      494,
+      509
+    ],
+    "new_size": [
+      450,
+      463
+    ],
+    "saved_bytes": 36509,
+    "error": null
+  },
+  {
+    "slug": "striped-rugby-shirt",
+    "name": "Striped Rugby Shirt",
+    "category": "Holiday 26",
+    "file_id": "10RnVHzNJSqDy_0aBmWS9qxRiwaLKFN-I",
+    "status": "cropped",
+    "original_size": [
+      496,
+      509
+    ],
+    "new_size": [
+      451,
+      463
+    ],
+    "saved_bytes": 33076,
+    "error": null
+  },
+  {
+    "slug": "red-christmas-tree-land-rover",
+    "name": "Red Christmas Tree Land Rover",
+    "category": "Fall 26",
+    "file_id": "1TuPmfi8YYcYCpvHRxbs0DPzKeS-Xjaoo",
+    "status": "cropped",
+    "original_size": [
+      661,
+      413
+    ],
+    "new_size": [
+      614,
+      366
+    ],
+    "saved_bytes": 7394,
+    "error": null
+  },
+  {
+    "slug": "red-nail-polish",
+    "name": "Red Nail Polish",
+    "category": "",
+    "file_id": "1yXgQdg1OGAsdEojfa2YvbgE-s0vV337e",
+    "status": "cropped",
+    "original_size": [
+      255,
+      510
+    ],
+    "new_size": [
+      212,
+      462
+    ],
+    "saved_bytes": 11531,
+    "error": null
+  }
+]

@@ -1,0 +1,631 @@
+[
+  {
+    "slug": "bear",
+    "name": "Bear",
+    "category": "Fall 26",
+    "file_id": "1U-inZrdtXPkJ0JAJn-WOQjOl_uXMFOgt",
+    "status": "cropped",
+    "original_size": [
+      289,
+      513
+    ],
+    "new_size": [
+      246,
+      468
+    ],
+    "saved_bytes": 16880,
+    "error": null
+  },
+  {
+    "slug": "chipmunk",
+    "name": "Chipmunk",
+    "category": "Fall 26",
+    "file_id": "1WuiDqanZ14wPrRvTlO1gVLcLi3eseIAY",
+    "status": "cropped",
+    "original_size": [
+      509,
+      281
+    ],
+    "new_size": [
+      460,
+      235
+    ],
+    "saved_bytes": 14086,
+    "error": null
+  },
+  {
+    "slug": "cow",
+    "name": "Cow",
+    "category": "Fall 26",
+    "file_id": "1oyMUFaXdfJRdJpcC070nEZpSpQXtN0ex",
+    "status": "cropped",
+    "original_size": [
+      508,
+      343
+    ],
+    "new_size": [
+      461,
+      297
+    ],
+    "saved_bytes": -15347,
+    "error": null
+  },
+  {
+    "slug": "fox",
+    "name": "Fox",
+    "category": "Fall 26",
+    "file_id": "1TGdDB_bcsE6Ka7vYJQZk1vEOc_9Dnsf5",
+    "status": "cropped",
+    "original_size": [
+      431,
+      508
+    ],
+    "new_size": [
+      383,
+      461
+    ],
+    "saved_bytes": 6592,
+    "error": null
+  },
+  {
+    "slug": "goose",
+    "name": "Goose",
+    "category": "Fall 26",
+    "file_id": "1moi7Ex7g4J-GGRX8dTggSaf3EQas6G-Y",
+    "status": "cropped",
+    "original_size": [
+      461,
+      509
+    ],
+    "new_size": [
+      415,
+      463
+    ],
+    "saved_bytes": -1214,
+    "error": null
+  },
+  {
+    "slug": "moose",
+    "name": "Moose",
+    "category": "Fall 26",
+    "file_id": "1E-JjYu8zor3JSmk3PjyaZuYib-DyjD5k",
+    "status": "cropped",
+    "original_size": [
+      509,
+      438
+    ],
+    "new_size": [
+      467,
+      392
+    ],
+    "saved_bytes": 853,
+    "error": null
+  },
+  {
+    "slug": "frog",
+    "name": "Frog",
+    "category": "Fall 26",
+    "file_id": "14UqpaVC0fykgOg965_wFJySue38PvSxV",
+    "status": "cropped",
+    "original_size": [
+      509,
+      390
+    ],
+    "new_size": [
+      460,
+      344
+    ],
+    "saved_bytes": 410,
+    "error": null
+  },
+  {
+    "slug": "highland-cow",
+    "name": "Highland Cow",
+    "category": "Fall 26",
+    "file_id": "1XKMWhfINAupL9_WfUgLmoYzWr6OK-5vR",
+    "status": "cropped",
+    "original_size": [
+      508,
+      413
+    ],
+    "new_size": [
+      462,
+      368
+    ],
+    "saved_bytes": 1241,
+    "error": null
+  },
+  {
+    "slug": "hot-toddy",
+    "name": "Hot Toddy",
+    "category": "Fall 26",
+    "file_id": "1hPji7aBCaFcqq9B0PGxJSvclea3wl41A",
+    "status": "cropped",
+    "original_size": [
+      483,
+      509
+    ],
+    "new_size": [
+      437,
+      463
+    ],
+    "saved_bytes": 43349,
+    "error": null
+  },
+  {
+    "slug": "lamb",
+    "name": "Lamb",
+    "category": "Fall 26",
+    "file_id": "13gHRtuPMFnmqdEGVVqKgGq6Tj_TLpbdd",
+    "status": "cropped",
+    "original_size": [
+      510,
+      437
+    ],
+    "new_size": [
+      467,
+      392
+    ],
+    "saved_bytes": -33980,
+    "error": null
+  },
+  {
+    "slug": "land-rover",
+    "name": "Land Rover",
+    "category": "Fall 26",
+    "file_id": "1GBlj8nX6pCwu3WgSyh_fltiyEEHSfkJ9",
+    "status": "cropped",
+    "original_size": [
+      661,
+      309
+    ],
+    "new_size": [
+      614,
+      265
+    ],
+    "saved_bytes": -2858,
+    "error": null
+  },
+  {
+    "slug": "christmas-tree-land-rover",
+    "name": "Christmas Tree Land Rover",
+    "category": "Fall 26",
+    "file_id": "1CBBXhIjrVtQ1O9IDw8XELVfw_6Wqiujl",
+    "status": "cropped",
+    "original_size": [
+      661,
+      413
+    ],
+    "new_size": [
+      614,
+      366
+    ],
+    "saved_bytes": 2506,
+    "error": null
+  },
+  {
+    "slug": "duck",
+    "name": "Duck",
+    "category": "Fall 26",
+    "file_id": "1Io3AzvrtsA0otENOuiFfTyfenMVGKhTO",
+    "status": "cropped",
+    "original_size": [
+      508,
+      449
+    ],
+    "new_size": [
+      458,
+      404
+    ],
+    "saved_bytes": 10934,
+    "error": null
+  },
+  {
+    "slug": "oars",
+    "name": "Oars",
+    "category": "Fall 26",
+    "file_id": "16ebFvRLrZNAyapNmaNyNtFdW4tg7U01b",
+    "status": "cropped",
+    "original_size": [
+      247,
+      509
+    ],
+    "new_size": [
+      203,
+      463
+    ],
+    "saved_bytes": 5189,
+    "error": null
+  },
+  {
+    "slug": "pickle-jar",
+    "name": "Pickle Jar",
+    "category": "Fall 26",
+    "file_id": "1VJ4lFtlppsVqD-EmTrgfaUrsEUJ6UAU-",
+    "status": "cropped",
+    "original_size": [
+      299,
+      509
+    ],
+    "new_size": [
+      256,
+      463
+    ],
+    "saved_bytes": 18305,
+    "error": null
+  },
+  {
+    "slug": "pumpkin-pie",
+    "name": "Pumpkin Pie",
+    "category": "Fall 26",
+    "file_id": "1-9fq4cnSadaUrguXt5K2HDHPiol5K--x",
+    "status": "cropped",
+    "original_size": [
+      508,
+      431
+    ],
+    "new_size": [
+      461,
+      385
+    ],
+    "saved_bytes": 22977,
+    "error": null
+  },
+  {
+    "slug": "cherry-pie",
+    "name": "Cherry Pie",
+    "category": "Fall 26",
+    "file_id": "1Lk2yPKLS3vZcm8UBVig78XCl5-TNnC1_",
+    "status": "cropped",
+    "original_size": [
+      508,
+      431
+    ],
+    "new_size": [
+      463,
+      385
+    ],
+    "saved_bytes": 17836,
+    "error": null
+  },
+  {
+    "slug": "pumpkin-truck",
+    "name": "Pumpkin Truck",
+    "category": "Fall 26",
+    "file_id": "1XU7GxyhDPZbaTWFVnJpf6a1cXUazyZ7E",
+    "status": "cropped",
+    "original_size": [
+      659,
+      314
+    ],
+    "new_size": [
+      615,
+      268
+    ],
+    "saved_bytes": 11501,
+    "error": null
+  },
+  {
+    "slug": "pumpkin",
+    "name": "Pumpkin",
+    "category": "Fall 26",
+    "file_id": "1KlWgnUFTGG758W_kWzFZPye6SBMHXXwE",
+    "status": "cropped",
+    "original_size": [
+      508,
+      470
+    ],
+    "new_size": [
+      464,
+      424
+    ],
+    "saved_bytes": 38451,
+    "error": null
+  },
+  {
+    "slug": "radish",
+    "name": "Radish",
+    "category": "Fall 26",
+    "file_id": "1_a9UtrIinJIMyt0s3ICjrb-Xx0_34iDz",
+    "status": "cropped",
+    "original_size": [
+      285,
+      510
+    ],
+    "new_size": [
+      241,
+      463
+    ],
+    "saved_bytes": 14277,
+    "error": null
+  },
+  {
+    "slug": "rain-boots",
+    "name": "Rain Boots",
+    "category": "Fall 26",
+    "file_id": "1RDz2krdasUeKBj_CB5-D-Zc2Kt1VHybq",
+    "status": "cropped",
+    "original_size": [
+      402,
+      509
+    ],
+    "new_size": [
+      356,
+      464
+    ],
+    "saved_bytes": 24778,
+    "error": null
+  },
+  {
+    "slug": "riding-boots",
+    "name": "Riding Boots",
+    "category": "Fall 26",
+    "file_id": "1wABr65fclrHecYgKsR9DYLnsTmA2h7MA",
+    "status": "cropped",
+    "original_size": [
+      420,
+      507
+    ],
+    "new_size": [
+      376,
+      461
+    ],
+    "saved_bytes": 7089,
+    "error": null
+  },
+  {
+    "slug": "riding-helmet",
+    "name": "Riding Helmet",
+    "category": "Fall 26",
+    "file_id": "1_vJE6ojlKFGGfsaeHnUqcEwCkZNtGkLO",
+    "status": "cropped",
+    "original_size": [
+      509,
+      501
+    ],
+    "new_size": [
+      465,
+      456
+    ],
+    "saved_bytes": -15354,
+    "error": null
+  },
+  {
+    "slug": "rowboat",
+    "name": "Rowboat",
+    "category": "Fall 26",
+    "file_id": "1QWUqHE8KI8qdaC1JUUKp5PEU4qzepefY",
+    "status": "cropped",
+    "original_size": [
+      658,
+      169
+    ],
+    "new_size": [
+      610,
+      123
+    ],
+    "saved_bytes": 251,
+    "error": null
+  },
+  {
+    "slug": "rugby-shirt",
+    "name": "Rugby Shirt",
+    "category": "Fall 26",
+    "file_id": "1vd3rhBSuIUU53nFFp8nKhHBs0BwjvfbH",
+    "status": "cropped",
+    "original_size": [
+      494,
+      509
+    ],
+    "new_size": [
+      450,
+      463
+    ],
+    "saved_bytes": 38207,
+    "error": null
+  },
+  {
+    "slug": "s-mores",
+    "name": "S'mores",
+    "category": "Fall 26",
+    "file_id": "1laaw5QrKtI3tiZLV1EHGTg5ejWOFewad",
+    "status": "cropped",
+    "original_size": [
+      509,
+      248
+    ],
+    "new_size": [
+      464,
+      202
+    ],
+    "saved_bytes": -2724,
+    "error": null
+  },
+  {
+    "slug": "egg-cup-whole",
+    "name": "Egg Cup Whole",
+    "category": "Fall 26",
+    "file_id": "1bu-NBZwo_sjjEHkezlEGAns4Xc04Z8oz",
+    "status": "cropped",
+    "original_size": [
+      457,
+      509
+    ],
+    "new_size": [
+      412,
+      464
+    ],
+    "saved_bytes": -17096,
+    "error": null
+  },
+  {
+    "slug": "egg-cup-cracked",
+    "name": "Egg Cup Cracked",
+    "category": "Fall 26",
+    "file_id": "1Qv7o27e9wkRiyVmaz_NIOe5g7ptXRIsN",
+    "status": "cropped",
+    "original_size": [
+      457,
+      478
+    ],
+    "new_size": [
+      412,
+      433
+    ],
+    "saved_bytes": -24849,
+    "error": null
+  },
+  {
+    "slug": "stirrups",
+    "name": "Stirrups",
+    "category": "Fall 26",
+    "file_id": "1lu45SDBTStx02OKJ1TA9QzZkNquhG0nO",
+    "status": "cropped",
+    "original_size": [
+      501,
+      509
+    ],
+    "new_size": [
+      457,
+      464
+    ],
+    "saved_bytes": -1158,
+    "error": null
+  },
+  {
+    "slug": "swan",
+    "name": "Swan",
+    "category": "Fall 26",
+    "file_id": "1Dr8o2z1KAwKULEvQq-eTBQEpxXB8pGlO",
+    "status": "cropped",
+    "original_size": [
+      509,
+      407
+    ],
+    "new_size": [
+      465,
+      362
+    ],
+    "saved_bytes": -27251,
+    "error": null
+  },
+  {
+    "slug": "teapot",
+    "name": "Teapot",
+    "category": "Fall 26",
+    "file_id": "13RyIHlCD-2TT_Y8ZCjP0gMLeDr6u9C_5",
+    "status": "cropped",
+    "original_size": [
+      422,
+      509
+    ],
+    "new_size": [
+      378,
+      464
+    ],
+    "saved_bytes": -18392,
+    "error": null
+  },
+  {
+    "slug": "wooden-tennis-raquet",
+    "name": "Wooden Tennis Raquet",
+    "category": "Fall 26",
+    "file_id": "1aQXPun5H25qIXev0Yl_qEXV6u6AZ6uDc",
+    "status": "cropped",
+    "original_size": [
+      423,
+      510
+    ],
+    "new_size": [
+      379,
+      465
+    ],
+    "saved_bytes": -9840,
+    "error": null
+  },
+  {
+    "slug": "cider-donut",
+    "name": "Cider Donut",
+    "category": "Fall 26",
+    "file_id": "1CGp6jT7RougKGPrc1VWM9aYv2ISYfAUP",
+    "status": "cropped",
+    "original_size": [
+      503,
+      346
+    ],
+    "new_size": [
+      460,
+      301
+    ],
+    "saved_bytes": 3578,
+    "error": null
+  },
+  {
+    "slug": "pear",
+    "name": "Pear",
+    "category": "Fall 26",
+    "file_id": "13GNwR-TGySmu5w-zBKNCpXQFZypN9ZXn",
+    "status": "cropped",
+    "original_size": [
+      335,
+      511
+    ],
+    "new_size": [
+      292,
+      465
+    ],
+    "saved_bytes": 19647,
+    "error": null
+  },
+  {
+    "slug": "beer-mug",
+    "name": "Beer Mug",
+    "category": "Fall 26",
+    "file_id": "1VXheuFspgXwJNcJgH_rYb0MZBWuHjFWC",
+    "status": "cropped",
+    "original_size": [
+      409,
+      509
+    ],
+    "new_size": [
+      359,
+      462
+    ],
+    "saved_bytes": 7695,
+    "error": null
+  },
+  {
+    "slug": "fig",
+    "name": "Fig",
+    "category": "Fall 26",
+    "file_id": "1zNrAiFQg--UTYayUVYhDa5TZUyWwIagr",
+    "status": "cropped",
+    "original_size": [
+      451,
+      509
+    ],
+    "new_size": [
+      408,
+      464
+    ],
+    "saved_bytes": 25720,
+    "error": null
+  },
+  {
+    "slug": "cabbage",
+    "name": "Cabbage",
+    "category": "Fall 26",
+    "file_id": "1A-2SreETQLpJsTvC71JLMpDJO2q2LLC1",
+    "status": "cropped",
+    "original_size": [
+      508,
+      482
+    ],
+    "new_size": [
+      463,
+      435
+    ],
+    "saved_bytes": 50212,
+    "error": null
+  }
+]
