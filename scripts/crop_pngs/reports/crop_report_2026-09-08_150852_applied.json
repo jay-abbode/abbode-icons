@@ -1,0 +1,36 @@
+[
+  {
+    "slug": "lips",
+    "name": "Lips",
+    "category": "Most Popular",
+    "file_id": "11R1N2vsypfvZtvJYXThQCsHB1M2wOPY2",
+    "status": "cropped",
+    "original_size": [
+      510,
+      348
+    ],
+    "new_size": [
+      462,
+      300
+    ],
+    "saved_bytes": 20410,
+    "error": null
+  },
+  {
+    "slug": "wreath",
+    "name": "Wreath",
+    "category": "",
+    "file_id": "1F3FJrqvu2n1t6OFtMYPkO4BMKb6HXhZ_",
+    "status": "cropped",
+    "original_size": [
+      442,
+      515
+    ],
+    "new_size": [
+      394,
+      466
+    ],
+    "saved_bytes": 4282,
+    "error": null
+  }
+]

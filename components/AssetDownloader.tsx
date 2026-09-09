@@ -3,7 +3,6 @@
 import { useMemo, useRef, useState } from "react";
 import { downloadZip } from "client-zip";
 import type { Icon } from "@/lib/sheets";
-import { isPremadeCategory } from "@/lib/categories";
 import { buildExportVariants, iconFileLabel, fileSafe } from "@/lib/variants";
 
 /**
@@ -29,13 +28,6 @@ import { buildExportVariants, iconFileLabel, fileSafe } from "@/lib/variants";
 type Props = {
   icons: Icon[];
   categories: string[];
-  /**
-   * Slugs of icons added within `newWindowDays`, resolved server-side by
-   * lib/iconDates. Passed in rather than computed here because dating an icon
-   * can require a Drive lookup, which has no business running in the browser.
-   */
-  newSlugs?: string[];
-  newWindowDays?: number;
 };
 
 type SizeKey = "small" | "medium" | "large";
@@ -50,21 +42,15 @@ type Entry = { name: string; input: Uint8Array };
 
 const CONCURRENCY = 6;
 
-export default function AssetDownloader({
-  icons,
-  categories,
-  newSlugs = [],
-  newWindowDays = 60,
-}: Props) {
+export default function AssetDownloader({ icons, categories }: Props) {
   const [selCats, setSelCats] = useState<Set<string>>(new Set());
-  // Extra criterion, orthogonal to category: narrow the whole export to icons
-  // added recently. Off by default so existing behaviour is unchanged.
-  const [onlyNew, setOnlyNew] = useState(false);
   const [types, setTypes] = useState({ ofm: false, dst: false, png: true });
   const [sizes, setSizes] = useState({ small: true, medium: true, large: true });
   // Color variations are opt-in: by default PNG means just the catalog PNG
   // (the file in column N), not a recolor for every thread color.
   const [inclVariations, setInclVariations] = useState(false);
+  // Drafts are opt-in; archived icons are never included in bulk downloads.
+  const [includeDrafts, setIncludeDrafts] = useState(false);
 
   const [status, setStatus] = useState<"idle" | "running" | "done" | "error">(
     "idle"
@@ -76,27 +62,30 @@ export default function AssetDownloader({
   const errRef = useRef(0);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const newSet = useMemo(() => new Set(newSlugs), [newSlugs]);
-  const hasNewData = newSlugs.length > 0;
-
-  // The working set: everything, or only recently-added icons. Every downstream
-  // count and the export itself read from this one list, so the checkbox can't
-  // drift out of sync with what actually lands in the zip.
-  const scopedIcons = useMemo(
-    () => (onlyNew ? icons.filter((i) => newSet.has(i.slug)) : icons),
-    [icons, onlyNew, newSet]
+  // Icons eligible for download: active always, drafts only when opted in,
+  // archived never. The counts, category groups, and the zip all read from this,
+  // so the draft toggle flows through everywhere automatically.
+  const downloadable = useMemo(
+    () =>
+      icons.filter((i) => {
+        const s = i.status.toUpperCase();
+        if (s === "ARCHIVED") return false;
+        if (s === "DRAFT") return includeDrafts;
+        return true;
+      }),
+    [icons, includeDrafts]
   );
 
-  // Group icons by category once (per scope).
+  // Group the eligible icons by category.
   const iconsByCategory = useMemo(() => {
     const m = new Map<string, Icon[]>();
-    for (const icon of scopedIcons) {
+    for (const icon of downloadable) {
       const list = m.get(icon.category);
       if (list) list.push(icon);
       else m.set(icon.category, [icon]);
     }
     return m;
-  }, [scopedIcons]);
+  }, [downloadable]);
 
   // Variant count per icon never changes with selection — precompute it.
   const variantCount = useMemo(() => {
@@ -303,43 +292,6 @@ export default function AssetDownloader({
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Scope — narrows everything below it, category selection included. */}
-      <section className="rounded-2xl border border-parchment bg-white p-5">
-        <h2 className="font-display mb-1 text-lg text-espresso">Scope</h2>
-        <label
-          className={`font-ui mt-2 flex items-start gap-2 text-sm text-espresso ${
-            hasNewData ? "cursor-pointer" : "cursor-not-allowed opacity-50"
-          }`}
-        >
-          <input
-            type="checkbox"
-            checked={onlyNew}
-            onChange={() => setOnlyNew((v) => !v)}
-            disabled={running || !hasNewData}
-            className="mt-0.5 h-4 w-4 accent-berry"
-          />
-          <span>
-            Only icons added in the last {newWindowDays} days
-            <span className="mt-0.5 block text-xs text-ink-muted">
-              {hasNewData ? (
-                <>
-                  {newSlugs.length.toLocaleString()} icon
-                  {newSlugs.length === 1 ? "" : "s"} qualify. Dates come from the
-                  &ldquo;Date Added&rdquo; column when present, otherwise the Drive creation time of
-                  the icon&rsquo;s PNG.{" "}
-                  <a href="/new" className="underline decoration-pink underline-offset-2">
-                    See them
-                  </a>
-                  .
-                </>
-              ) : (
-                "No icons could be dated in that window, so there's nothing to narrow to."
-              )}
-            </span>
-          </span>
-        </label>
-      </section>
-
       {/* Categories */}
       <section className="rounded-2xl border border-parchment bg-white p-5">
         <div className="mb-3 flex items-center justify-between">
@@ -356,38 +308,38 @@ export default function AssetDownloader({
           </label>
         </div>
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
-          {categories.map((cat) => {
-            // Under a narrowed scope a category can hold nothing. Showing the
-            // count (and disabling the empties) beats letting someone tick a
-            // category and get an empty zip.
-            const count = iconsByCategory.get(cat)?.length ?? 0;
-            const empty = onlyNew && count === 0;
-            return (
-              <label
-                key={cat}
-                className={`font-ui flex items-center gap-2 text-sm text-espresso ${
-                  empty ? "cursor-not-allowed opacity-40" : "cursor-pointer"
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={selCats.has(cat) && !empty}
-                  onChange={() => toggleCat(cat)}
-                  disabled={running || empty}
-                  className="h-4 w-4 accent-berry"
-                />
-                <span className={`truncate ${isPremadeCategory(cat) ? "text-berry" : ""}`}>
-                  {cat}
-                </span>
-                {onlyNew && (
-                  <span className="font-ui flex-none text-xs tabular-nums text-ink-muted">
-                    {count}
-                  </span>
-                )}
-              </label>
-            );
-          })}
+          {categories.map((cat) => (
+            <label
+              key={cat}
+              className="font-ui flex cursor-pointer items-center gap-2 text-sm text-espresso"
+            >
+              <input
+                type="checkbox"
+                checked={selCats.has(cat)}
+                onChange={() => toggleCat(cat)}
+                disabled={running}
+                className="h-4 w-4 accent-berry"
+              />
+              <span className="truncate">{cat}</span>
+            </label>
+          ))}
         </div>
+
+        <label className="font-ui mt-4 flex cursor-pointer items-start gap-2 border-t border-parchment pt-3 text-sm text-espresso">
+          <input
+            type="checkbox"
+            checked={includeDrafts}
+            onChange={() => setIncludeDrafts((v) => !v)}
+            disabled={running}
+            className="mt-0.5 h-4 w-4 accent-berry"
+          />
+          <span>
+            Include drafts
+            <span className="mt-0.5 block text-xs text-ink-muted">
+              Adds icons still marked DRAFT. Archived icons are never included.
+            </span>
+          </span>
+        </label>
       </section>
 
       {/* File types + sizes */}

@@ -1,6 +1,6 @@
 @echo off
-cd /d "%~dp0"
+cd /d "C:\Users\abbod\Dropbox\File Processing (Don't Open)\ICON APP\abbode-icons"
 git add -A
-git commit -m "ofm_colormap: handle Design Status tables capped at 20 entries (23-stop designs no longer error out)"
+git commit -m "Downloads: add Include drafts checkbox (active-only by default, archived never)"
 git push
 pause

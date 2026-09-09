@@ -1,0 +1,104 @@
+[
+  {
+    "slug": "christmas-ornaments",
+    "name": "Christmas Ornaments",
+    "category": "Holiday 26",
+    "file_id": "1y-zoUzWTMoKxVcmD_MCzaTvOVUUZSQHE",
+    "status": "cropped",
+    "original_size": [
+      476,
+      508
+    ],
+    "new_size": [
+      432,
+      461
+    ],
+    "saved_bytes": 42376,
+    "error": null
+  },
+  {
+    "slug": "sleep-mask",
+    "name": "Sleep Mask",
+    "category": "Holiday 26",
+    "file_id": "1hKADsLw4pXsM3yTmDTPPvNbe9vE5knSw",
+    "status": "cropped",
+    "original_size": [
+      509,
+      359
+    ],
+    "new_size": [
+      466,
+      314
+    ],
+    "saved_bytes": 141,
+    "error": null
+  },
+  {
+    "slug": "christmas-tree-2026",
+    "name": "Christmas Tree 2026",
+    "category": "Holiday 26",
+    "file_id": "1C9QlAEaPoJlZDgzudjxRvSi2pqbyw4lv",
+    "status": "cropped",
+    "original_size": [
+      335,
+      509
+    ],
+    "new_size": [
+      284,
+      462
+    ],
+    "saved_bytes": 30015,
+    "error": null
+  },
+  {
+    "slug": "pajamas",
+    "name": "Pajamas",
+    "category": "Holiday 26",
+    "file_id": "1xZyQGcPz8vyLlVDUUWRulgcStQvJaKh-",
+    "status": "cropped",
+    "original_size": [
+      333,
+      516
+    ],
+    "new_size": [
+      289,
+      470
+    ],
+    "saved_bytes": 18193,
+    "error": null
+  },
+  {
+    "slug": "blue-dreidel",
+    "name": "Blue Dreidel",
+    "category": "Holiday 26",
+    "file_id": "1VguwrANlxIvA_HiNhykVWjvpGtk0rE2P",
+    "status": "cropped",
+    "original_size": [
+      367,
+      508
+    ],
+    "new_size": [
+      318,
+      461
+    ],
+    "saved_bytes": 18014,
+    "error": null
+  },
+  {
+    "slug": "red-dreidel",
+    "name": "Red Dreidel",
+    "category": "Holiday 26",
+    "file_id": "1_Dk6iBQfJzbeH1mTv-kmxx4HmjnMDZYK",
+    "status": "cropped",
+    "original_size": [
+      364,
+      508
+    ],
+    "new_size": [
+      315,
+      461
+    ],
+    "saved_bytes": 22046,
+    "error": null
+  }
+]
