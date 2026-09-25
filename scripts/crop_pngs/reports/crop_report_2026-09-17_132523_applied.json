@@ -1,0 +1,53 @@
+[
+  {
+    "slug": "lipstick",
+    "name": "Lipstick",
+    "category": "Hobby",
+    "file_id": "1ydaF3GOGQB0KMb6AzBGjEFWzCyTTsz33",
+    "status": "cropped",
+    "original_size": [
+      172,
+      509
+    ],
+    "new_size": [
+      129,
+      463
+    ],
+    "saved_bytes": 12523,
+    "error": null
+  },
+  {
+    "slug": "i-heart-ny-shirt",
+    "name": "I heart NY Shirt",
+    "category": "NYC",
+    "file_id": "1zAyP3ZSewhhU0xZlYFjH43tSRB1F4aVS",
+    "status": "cropped",
+    "original_size": [
+      510,
+      425
+    ],
+    "new_size": [
+      465,
+      378
+    ],
+    "saved_bytes": -17245,
+    "error": null
+  },
+  {
+    "slug": "champagne-tower",
+    "name": "Champagne Tower",
+    "category": "Holiday 26",
+    "file_id": "1JUSO8pLGx1ZVG5P1LkxDs2u_aMbG5LV6",
+    "status": "cropped",
+    "original_size": [
+      407,
+      515
+    ],
+    "new_size": [
+      362,
+      470
+    ],
+    "saved_bytes": -1535,
+    "error": null
+  }
+]

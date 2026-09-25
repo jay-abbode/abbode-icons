@@ -15,6 +15,7 @@ import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
 import FiltersMenu from "@/components/FiltersMenu";
 import FilterControls from "@/components/FilterControls";
+import CollabTheme from "@/components/CollabTheme";
 import IconGrid from "@/components/IconGrid";
 
 export const dynamic = "force-dynamic";
@@ -102,7 +103,15 @@ export default async function BrowsePage({
     if (statusView === "ARCHIVED") return s === "ARCHIVED";
     return s !== "DRAFT" && s !== "ARCHIVED";
   };
-  const scopedIcons = catalog.icons.filter(inCurrentView);
+
+  // Collab view: the selected category is one of the isolated collab
+  // categories, so source icons from the collab list instead of the main
+  // catalog. Collab designs never appear in any other view — they're not in
+  // catalog.icons at all.
+  const isCollabView =
+    !!category && catalog.collabCategories.includes(category);
+  const sourceIcons = isCollabView ? catalog.collabIcons : catalog.icons;
+  const scopedIcons = sourceIcons.filter(inCurrentView);
 
   const filtered = applyFilters(scopedIcons, {
     query,
@@ -139,12 +148,23 @@ export default async function BrowsePage({
   // (Active) view they're active icons by category, on the Draft view they're
   // draft icons by category, etc. That way the numbers always match what the
   // user would actually see if they clicked the category.
+  //
+  // Regular categories always count from the MAIN catalog (never the collab
+  // list), so switching into a collab category doesn't disturb their numbers.
+  const regularScoped = catalog.icons.filter(inCurrentView);
   const categoryCounts: Record<string, number> = {};
-  for (const i of scopedIcons) {
+  for (const i of regularScoped) {
     if (!i.category) continue;
     categoryCounts[i.category] = (categoryCounts[i.category] || 0) + 1;
   }
-  const totalCount = scopedIcons.length;
+  const totalCount = regularScoped.length;
+
+  // Collab categories count from the isolated collab list, same view scoping.
+  const collabCategoryCounts: Record<string, number> = {};
+  for (const i of catalog.collabIcons.filter(inCurrentView)) {
+    if (!i.category) continue;
+    collabCategoryCounts[i.category] = (collabCategoryCounts[i.category] || 0) + 1;
+  }
 
   // Heading reflects category > query > view, in that order of specificity.
   // The view name is also surfaced as a small eyebrow above the heading when
@@ -170,6 +190,7 @@ export default async function BrowsePage({
     <>
       <Header initialQuery={query} showSearch />
       <main className="mx-auto max-w-7xl px-6 py-10 lg:px-10">
+        {isCollabView && <CollabTheme />}
         <nav className="font-ui mb-6 flex items-center gap-2 text-xs text-ink-muted">
           <Link href="/" className="hover:text-espresso transition-colors">
             Home
@@ -272,6 +293,8 @@ export default async function BrowsePage({
           <aside className="lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-2">
             <FilterControls
               categories={catalog.categories}
+              collabCategories={catalog.collabCategories}
+              collabCategoryCounts={collabCategoryCounts}
               currentCategory={category}
               currentColorVar={colorVarOnly}
               currentQuery={query}

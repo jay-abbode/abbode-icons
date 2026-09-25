@@ -1,0 +1,48 @@
+ABBODE ICONS — COLLABS (brand-partner fixed designs)
+====================================================
+
+SHEET SETUP (do this first — one column)
+  In MASTER, add a column headed exactly:   COLLAB
+  Make it a checkbox column (select the column → Insert → Checkbox).
+  Tick it for any brand-collab design. The design's Category cell is the
+  collab's name (e.g. the brand), and that's what shows under "Collabs".
+  (The app also accepts a typed YES / X / 1 if a cell isn't a checkbox.)
+
+WHAT THE APP NOW DOES
+  Isolation — ticked rows are kept OUT of the main catalog entirely. They
+    are not in search, the search API, contact sheets, the visual scanner,
+    the downloads page, the New Icons page, reports, or color stats. They
+    only appear under their own collab categories on /browse.
+  Nav — a "Collabs" subheader with the collab categories, placed under the
+    regular categories and above the Draft/Archived view links. Each shows a
+    count scoped to the current view (Active / Draft / Archived).
+  Single size — collab designs are fixed pieces. Their detail panel shows one
+    "Design" row (whichever size column you filled — Medium by convention,
+    but any one works) instead of Small/Medium/Large, and the download file
+    name has no size suffix (e.g. "Bag Tag.ofm").
+  Theme — opening a collab category switches the whole page to a reshuffled
+    brand palette: parchment background, plum ink, olive as the primary
+    accent (where berry was), sage for soft accents (where pink was). Leaving
+    the collab category restores the normal look. Tweak in app/globals.css
+    under "Collab theme" — it's a short block of color swaps.
+  Status still applies — a collab can be DRAFT/ACTIVE/ARCHIVED like anything
+    else; the Draft/Archived views work inside collab categories too.
+
+FILES (merge, keeping paths)
+  lib/sheets.ts                          parse COLLAB, split catalog
+  components/FilterControls.tsx          "Collabs" subheader + categories
+  components/CollabTheme.tsx             (new) applies data-theme="collab"
+  components/IconDetailModal.tsx         single "Design" row for collabs
+  app/browse/page.tsx                    collab view, counts, theme mount
+  app/globals.css                        the collab palette
+  app/icon/[slug]/variations/page.tsx    collab slugs don't 404
+
+VALIDATED
+  Built from your live main (68d5004). tsc clean + full next build passes.
+
+INSTALL — app code, needs a redeploy
+  cd /d "C:\Users\abbod\Dropbox\File Processing (Don't Open)\ICON APP\abbode-icons"
+  git add -A
+  git commit -m "Collabs: COLLAB checkbox, isolated collab categories, single-size, collab theme"
+  git push
+  Then hard-refresh. Until you tick a COLLAB box, nothing changes visibly.

@@ -31,7 +31,9 @@ interface Props {
 
 export default async function VariationsPage({ params }: Props) {
   const catalog = await getIconCatalog();
-  const icon = catalog.icons.find((i) => i.slug === params.slug);
+  const icon =
+    catalog.icons.find((i) => i.slug === params.slug) ??
+    catalog.collabIcons.find((i) => i.slug === params.slug);
 
   if (!icon || !icon.hasColorVariation || !icon.pngFileId) {
     notFound();

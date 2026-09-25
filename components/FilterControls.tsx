@@ -7,6 +7,12 @@ import { isPremadeCategory } from "@/lib/categories";
 
 interface Props {
   categories: string[];
+  /**
+   * Collab (brand-partner) categories, shown under their own "Collabs"
+   * subheader beneath the regular categories. Empty when none exist.
+   */
+  collabCategories?: string[];
+  collabCategoryCounts?: Record<string, number>;
   currentCategory: string;
   currentColorVar: boolean;
   currentQuery: string;
@@ -28,6 +34,8 @@ interface Props {
 
 export default function FilterControls({
   categories,
+  collabCategories = [],
+  collabCategoryCounts,
   currentCategory,
   currentColorVar,
   currentQuery,
@@ -109,6 +117,23 @@ export default function FilterControls({
           })}
         </div>
       </FilterGroup>
+
+      {collabCategories.length > 0 && (
+        <FilterGroup label="Collabs">
+          <div className="space-y-0.5">
+            {collabCategories.map((cat) => (
+              <RadioRow
+                key={cat}
+                label={cat}
+                checked={currentCategory === cat}
+                count={collabCategoryCounts?.[cat]}
+                onSelect={() => setParam("category", cat)}
+                accent
+              />
+            ))}
+          </div>
+        </FilterGroup>
+      )}
 
       <FilterGroup label="Attributes">
         <label className="font-ui flex cursor-pointer items-center gap-2.5 py-1.5 text-sm text-ink-soft hover:text-espresso">

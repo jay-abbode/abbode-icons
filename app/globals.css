@@ -145,3 +145,49 @@
   margin-top: -0.45em;
   margin-bottom: -0.4em;
 }
+
+/* ---------- Collab theme ----------
+   Applied while a collab (brand-partner) category is open on /browse: the
+   <CollabTheme> component sets data-theme="collab" on <html> for that view
+   and removes it on navigate-away.
+
+   It's a reshuffle of the existing brand palette, not new colors. The main
+   catalog reads warm (porcelain / pink / berry / espresso); collabs read
+   green + wine (parchment / sage / olive / plum) so they're unmistakably a
+   different section while still looking like Abbode.
+
+   Semantic tokens first (page bg, surfaces, ink, borders), then the brand
+   utility classes components use directly. [data-theme] + .class outranks a
+   bare Tailwind utility, so these win without !important. */
+[data-theme="collab"] {
+  --color-bg:      var(--parchment);
+  --color-surface: var(--porcelain);
+  --color-ink:     var(--plum);
+  --color-border:  #D9D1B4; /* sage-leaning border */
+}
+
+/* ink: espresso -> plum */
+[data-theme="collab"] .text-espresso { color: var(--plum); }
+[data-theme="collab"] .text-ink-soft  { color: #7A3B4B; }
+[data-theme="collab"] .text-ink-muted { color: #9A6E78; }
+
+/* primary accent: berry -> olive */
+[data-theme="collab"] .text-berry   { color: var(--olive); }
+[data-theme="collab"] .bg-berry     { background-color: var(--olive); }
+[data-theme="collab"] .border-berry { border-color: var(--olive); }
+[data-theme="collab"] .accent-berry { accent-color: var(--olive); }
+[data-theme="collab"] .ring-berry   { --tw-ring-color: var(--olive); }
+[data-theme="collab"] .hover\:text-cherry:hover { color: var(--olive); }
+[data-theme="collab"] .text-cherry  { color: var(--olive); }
+
+/* soft accent: pink -> sage, highlight: pink-soft -> chartreuse */
+[data-theme="collab"] .bg-pink        { background-color: var(--sage); }
+[data-theme="collab"] .bg-pink-soft   { background-color: #F4F1DF; } /* soft sage tint */
+[data-theme="collab"] .hover\:bg-pink-soft:hover { background-color: #F4F1DF; }
+[data-theme="collab"] .decoration-pink { text-decoration-color: var(--sage); }
+
+/* surfaces + borders */
+[data-theme="collab"] .bg-porcelain    { background-color: var(--parchment); }
+[data-theme="collab"] .bg-parchment    { background-color: #EEE8DC; }
+[data-theme="collab"] .bg-white        { background-color: var(--porcelain); }
+[data-theme="collab"] .border-parchment { border-color: #D9D1B4; }

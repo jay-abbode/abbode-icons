@@ -31,6 +31,14 @@ export interface Icon {
   /** True only when Col. Var. = "YES/MC". */
   isMultiColor: boolean;
   status: string;
+  /**
+   * True when the sheet's COLLAB checkbox is ticked. Collab designs are fixed,
+   * single-size pieces made for brand partners. They are kept out of the main
+   * catalog (`IconCatalog.icons`) entirely — search, contact sheets, the visual
+   * scanner, downloads, and reports never see them — and only surface under
+   * their own "Collabs" categories on the browse page.
+   */
+  isCollab: boolean;
   notes: string | null;
   oldName: string | null;
   /** Drive file ID for the PNG, or null. */
@@ -73,8 +81,17 @@ export interface Icon {
 }
 
 export interface IconCatalog {
+  /** The main catalog. Collab designs are deliberately NOT in here. */
   icons: Icon[];
   categories: string[];
+  /**
+   * Collab designs (COLLAB checkbox ticked), isolated from `icons` so nothing
+   * that reads the main catalog can pick them up by accident. Only the browse
+   * page's Collabs section reads these.
+   */
+  collabIcons: Icon[];
+  /** Categories that contain collab designs, alphabetical. */
+  collabCategories: string[];
   /** Total icons including those with status other than "Approved"/"Active". */
   totalCount: number;
   /** Timestamp this snapshot was fetched (used for cache headers). */
@@ -140,6 +157,9 @@ async function fetchCatalogFromSheet(): Promise<IconCatalog> {
 
   const icons: Icon[] = [];
   const categorySet = new Set<string>();
+  // Collab designs are collected separately and never enter `icons`.
+  const collabIcons: Icon[] = [];
+  const collabCategorySet = new Set<string>();
   const seenSlugs = new Set<string>();
 
   for (let i = 2; i < rowData.length; i++) {
@@ -161,6 +181,11 @@ async function fetchCatalogFromSheet(): Promise<IconCatalog> {
     // YES, YES/MC, and YES-MC all unlock the variations workflow.
     const hasColorVariation = colorVar === "YES" || isMultiColor;
 
+    // A Google Sheets checkbox reads back as "TRUE"/"FALSE". Also accept a
+    // hand-typed YES / X / 1 so a non-checkbox cell still works.
+    const collabRaw = getCellText(row, col.collab).trim().toUpperCase();
+    const isCollab = ["TRUE", "YES", "X", "1", "✓"].includes(collabRaw);
+
     const icon: Icon = {
       slug,
       name,
@@ -168,6 +193,7 @@ async function fetchCatalogFromSheet(): Promise<IconCatalog> {
       hasColorVariation,
       isMultiColor,
       status: getCellText(row, col.status) || "Unknown",
+      isCollab,
       notes: getCellText(row, col.notes) || null,
       oldName: getCellText(row, col.oldName) || null,
       pngFileId: extractDriveFileId(getCellHyperlink(row, col.png)),
@@ -194,8 +220,13 @@ async function fetchCatalogFromSheet(): Promise<IconCatalog> {
       },
     };
 
-    icons.push(icon);
-    categorySet.add(category);
+    if (icon.isCollab) {
+      collabIcons.push(icon);
+      collabCategorySet.add(category);
+    } else {
+      icons.push(icon);
+      categorySet.add(category);
+    }
   }
 
   return {
@@ -205,6 +236,8 @@ async function fetchCatalogFromSheet(): Promise<IconCatalog> {
     // catalog.categories — the home tiles, the browse sidebar, and the /assets
     // download page — so the pin is defined in exactly one place.
     categories: orderCategories(Array.from(categorySet)),
+    collabIcons,
+    collabCategories: Array.from(collabCategorySet).sort((a, b) => a.localeCompare(b)),
     totalCount: icons.length,
     fetchedAt: new Date().toISOString(),
   };
@@ -236,6 +269,7 @@ interface ColumnIndex {
   mediumDst: number;
   largeDst: number;
   tags: number;
+  collab: number;
 }
 
 function buildColumnIndex(headers: string[]): ColumnIndex {
@@ -288,6 +322,9 @@ function buildColumnIndex(headers: string[]): ColumnIndex {
     largeDst: findHeader(["LARGE DST", "Large DST"]),
     // Optional — added for thematic search. Missing column just means no tags.
     tags: findHeader(["Tags", "TAGS", "Search Tags", "Theme Tags"]),
+    // Optional — the COLLAB checkbox column. Missing column just means no
+    // collab designs, and the whole Collabs section stays hidden.
+    collab: findHeader(["COLLAB", "Collab", "Collabs", "Brand Collab"]),
     // Optional — when the icon joined the catalog. Deliberately NOT matched on a
     // bare "Date": too generic to guess at, and a wrong match would quietly
     // mis-date the whole catalog. Missing column falls back to Drive.

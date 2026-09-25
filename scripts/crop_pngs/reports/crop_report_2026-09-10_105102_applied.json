@@ -1,0 +1,53 @@
+[
+  {
+    "slug": "pumpkin",
+    "name": "Pumpkin",
+    "category": "Fall 26",
+    "file_id": "1KlWgnUFTGG758W_kWzFZPye6SBMHXXwE",
+    "status": "cropped",
+    "original_size": [
+      508,
+      470
+    ],
+    "new_size": [
+      463,
+      424
+    ],
+    "saved_bytes": 38769,
+    "error": null
+  },
+  {
+    "slug": "riding-boots",
+    "name": "Riding Boots",
+    "category": "Fall 26",
+    "file_id": "1wABr65fclrHecYgKsR9DYLnsTmA2h7MA",
+    "status": "cropped",
+    "original_size": [
+      420,
+      507
+    ],
+    "new_size": [
+      376,
+      461
+    ],
+    "saved_bytes": 5962,
+    "error": null
+  },
+  {
+    "slug": "champagne-tower",
+    "name": "Champagne Tower",
+    "category": "Holiday 26",
+    "file_id": "1JUSO8pLGx1ZVG5P1LkxDs2u_aMbG5LV6",
+    "status": "cropped",
+    "original_size": [
+      399,
+      509
+    ],
+    "new_size": [
+      355,
+      465
+    ],
+    "saved_bytes": -13624,
+    "error": null
+  }
+]

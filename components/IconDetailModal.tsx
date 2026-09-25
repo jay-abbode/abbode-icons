@@ -199,9 +199,28 @@ export default function IconDetailModal({
             <section>
               <SectionLabel>Embroidery files</SectionLabel>
               <div className="space-y-3">
-                <SizeRow icon={icon} sizeKey="small" label="Small" />
-                <SizeRow icon={icon} sizeKey="medium" label="Medium" />
-                <SizeRow icon={icon} sizeKey="large" label="Large" />
+                {icon.isCollab ? (
+                  // Collab designs are fixed, single-size pieces. Show the one
+                  // populated size as a single "Design" row rather than a
+                  // Small/Medium/Large trio with two "not available" slots.
+                  <SizeRow
+                    icon={icon}
+                    sizeKey={
+                      (["medium", "small", "large"] as const).find((k) => {
+                        const s = icon.sizes[k];
+                        return s.inches || s.ofmFileId || s.dstFileId;
+                      }) ?? "medium"
+                    }
+                    label="Design"
+                    single
+                  />
+                ) : (
+                  <>
+                    <SizeRow icon={icon} sizeKey="small" label="Small" />
+                    <SizeRow icon={icon} sizeKey="medium" label="Medium" />
+                    <SizeRow icon={icon} sizeKey="large" label="Large" />
+                  </>
+                )}
               </div>
             </section>
 
@@ -249,10 +268,13 @@ function SizeRow({
   icon,
   sizeKey,
   label,
+  single = false,
 }: {
   icon: Icon;
   sizeKey: "small" | "medium" | "large";
   label: string;
+  /** Fixed single-size design (collabs): no size suffix on the file name. */
+  single?: boolean;
 }) {
   const size: IconSize = icon.sizes[sizeKey];
   const isAvailable = size.inches || size.ofmFileId || size.dstFileId;
@@ -281,7 +303,7 @@ function SizeRow({
         {size.ofmFileId ? (
           <DownloadButton
             fileId={size.ofmFileId}
-            filename={`${icon.name} ${label.toUpperCase()}.ofm`}
+            filename={single ? `${icon.name}.ofm` : `${icon.name} ${label.toUpperCase()}.ofm`}
             format="OFM"
           />
         ) : (
@@ -290,7 +312,7 @@ function SizeRow({
         {size.dstFileId ? (
           <DownloadButton
             fileId={size.dstFileId}
-            filename={`${icon.name} ${label.toUpperCase()}.dst`}
+            filename={single ? `${icon.name}.dst` : `${icon.name} ${label.toUpperCase()}.dst`}
             format="DST"
           />
         ) : (

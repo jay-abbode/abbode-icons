@@ -1,0 +1,64 @@
+[
+  {
+    "slug": "gingerbread-man",
+    "name": "Gingerbread Man",
+    "category": "Holiday 26",
+    "file_id": "1Uim1Mw66HSE1LEF-YDBJDAYhvug9IJIk",
+    "status": "cropped",
+    "original_size": [
+      425,
+      509
+    ],
+    "new_size": [
+      382,
+      464
+    ],
+    "saved_bytes": -23297,
+    "error": null
+  },
+  {
+    "slug": "winter-hat",
+    "name": "Winter Hat",
+    "category": "Holiday 26",
+    "file_id": "1tV5zhsw2Y8Ya3iIFrCa9-KzsZaXVMafy",
+    "status": "cropped",
+    "original_size": [
+      493,
+      508
+    ],
+    "new_size": [
+      449,
+      462
+    ],
+    "saved_bytes": 31983,
+    "error": null
+  },
+  {
+    "slug": "mittens",
+    "name": "Mittens",
+    "category": "Holiday 26",
+    "file_id": "1vpAGBOc6TGj8j8-JSILNl1HynqhKQq5N",
+    "status": "cropped",
+    "original_size": [
+      667,
+      450
+    ],
+    "new_size": [
+      615,
+      404
+    ],
+    "saved_bytes": 19530,
+    "error": null
+  },
+  {
+    "slug": "gingerbread-man-2",
+    "name": "Gingerbread Man",
+    "category": "Holiday 26",
+    "file_id": null,
+    "status": "no_png",
+    "original_size": null,
+    "new_size": null,
+    "saved_bytes": null,
+    "error": null
+  }
+]
