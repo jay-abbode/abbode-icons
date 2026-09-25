@@ -1,0 +1,36 @@
+COLLABS NOW KEY OFF Col. Var. = "FIXED/COLLAB"  (no COLLAB column)
+==================================================================
+
+SHEET
+  1. Add "FIXED/COLLAB" as an option in the Col. Var. dropdown
+     (alongside NO / YES / YES/MC). Delete the COLLAB column if you added it.
+  2. Set Col. Var. = FIXED/COLLAB on your collab rows.
+  New rows made by the portal copy that dropdown, so they'll offer it too.
+
+WHAT CHANGED (only the two detection points; everything else is unchanged)
+  lib/sheets.ts                          collab = Col. Var. is FIXED/COLLAB
+                                          (it also implies no color variation)
+  scripts/backfill_blanks/backfill_blanks.py
+                                          same rule for routing sizeless
+                                          OFM/DST files into the MEDIUM cell
+
+INSTALL
+  lib/sheets.ts -> app code, needs a redeploy:
+    cd /d "C:\Users\abbod\Dropbox\File Processing (Don't Open)\ICON APP\abbode-icons"
+    git add -A
+    git commit -m "Collabs: detect via Col. Var. = FIXED/COLLAB (drop checkbox column)"
+    git push
+  backfill_blanks.py -> local script, no redeploy.
+
+LINK YOUR EXISTING COLLAB FILES
+  After setting FIXED/COLLAB on those rows, re-run the link step (fills blank
+  cells only):
+    cd scripts\add_icons
+    python add_icons.py --skip-upload --apply
+
+PUSHING A NEW COLLAB THROUGH THE PORTAL — one command
+  Tell the runner to create the row as a collab so its sizeless OFM/DST link
+  on the same push (the backfill runs after the row is created):
+    python add_icons.py --portal --apply --new-colorvar "FIXED/COLLAB"
+  Without that flag the row is created as NO, so you'd set FIXED/COLLAB by
+  hand and re-run the link step afterward.

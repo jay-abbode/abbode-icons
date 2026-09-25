@@ -1,0 +1,206 @@
+[
+  {
+    "slug": "ctk-wht-xx-mtn",
+    "name": "CTK-WHT-XX-MTN",
+    "category": "The Knot",
+    "file_id": "1E7yJ9bpomnOCe3Y_pJVTRdlJt2uPUv9w",
+    "status": "cropped",
+    "original_size": [
+      333,
+      509
+    ],
+    "new_size": [
+      286,
+      462
+    ],
+    "saved_bytes": -8023,
+    "error": null
+  },
+  {
+    "slug": "ctk-wht-xx-tx",
+    "name": "CTK-WHT-XX-TX",
+    "category": "The Knot",
+    "file_id": "1-Aljl4ljv7GMqAKoBt1Z36comaB7u4wO",
+    "status": "cropped",
+    "original_size": [
+      658,
+      333
+    ],
+    "new_size": [
+      613,
+      285
+    ],
+    "saved_bytes": 7265,
+    "error": null
+  },
+  {
+    "slug": "plc-que-xx-m2m",
+    "name": "PLC-QUE-XX-M2M",
+    "category": "The Knot",
+    "file_id": "12GwNqp6a-dHIEbDketXETjJj18QCkOlj",
+    "status": "cropped",
+    "original_size": [
+      3056,
+      567
+    ],
+    "new_size": [
+      3014,
+      522
+    ],
+    "saved_bytes": 30797,
+    "error": null
+  },
+  {
+    "slug": "ptkt-wht-lrg-m",
+    "name": "PTKT-WHT-LRG-M",
+    "category": "The Knot",
+    "file_id": "1UIh4EMuIKqZciAwJlVNFdD2yXrldPnVv",
+    "status": "cropped",
+    "original_size": [
+      772,
+      363
+    ],
+    "new_size": [
+      730,
+      320
+    ],
+    "saved_bytes": -2991,
+    "error": null
+  },
+  {
+    "slug": "ptkt-wht-med-m",
+    "name": "PTKT-WHT-MED-M",
+    "category": "The Knot",
+    "file_id": "1LJEWtYQ7j36O67TiGFS2UpiO-YaqDyOv",
+    "status": "cropped",
+    "original_size": [
+      772,
+      363
+    ],
+    "new_size": [
+      730,
+      320
+    ],
+    "saved_bytes": -2991,
+    "error": null
+  },
+  {
+    "slug": "ptkt-wht-sm-m",
+    "name": "PTKT-WHT-SM-M",
+    "category": "The Knot",
+    "file_id": "1nhe6JdxEFoL45Q2rR8LbNpEvsM7zZJOA",
+    "status": "cropped",
+    "original_size": [
+      772,
+      363
+    ],
+    "new_size": [
+      730,
+      320
+    ],
+    "saved_bytes": -2991,
+    "error": null
+  },
+  {
+    "slug": "ptkt-wht-xl-m",
+    "name": "PTKT-WHT-XL-M",
+    "category": "The Knot",
+    "file_id": "14TmCv0SU0h9jvtLWeFvyGlO0XpX_kyKx",
+    "status": "cropped",
+    "original_size": [
+      772,
+      363
+    ],
+    "new_size": [
+      730,
+      320
+    ],
+    "saved_bytes": -2991,
+    "error": null
+  },
+  {
+    "slug": "ptkt-wht-xs-m",
+    "name": "PTKT-WHT-XS-M",
+    "category": "The Knot",
+    "file_id": "1a4epHoJpvA9IMb7V9VdJP-dcob2y4XyJ",
+    "status": "cropped",
+    "original_size": [
+      772,
+      363
+    ],
+    "new_size": [
+      730,
+      320
+    ],
+    "saved_bytes": -2991,
+    "error": null
+  },
+  {
+    "slug": "wfp-lbl-xx-sb",
+    "name": "WFP-LBL-XX-SB",
+    "category": "The Knot",
+    "file_id": "1LR3TaVuO5USMK6s6m207ZiLhbuhE4KVM",
+    "status": "cropped",
+    "original_size": [
+      1309,
+      333
+    ],
+    "new_size": [
+      1266,
+      289
+    ],
+    "saved_bytes": -42548,
+    "error": null
+  },
+  {
+    "slug": "wfp-wht-xx-brd",
+    "name": "WFP-WHT-XX-BRD",
+    "category": "The Knot",
+    "file_id": "1c8AHDCL287_Ze5_-lwmcFd5bG1FzJ0VI",
+    "status": "cropped",
+    "original_size": [
+      1102,
+      863
+    ],
+    "new_size": [
+      1057,
+      820
+    ],
+    "saved_bytes": 14523,
+    "error": null
+  },
+  {
+    "slug": "wfp-wht-xx-mtm",
+    "name": "WFP-WHT-XX-MTM",
+    "category": "The Knot",
+    "file_id": "1VOYTT2-HhkKFE-b_5lBhngvQolG_Qow8",
+    "status": "cropped",
+    "original_size": [
+      1259,
+      262
+    ],
+    "new_size": [
+      1216,
+      219
+    ],
+    "saved_bytes": -2754,
+    "error": null
+  },
+  {
+    "slug": "wfp-wht-xx-tf",
+    "name": "WFP-WHT-XX-TF",
+    "category": "The Knot",
+    "file_id": "1BflRMJdUsv0WJnzw6vpHf8n1ym6HtGLB",
+    "status": "cropped",
+    "original_size": [
+      1215,
+      419
+    ],
+    "new_size": [
+      1172,
+      375
+    ],
+    "saved_bytes": 17877,
+    "error": null
+  }
+]

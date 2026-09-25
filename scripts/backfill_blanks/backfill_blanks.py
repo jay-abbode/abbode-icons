@@ -6,9 +6,10 @@ What it does
   * OFM  -> fills blank SMALL/MEDIUM/LARGE OFM cells from "<Icon> <SIZE>.ofm"
   * DST  -> fills blank SMALL/MEDIUM/LARGE DST cells from "<Icon> <SIZE>.dst"
   * PNG  -> fills the blank PNG cell from "<Icon>.png"
-  * Premade Designs are fixed-size: an OFM/DST file with no <SIZE> word whose
-    row is in that category is linked into the MEDIUM cell. For every other
-    category, a missing size word is still flagged as a bad filename.
+  * Fixed-size rows — Premade Designs, or any row whose Col. Var. is
+    "FIXED/COLLAB" — take an OFM/DST with no <SIZE> word and link it into the
+    MEDIUM cell. For every other row, a missing size word is still flagged as a
+    bad filename.
   Only blank cells are touched. Any cell that already has a link is left alone.
 
 Folders are scanned RECURSIVELY (subfolders included). Pass whichever folders
@@ -61,11 +62,12 @@ TYPES = {
     "PNG": {"ext": "png", "sized": False, "headers": {None: "png"}},
 }
 
-# Premade Designs are fixed-size, so their OFM/DST files won't carry a
-# SMALL/MEDIUM/LARGE token. A sized file with no size word is accepted ONLY when
-# its row is in this category, and its link is routed to the canonical column
-# below. Mirrors PREMADE_CATEGORY in lib/categories.ts. Any other category with
-# a missing size word is still reported as a bad filename (the typo-catch).
+# Fixed-size rows won't carry a SMALL/MEDIUM/LARGE token in their OFM/DST
+# filenames. A sized file with no size word is accepted ONLY when its row is
+# fixed-size — the Premade Designs category, or Col. Var. = "FIXED/COLLAB" —
+# and its link is routed to the canonical column below. Mirrors
+# PREMADE_CATEGORY in lib/categories.ts. Any other row with a missing size
+# word is still reported as a bad filename (the typo-catch).
 PREMADE_CATEGORY = "Premade Designs"
 PREMADE_FIXED_SIZE = "MEDIUM"
 
@@ -188,12 +190,13 @@ def main():
     # rows: norm name -> rownum; and the reverse, and all names for typo matching.
     # cat_by_norm remembers each row's Category so sized files with no size word
     # can be accepted for Premade Designs rows (routed to the MEDIUM column).
-    # collab_by_norm does the same for rows with the COLLAB checkbox ticked —
-    # collab designs are fixed single-size pieces, so their files carry no
-    # size word either.
+    # colorvar_by_norm does the same for rows whose Col. Var. dropdown is
+    # "FIXED/COLLAB" — collab designs are fixed single-size pieces, so their
+    # files carry no size word either.
     cat_col = find_col("category")
-    collab_col = find_col("collab")
-    row_by_norm, name_by_norm, cat_by_norm, collab_by_norm = {}, {}, {}, {}
+    cv_col = next((c for c in (find_col("col. var."), find_col("col var"),
+                               find_col("color variation")) if c >= 0), -1)
+    row_by_norm, name_by_norm, cat_by_norm, colorvar_by_norm = {}, {}, {}, {}
     for r in range(2, len(grid)):
         nm = ((get(grid[r], icon_col) or {}).get("formattedValue") or "").strip()
         if nm:
@@ -203,9 +206,9 @@ def main():
             if cat_col >= 0:
                 cat = ((get(grid[r], cat_col) or {}).get("formattedValue") or "").strip()
                 cat_by_norm.setdefault(key, cat)
-            if collab_col >= 0:
-                cv = ((get(grid[r], collab_col) or {}).get("formattedValue") or "").strip()
-                collab_by_norm.setdefault(key, cv)
+            if cv_col >= 0:
+                cv = ((get(grid[r], cv_col) or {}).get("formattedValue") or "").strip()
+                colorvar_by_norm.setdefault(key, cv)
     all_norms = list(row_by_norm.keys())
 
     premade_norm = norm(PREMADE_CATEGORY)
@@ -214,9 +217,11 @@ def main():
         return bool(base_norm) and norm(cat_by_norm.get(base_norm, "")) == premade_norm
 
     def is_collab(base_norm):
-        # A Sheets checkbox reads back TRUE/FALSE; also accept a typed YES/X/1.
-        return bool(base_norm) and collab_by_norm.get(base_norm, "").strip().upper() in (
-            "TRUE", "YES", "X", "1", "✓")
+        # "FIXED/COLLAB" in the Col. Var. dropdown marks a fixed, single-size
+        # brand-collab design. Accept the slash, a dash, or no separator.
+        cv = colorvar_by_norm.get(base_norm, "").strip().upper()
+        cv = cv.replace(" ", "").replace("_", "")
+        return bool(base_norm) and cv in ("FIXED/COLLAB", "FIXED-COLLAB", "FIXEDCOLLAB")
 
     def fixed_size_row(base_norm):
         """Rows whose files legitimately carry no size word."""

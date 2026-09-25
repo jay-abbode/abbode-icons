@@ -32,7 +32,7 @@ export interface Icon {
   isMultiColor: boolean;
   status: string;
   /**
-   * True when the sheet's COLLAB checkbox is ticked. Collab designs are fixed,
+   * True when Col. Var. is "FIXED/COLLAB". Collab designs are fixed,
    * single-size pieces made for brand partners. They are kept out of the main
    * catalog (`IconCatalog.icons`) entirely — search, contact sheets, the visual
    * scanner, downloads, and reports never see them — and only surface under
@@ -181,10 +181,14 @@ async function fetchCatalogFromSheet(): Promise<IconCatalog> {
     // YES, YES/MC, and YES-MC all unlock the variations workflow.
     const hasColorVariation = colorVar === "YES" || isMultiColor;
 
-    // A Google Sheets checkbox reads back as "TRUE"/"FALSE". Also accept a
-    // hand-typed YES / X / 1 so a non-checkbox cell still works.
-    const collabRaw = getCellText(row, col.collab).trim().toUpperCase();
-    const isCollab = ["TRUE", "YES", "X", "1", "✓"].includes(collabRaw);
+    // "FIXED/COLLAB" in the Col. Var. dropdown marks a fixed, single-size
+    // brand-collab design. It's a fourth mode alongside NO / YES / YES/MC, and
+    // it implies no color variation (neither YES branch above matches it).
+    // Accept the slash, a dash, or no separator.
+    const isCollab =
+      colorVar === "FIXED/COLLAB" ||
+      colorVar === "FIXED-COLLAB" ||
+      colorVar === "FIXEDCOLLAB";
 
     const icon: Icon = {
       slug,
@@ -269,7 +273,6 @@ interface ColumnIndex {
   mediumDst: number;
   largeDst: number;
   tags: number;
-  collab: number;
 }
 
 function buildColumnIndex(headers: string[]): ColumnIndex {
@@ -322,9 +325,6 @@ function buildColumnIndex(headers: string[]): ColumnIndex {
     largeDst: findHeader(["LARGE DST", "Large DST"]),
     // Optional — added for thematic search. Missing column just means no tags.
     tags: findHeader(["Tags", "TAGS", "Search Tags", "Theme Tags"]),
-    // Optional — the COLLAB checkbox column. Missing column just means no
-    // collab designs, and the whole Collabs section stays hidden.
-    collab: findHeader(["COLLAB", "Collab", "Collabs", "Brand Collab"]),
     // Optional — when the icon joined the catalog. Deliberately NOT matched on a
     // bare "Date": too generic to guess at, and a wrong match would quietly
     // mis-date the whole catalog. Missing column falls back to Drive.
