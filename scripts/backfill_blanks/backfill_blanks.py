@@ -188,8 +188,12 @@ def main():
     # rows: norm name -> rownum; and the reverse, and all names for typo matching.
     # cat_by_norm remembers each row's Category so sized files with no size word
     # can be accepted for Premade Designs rows (routed to the MEDIUM column).
+    # collab_by_norm does the same for rows with the COLLAB checkbox ticked —
+    # collab designs are fixed single-size pieces, so their files carry no
+    # size word either.
     cat_col = find_col("category")
-    row_by_norm, name_by_norm, cat_by_norm = {}, {}, {}
+    collab_col = find_col("collab")
+    row_by_norm, name_by_norm, cat_by_norm, collab_by_norm = {}, {}, {}, {}
     for r in range(2, len(grid)):
         nm = ((get(grid[r], icon_col) or {}).get("formattedValue") or "").strip()
         if nm:
@@ -199,12 +203,24 @@ def main():
             if cat_col >= 0:
                 cat = ((get(grid[r], cat_col) or {}).get("formattedValue") or "").strip()
                 cat_by_norm.setdefault(key, cat)
+            if collab_col >= 0:
+                cv = ((get(grid[r], collab_col) or {}).get("formattedValue") or "").strip()
+                collab_by_norm.setdefault(key, cv)
     all_norms = list(row_by_norm.keys())
 
     premade_norm = norm(PREMADE_CATEGORY)
 
     def is_premade(base_norm):
         return bool(base_norm) and norm(cat_by_norm.get(base_norm, "")) == premade_norm
+
+    def is_collab(base_norm):
+        # A Sheets checkbox reads back TRUE/FALSE; also accept a typed YES/X/1.
+        return bool(base_norm) and collab_by_norm.get(base_norm, "").strip().upper() in (
+            "TRUE", "YES", "X", "1", "✓")
+
+    def fixed_size_row(base_norm):
+        """Rows whose files legitimately carry no size word."""
+        return is_premade(base_norm) or is_collab(base_norm)
 
     all_writes = []
     png_filled = []  # icon names whose PNG cell was filled this run (for the runner)
@@ -246,13 +262,14 @@ def main():
                     continue
             elif cfg["sized"] and sizeless_re is not None:
                 # No SMALL/MEDIUM/LARGE token: accept ONLY if it resolves to a
-                # Premade Designs row, and route it to the MEDIUM column. Anything
-                # else with a missing size word stays a flagged bad filename.
+                # fixed-size row (Premade Designs, or a COLLAB-ticked row), and
+                # route it to the MEDIUM column. Anything else with a missing
+                # size word stays a flagged bad filename.
                 sm = sizeless_re.match(fname)
                 base = sm.group("name").strip() if sm else ""
                 base_norm = norm(base)
                 rownum = row_by_norm.get(base_norm)
-                if not (sm and rownum and is_premade(base_norm)):
+                if not (sm and rownum and fixed_size_row(base_norm)):
                     bad_pattern.append(fname)
                     continue
                 size = PREMADE_FIXED_SIZE
@@ -282,7 +299,7 @@ def main():
         if len(fills) > 100:
             print(f"    ... and {len(fills) - 100} more")
         if premade_sizeless:
-            print(f"[{t}] {len(premade_sizeless)} fixed-size Premade file(s) "
+            print(f"[{t}] {len(premade_sizeless)} fixed-size file(s) (Premade / Collab) "
                   f"routed to the {PREMADE_FIXED_SIZE} column (no size word):")
             for where, fname in premade_sizeless[:50]:
                 print(f"    {where:<6} <- {fname}")

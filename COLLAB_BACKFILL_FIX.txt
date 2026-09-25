@@ -1,0 +1,23 @@
+WHY THE COLLAB OFM/DST CELLS STAYED BLANK
+  The backfill maps an OFM/DST to a size column by the " SMALL / MEDIUM / LARGE"
+  word in the filename. It already knew to accept a file with NO size word and
+  route it to MEDIUM — but only for rows in the "Premade Designs" category. A
+  collab row's category is the brand name, so its sizeless files were rejected.
+
+THE FIX (local script — NO Vercel redeploy)
+  scripts/backfill_blanks/backfill_blanks.py now treats a row with the COLLAB
+  box ticked the same way as a Premade row: a file with no size word is
+  accepted and linked into the MEDIUM column. Regular icons still need the
+  size word, exactly as before.
+
+RE-LINK THE COLLAB FILES YOU ALREADY PUSHED
+  The files are in Drive; only their sheet cells are empty. Re-run the link
+  step — it fills blank cells only, so nothing else is touched:
+    cd scripts\add_icons
+    python add_icons.py --skip-upload --apply
+  Then hard-refresh the app. The collab's detail panel shows the single
+  "Design" row with OFM + DST.
+
+GOING FORWARD
+  Push collab files with no size word ("Bag Tag.ofm", "Bag Tag.dst") — the
+  portal handles them now. (Files with a size word still work too.)
