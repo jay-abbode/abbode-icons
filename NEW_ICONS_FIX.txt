@@ -1,0 +1,57 @@
+NEW ICONS FIX  (/new and the "recently added" scope on /assets)
+================================================================
+
+WHAT WAS WRONG
+--------------
+MASTER has no "Date Added" column, so every date on /new comes from the Drive
+creation time of each icon's PNG. The old lookup guessed which Drive folders
+to list by asking the first eight icons in the sheet where their PNG lived,
+then listed only those folders. Anything outside them fell through to a
+40-file "straggler" cap and the rest came out undated.
+
+Verified against the live sheet and Drive on 2026-09-30:
+  - rows 3-10 of MASTER (Apothecary) all have PNGs in folder
+    1w03KGxAIweJ_ChqXmcJ1eaQ2XBVRFQYq (created 2026-04-07)
+  - the Varsity Letters batch (360 PNGs) is in folder
+    1kJRvCNe_uZnuwKVxL-mHDA_ucJY5HSf4 (created 2026-09-30/10-01)
+So the folder the new icons are in was never listed, and /new could show at
+most 40 of them.
+
+WHAT CHANGED
+------------
+lib/iconDates.ts
+  One Drive query instead of a folder walk:
+    mimeType = 'image/png' and createdTime >= <365 days ago> and trashed = false
+  across all drives. Every icon gets a definite answer from that one result:
+  in it = dated, not in it = older than 365 days (so never "new"). No per-icon
+  lookups, no caps. Still cached 30 minutes. Sheet "Date Added" still wins
+  when the column exists.
+  New index fields: olderCount, horizonDays, driveTruncated.
+  New exports: MAX_WINDOW_DAYS (365), horizonDate(), buildIconAgeIndex().
+
+app/new/page.tsx
+  ?days cap reads MAX_WINDOW_DAYS. Coverage line now reads e.g.
+  "Dated 360 of 1,273 icons · 360 from Drive · 877 older than 365 days ·
+   36 undated (these can't appear here)."
+
+No other files touched. /assets uses the same index and picks up the fix.
+
+DATA NOTE (not fixed here)
+--------------------------
+36 Varsity rows named "... - Matcha Green" have OFM links but no PNG link, and
+36 rows named "... - Matcha" have a PNG link but no OFMs. Those 36 PNG-less
+rows are the "36 undated" above and cannot appear on /new until a PNG is
+linked (or the two rows are merged).
+
+VALIDATION
+----------
+  tsc --noEmit clean; next build clean (/new in the route table).
+  24-assertion unit suite on buildIconAgeIndex / horizonDate / filterNewIcons:
+  sheet-wins, older-vs-undated split, truncated listing, Drive failure,
+  400-icon batch with no cap.
+  End-to-end render of /new against the real MASTER export with a stubbed
+  Drive returning the 360 Varsity PNG ids: 360 icons shown under "This week".
+
+REDEPLOY
+--------
+  App-code change — Vercel redeploys on push.

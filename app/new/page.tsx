@@ -4,6 +4,7 @@ import IconGrid from "@/components/IconGrid";
 import { getIconCatalog } from "@/lib/sheets";
 import { getCommentCounts } from "@/lib/comments";
 import {
+  MAX_WINDOW_DAYS,
   NEW_WINDOW_DAYS,
   bucketByAge,
   daysSince,
@@ -27,7 +28,7 @@ export const dynamic = "force-dynamic";
 function parseDays(raw: string | undefined): number {
   const n = parseInt(raw ?? "", 10);
   if (!Number.isFinite(n) || n <= 0) return NEW_WINDOW_DAYS;
-  return Math.min(n, 365);
+  return Math.min(n, MAX_WINDOW_DAYS);
 }
 
 export default async function NewIconsPage({
@@ -57,8 +58,11 @@ export default async function NewIconsPage({
     getIconAgeIndex(catalog.icons).catch(() => ({
       bySlug: new Map(),
       counts: { sheet: 0, drive: 0 },
+      olderCount: 0,
       undatedCount: catalog.icons.length,
+      horizonDays: MAX_WINDOW_DAYS,
       driveFailed: true,
+      driveTruncated: false,
     })),
     getCommentCounts()
       .then((r) => r.counts)
@@ -126,12 +130,16 @@ export default async function NewIconsPage({
           Dated {datedCount.toLocaleString()} of {catalog.icons.length.toLocaleString()} icons
           {index.counts.sheet > 0 && ` · ${index.counts.sheet.toLocaleString()} from the sheet`}
           {index.counts.drive > 0 && ` · ${index.counts.drive.toLocaleString()} from Drive`}
+          {index.olderCount > 0 &&
+            ` · ${index.olderCount.toLocaleString()} older than ${index.horizonDays} days`}
           {index.undatedCount > 0 &&
             ` · ${index.undatedCount.toLocaleString()} undated (these can't appear here)`}
           .{" "}
           {index.driveFailed
             ? "Drive lookup failed this time, so only icons with a Date Added value are shown."
-            : "Add a \u201cDate Added\u201d column to MASTER to make this exact — it takes priority over the Drive fallback."}
+            : index.driveTruncated
+              ? "Drive returned more files than fit in one lookup, so some icons may be missing here."
+              : "Add a \u201cDate Added\u201d column to MASTER to make this exact — it takes priority over the Drive fallback."}
         </p>
 
         {entries.length === 0 ? (
