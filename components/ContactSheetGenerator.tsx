@@ -5,6 +5,8 @@ import { PDFDocument } from "pdf-lib";
 import { WORDMARK_PATHS, wordmarkSvg } from "@/lib/wordmark";
 import { THREAD_PALETTE, rgbToHex } from "@/lib/threadPalette";
 import { isPremadeCategory } from "@/lib/categories";
+import type { Icon } from "@/lib/sheets";
+import { downloadTasksAsZip, type ZipTask } from "@/lib/zipDownload";
 
 /* ------------------------------------------------------------------ *
  * Contact-sheet generator.
@@ -173,6 +175,19 @@ export default function ContactSheetGenerator({ loadId }: { loadId?: string }) {
   const [pool, setPool] = useState<PoolIcon[]>([]);
   const [exporting, setExporting] = useState<string | null>(null);
   const [saving, setSaving] = useState<"idle" | "saving" | "saved">("idle");
+
+  // --- Icon files: ZIP of the actual files for the icons on this sheet ---
+  const [dlTypes, setDlTypes] = useState({ png: true, ofm: true, dst: true });
+  const [dlSizes, setDlSizes] = useState({ small: true, medium: true, large: true });
+  // The sheet only holds {slug, name, pngFileId}. OFM/DST file IDs live on the
+  // full Icon, so the catalog is fetched once on demand and joined by slug.
+  const [catalogIcons, setCatalogIcons] = useState<Icon[] | null>(null);
+  const [dl, setDl] = useState<{
+    status: "idle" | "running" | "done" | "error";
+    done: number;
+    total: number;
+    errors: number;
+  }>({ status: "idle", done: 0, total: 0, errors: 0 });
 
   const [loadTick, setLoadTick] = useState(0);
   const [logoReady, setLogoReady] = useState(false);
@@ -445,6 +460,80 @@ export default function ContactSheetGenerator({ loadId }: { loadId?: string }) {
     () => slugifyFilename(categoryLabel || theme),
     [categoryLabel, theme]
   );
+
+  // --- Icon files ZIP: data + action ---
+
+  // Fetch the full catalog once the sheet has icons (one time, on demand).
+  useEffect(() => {
+    if (icons.length === 0 || catalogIcons !== null) return;
+    let cancelled = false;
+    fetch("/api/icons")
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("catalog"))))
+      .then((cat: { icons?: Icon[] }) => {
+        if (!cancelled) setCatalogIcons(cat.icons ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setCatalogIcons([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [icons.length, catalogIcons]);
+
+  // The sheet's icons with their full file data (those still in the catalog),
+  // in sheet order.
+  const sheetFullIcons = useMemo(() => {
+    if (!catalogIcons) return [];
+    const bySlug = new Map(catalogIcons.map((i) => [i.slug, i]));
+    return icons
+      .map((s) => bySlug.get(s.slug))
+      .filter((i): i is Icon => !!i);
+  }, [icons, catalogIcons]);
+
+  const dlSizesSelected = useMemo(
+    () => (["small", "medium", "large"] as const).filter((s) => dlSizes[s]),
+    [dlSizes]
+  );
+
+  // Exactly what the ZIP will contain — so the button shows a true file count.
+  // One folder per file type; sizes apply to OFM/DST (PNG is single).
+  const dlTasks = useMemo((): ZipTask[] => {
+    const tasks: ZipTask[] = [];
+    for (const icon of sheetFullIcons) {
+      if (dlTypes.png && icon.pngFileId) {
+        tasks.push({ url: `/api/download/${icon.pngFileId}`, dir: "PNG" });
+      }
+      for (const s of dlSizesSelected) {
+        const sz = icon.sizes[s];
+        if (dlTypes.ofm && sz.ofmFileId) {
+          tasks.push({ url: `/api/download/${sz.ofmFileId}`, dir: "OFM" });
+        }
+        if (dlTypes.dst && sz.dstFileId) {
+          tasks.push({ url: `/api/download/${sz.dstFileId}`, dir: "DST" });
+        }
+      }
+    }
+    return tasks;
+  }, [sheetFullIcons, dlTypes, dlSizesSelected]);
+
+  const dlNeedsSize = dlTypes.ofm || dlTypes.dst;
+  const dlSizesValid = !dlNeedsSize || dlSizesSelected.length > 0;
+  const dlCanRun = dl.status !== "running" && dlTasks.length > 0 && dlSizesValid;
+
+  const downloadFiles = useCallback(async () => {
+    if (dlTasks.length === 0) return;
+    setDl({ status: "running", done: 0, total: dlTasks.length, errors: 0 });
+    try {
+      const errors = await downloadTasksAsZip(
+        dlTasks,
+        `${fileBase}-files.zip`,
+        (done, errs) => setDl((p) => ({ ...p, done, errors: errs }))
+      );
+      setDl((p) => ({ ...p, status: "done", errors }));
+    } catch {
+      setDl((p) => ({ ...p, status: "error" }));
+    }
+  }, [dlTasks, fileBase]);
 
   const exportPNG = useCallback(async () => {
     setExporting("PNG");
@@ -876,6 +965,92 @@ ${parts.join("\n")}
               </div>
               <p className="font-ui mt-2 text-[11px] text-ink-muted">
                 PNG has a white background. HTML is a single self-contained file.
+              </p>
+            </div>
+
+            {/* Icon files: ZIP of the actual files for the icons on this sheet */}
+            <div className="rounded-xl border border-parchment bg-white p-4">
+              <p className="font-ui mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                Icon files
+              </p>
+
+              <p className="font-ui mb-1.5 text-[11px] text-ink-muted">File type</p>
+              <div className="grid grid-cols-3 gap-2">
+                {(
+                  [
+                    ["png", "PNG"],
+                    ["ofm", "OFM"],
+                    ["dst", "DST"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <label
+                    key={key}
+                    className="font-ui flex cursor-pointer items-center gap-2 rounded-lg border border-cream-200 px-3 py-2 text-sm text-espresso hover:bg-pink-soft"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={dlTypes[key]}
+                      onChange={() => setDlTypes((t) => ({ ...t, [key]: !t[key] }))}
+                      disabled={dl.status === "running"}
+                      className="h-4 w-4 accent-berry"
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+
+              <p className="font-ui mb-1.5 mt-3 text-[11px] text-ink-muted">
+                Size <span className="text-ink-muted/70">(OFM / DST)</span>
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {(
+                  [
+                    ["small", "Small"],
+                    ["medium", "Medium"],
+                    ["large", "Large"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <label
+                    key={key}
+                    className={`font-ui flex cursor-pointer items-center gap-2 rounded-lg border border-cream-200 px-3 py-2 text-sm text-espresso hover:bg-pink-soft ${
+                      dlNeedsSize ? "" : "opacity-50"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={dlSizes[key]}
+                      onChange={() => setDlSizes((s) => ({ ...s, [key]: !s[key] }))}
+                      disabled={dl.status === "running" || !dlNeedsSize}
+                      className="h-4 w-4 accent-berry"
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={downloadFiles}
+                disabled={!dlCanRun}
+                className="font-ui mt-3 w-full rounded-lg bg-berry px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-cherry disabled:opacity-50 focus-ring"
+              >
+                {dl.status === "running"
+                  ? `Zipping… ${dl.done} / ${dl.total}`
+                  : catalogIcons === null
+                  ? "Download ZIP"
+                  : `Download ZIP (${dlTasks.length} file${dlTasks.length === 1 ? "" : "s"})`}
+              </button>
+
+              <p className="font-ui mt-2 text-[11px] text-ink-muted">
+                {dl.status === "done"
+                  ? dl.errors > 0
+                    ? `Done — ${dl.errors} file${dl.errors === 1 ? "" : "s"} couldn't be fetched and were skipped.`
+                    : "Done — your ZIP is downloading."
+                  : dl.status === "error"
+                  ? "The ZIP couldn't be built. Try again."
+                  : !dlSizesValid
+                  ? "Pick at least one size for OFM / DST."
+                  : "One folder per file type, for every icon on this sheet."}
               </p>
             </div>
           </div>

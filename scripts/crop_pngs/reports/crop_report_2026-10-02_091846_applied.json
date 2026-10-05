@@ -1,0 +1,614 @@
+[
+  {
+    "slug": "varsity-0-matcha-green",
+    "name": "Varsity 0 - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1SEAaui5ixXDx1b0MekJPFskrNjgZIOME",
+    "status": "cropped",
+    "original_size": [
+      350,
+      509
+    ],
+    "new_size": [
+      306,
+      465
+    ],
+    "saved_bytes": 17780,
+    "error": null
+  },
+  {
+    "slug": "varsity-1-matcha-green",
+    "name": "Varsity 1 - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "18fMmSeiavYITxXNGI75tYCGu8J9M___-",
+    "status": "cropped",
+    "original_size": [
+      213,
+      509
+    ],
+    "new_size": [
+      169,
+      465
+    ],
+    "saved_bytes": 10504,
+    "error": null
+  },
+  {
+    "slug": "varsity-2-matcha-green",
+    "name": "Varsity 2 - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1U1TJ2cOC-GTBZO6CjUTlqk2x8VkRD7kS",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      299,
+      465
+    ],
+    "saved_bytes": 14038,
+    "error": null
+  },
+  {
+    "slug": "varsity-3-matcha-green",
+    "name": "Varsity 3 - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1_OpFvUWbASMJtlPZ94oG0Bq0e8RxRKc9",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 15324,
+    "error": null
+  },
+  {
+    "slug": "varsity-4-matcha-green",
+    "name": "Varsity 4 - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1J4VwLngsF_MwX5L9MfWfQ8wV0oWSnUBx",
+    "status": "cropped",
+    "original_size": [
+      373,
+      509
+    ],
+    "new_size": [
+      330,
+      465
+    ],
+    "saved_bytes": 15865,
+    "error": null
+  },
+  {
+    "slug": "varsity-5-matcha-green",
+    "name": "Varsity 5 - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "165Bf98r00cq31YSMYwKuYcZ7lIZ6fMhn",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 15318,
+    "error": null
+  },
+  {
+    "slug": "varsity-6-matcha-green",
+    "name": "Varsity 6 - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1Hf36BSai5CS9jjLblgMKLpnTwllslNsx",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 15506,
+    "error": null
+  },
+  {
+    "slug": "varsity-7-matcha-green",
+    "name": "Varsity 7 - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1hTsX9JPaQnM6RjdbHAJtR_cQKeS075iR",
+    "status": "cropped",
+    "original_size": [
+      308,
+      509
+    ],
+    "new_size": [
+      263,
+      465
+    ],
+    "saved_bytes": 11084,
+    "error": null
+  },
+  {
+    "slug": "varsity-8-matcha-green",
+    "name": "Varsity 8 - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1VJmU7DcjHbXpteYsE4ag8yWxr_acTYkM",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      299,
+      465
+    ],
+    "saved_bytes": 19391,
+    "error": null
+  },
+  {
+    "slug": "varsity-9-matcha-green",
+    "name": "Varsity 9 - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1ur-c5BjPuFeHz1pcx4BsNDgDeMUME_Zx",
+    "status": "cropped",
+    "original_size": [
+      344,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 17347,
+    "error": null
+  },
+  {
+    "slug": "varsity-a-matcha-green",
+    "name": "Varsity A - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1ATkTVKNJKdfodhrm2YJsxkpf9BJuLDuA",
+    "status": "cropped",
+    "original_size": [
+      353,
+      510
+    ],
+    "new_size": [
+      310,
+      465
+    ],
+    "saved_bytes": 15498,
+    "error": null
+  },
+  {
+    "slug": "varsity-b-matcha-green",
+    "name": "Varsity B - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1YESFK_E1a_d7y07P1D7tFX_KZ8oMtfNa",
+    "status": "cropped",
+    "original_size": [
+      341,
+      509
+    ],
+    "new_size": [
+      297,
+      464
+    ],
+    "saved_bytes": 12381,
+    "error": null
+  },
+  {
+    "slug": "varsity-c-matcha-green",
+    "name": "Varsity C - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1IiYHY2x9jHsTh84hFnAcmIBWXkOF-8C9",
+    "status": "cropped",
+    "original_size": [
+      343,
+      511
+    ],
+    "new_size": [
+      299,
+      467
+    ],
+    "saved_bytes": 10995,
+    "error": null
+  },
+  {
+    "slug": "varsity-d-matcha-green",
+    "name": "Varsity D - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1z5XLk9QNRa_eQf20pm8rHcnSEjhMKYtI",
+    "status": "cropped",
+    "original_size": [
+      339,
+      509
+    ],
+    "new_size": [
+      296,
+      465
+    ],
+    "saved_bytes": 10449,
+    "error": null
+  },
+  {
+    "slug": "varsity-e-matcha-green",
+    "name": "Varsity E - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1T5WdDGxXBiIXZG2mt3Nrq7DpOsCLv5Lo",
+    "status": "cropped",
+    "original_size": [
+      319,
+      509
+    ],
+    "new_size": [
+      276,
+      465
+    ],
+    "saved_bytes": 12353,
+    "error": null
+  },
+  {
+    "slug": "varsity-f-matcha-green",
+    "name": "Varsity F - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1GxzNuQM0uQfQBp5VTp9QbpJHlNeSo2vP",
+    "status": "cropped",
+    "original_size": [
+      320,
+      509
+    ],
+    "new_size": [
+      276,
+      463
+    ],
+    "saved_bytes": 10365,
+    "error": null
+  },
+  {
+    "slug": "varsity-g-matcha-green",
+    "name": "Varsity G - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1XuxSxJ_E3DAuhVYTDHgHRB0zLN4k9O96",
+    "status": "cropped",
+    "original_size": [
+      345,
+      510
+    ],
+    "new_size": [
+      301,
+      465
+    ],
+    "saved_bytes": 10484,
+    "error": null
+  },
+  {
+    "slug": "varsity-h-matcha-green",
+    "name": "Varsity H - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1jC4A9gspAi_Qnm07mPjfV_D5-Sj_dTOU",
+    "status": "cropped",
+    "original_size": [
+      333,
+      511
+    ],
+    "new_size": [
+      289,
+      465
+    ],
+    "saved_bytes": 8244,
+    "error": null
+  },
+  {
+    "slug": "varsity-i-matcha-green",
+    "name": "Varsity I - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1eFEfotDOPUdgiAChL4X0Aa2O-H7dLDQx",
+    "status": "cropped",
+    "original_size": [
+      170,
+      513
+    ],
+    "new_size": [
+      127,
+      469
+    ],
+    "saved_bytes": 3947,
+    "error": null
+  },
+  {
+    "slug": "varsity-j-matcha-green",
+    "name": "Varsity J - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1jQUzxXLSUcxk7VD7S3SZhLMt2cvgpyp9",
+    "status": "cropped",
+    "original_size": [
+      341,
+      508
+    ],
+    "new_size": [
+      298,
+      464
+    ],
+    "saved_bytes": 9770,
+    "error": null
+  },
+  {
+    "slug": "varsity-k-matcha-green",
+    "name": "Varsity K - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "13-felKh47zLBEUPhiS8ydcRx4LQGy2GO",
+    "status": "cropped",
+    "original_size": [
+      347,
+      513
+    ],
+    "new_size": [
+      303,
+      466
+    ],
+    "saved_bytes": 11921,
+    "error": null
+  },
+  {
+    "slug": "varsity-l-matcha-green",
+    "name": "Varsity L - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1FiJCNw1cqIqFqacQuAXWKTRekHZkbOME",
+    "status": "cropped",
+    "original_size": [
+      313,
+      511
+    ],
+    "new_size": [
+      269,
+      467
+    ],
+    "saved_bytes": 10876,
+    "error": null
+  },
+  {
+    "slug": "varsity-m-matcha-green",
+    "name": "Varsity M - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1qQVaY7V7ZsEwEFzhqQmIIREJWn57VUqF",
+    "status": "cropped",
+    "original_size": [
+      364,
+      513
+    ],
+    "new_size": [
+      321,
+      467
+    ],
+    "saved_bytes": 9875,
+    "error": null
+  },
+  {
+    "slug": "varsity-n-matcha-green",
+    "name": "Varsity N - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "18ScjSN24wG7N_x9Gh7_69H_BvIw63ObH",
+    "status": "cropped",
+    "original_size": [
+      345,
+      510
+    ],
+    "new_size": [
+      301,
+      465
+    ],
+    "saved_bytes": 11270,
+    "error": null
+  },
+  {
+    "slug": "varsity-o-matcha-green",
+    "name": "Varsity O - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1E8KhNucHidY4_SbSMJX6AktCt49QkTGt",
+    "status": "cropped",
+    "original_size": [
+      348,
+      509
+    ],
+    "new_size": [
+      306,
+      464
+    ],
+    "saved_bytes": 10959,
+    "error": null
+  },
+  {
+    "slug": "varsity-p-matcha-green",
+    "name": "Varsity P - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1atFo0DS4B-WXoYZLGu_ZlU0kcpyifcsq",
+    "status": "cropped",
+    "original_size": [
+      340,
+      513
+    ],
+    "new_size": [
+      297,
+      469
+    ],
+    "saved_bytes": 10882,
+    "error": null
+  },
+  {
+    "slug": "varsity-q-matcha-green",
+    "name": "Varsity Q - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1LKASf70K0LvuL6YOtDwybpF_20860snz",
+    "status": "cropped",
+    "original_size": [
+      301,
+      511
+    ],
+    "new_size": [
+      258,
+      465
+    ],
+    "saved_bytes": 10607,
+    "error": null
+  },
+  {
+    "slug": "varsity-r-matcha-green",
+    "name": "Varsity R - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1nYZQkOSYFcLPjqQfcoPyzp1ITPlAMb4-",
+    "status": "cropped",
+    "original_size": [
+      341,
+      514
+    ],
+    "new_size": [
+      297,
+      469
+    ],
+    "saved_bytes": 9815,
+    "error": null
+  },
+  {
+    "slug": "varsity-s-matcha-green",
+    "name": "Varsity S - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "10Nj2-oqQdXtsQmItfo5umh_5gPoIUfbs",
+    "status": "cropped",
+    "original_size": [
+      338,
+      511
+    ],
+    "new_size": [
+      294,
+      467
+    ],
+    "saved_bytes": 12258,
+    "error": null
+  },
+  {
+    "slug": "varsity-t-matcha-green",
+    "name": "Varsity T - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "14VVSS5uQwS9KqJEQNM8yZ2a6E97b-5a7",
+    "status": "cropped",
+    "original_size": [
+      352,
+      508
+    ],
+    "new_size": [
+      308,
+      463
+    ],
+    "saved_bytes": 10109,
+    "error": null
+  },
+  {
+    "slug": "varsity-u-matcha-green",
+    "name": "Varsity U - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1Gdbd-BXYKHpHMpmXOb6Qokn-8yZnFvza",
+    "status": "cropped",
+    "original_size": [
+      344,
+      511
+    ],
+    "new_size": [
+      299,
+      466
+    ],
+    "saved_bytes": 10022,
+    "error": null
+  },
+  {
+    "slug": "varsity-v-matcha-green",
+    "name": "Varsity V - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1891XYG02qt8KA4wCGM8tPOkfazCBK0xe",
+    "status": "cropped",
+    "original_size": [
+      356,
+      510
+    ],
+    "new_size": [
+      312,
+      466
+    ],
+    "saved_bytes": 11331,
+    "error": null
+  },
+  {
+    "slug": "varsity-w-matcha-green",
+    "name": "Varsity W - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1MYtJNproPtDlZXafD1xESGYvYJKDxNnS",
+    "status": "cropped",
+    "original_size": [
+      433,
+      511
+    ],
+    "new_size": [
+      390,
+      466
+    ],
+    "saved_bytes": 15707,
+    "error": null
+  },
+  {
+    "slug": "varsity-x-matcha-green",
+    "name": "Varsity X - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1CzTWJWXH0Ns8BwwGEfC7NYDdq095VUAn",
+    "status": "cropped",
+    "original_size": [
+      381,
+      507
+    ],
+    "new_size": [
+      336,
+      463
+    ],
+    "saved_bytes": 14341,
+    "error": null
+  },
+  {
+    "slug": "varsity-y-matcha-green",
+    "name": "Varsity Y - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1r5xdg3T2j9yV-r7ciQV76GJRQ61LMmWj",
+    "status": "cropped",
+    "original_size": [
+      381,
+      507
+    ],
+    "new_size": [
+      335,
+      462
+    ],
+    "saved_bytes": 12917,
+    "error": null
+  },
+  {
+    "slug": "varsity-z-matcha-green",
+    "name": "Varsity Z - Matcha Green",
+    "category": "Varsity Letters",
+    "file_id": "1QXpCC41lU7uuYHnipDvjvn-1D_3OxjFN",
+    "status": "cropped",
+    "original_size": [
+      309,
+      508
+    ],
+    "new_size": [
+      267,
+      462
+    ],
+    "saved_bytes": 12722,
+    "error": null
+  }
+]

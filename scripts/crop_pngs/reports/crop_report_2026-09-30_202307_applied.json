@@ -1,0 +1,6122 @@
+[
+  {
+    "slug": "varsity-0-black",
+    "name": "Varsity 0 - Black",
+    "category": "",
+    "file_id": "1nxUj3igBD2jo3duxOWx7JUp3kP6Yz1j7",
+    "status": "cropped",
+    "original_size": [
+      350,
+      509
+    ],
+    "new_size": [
+      306,
+      465
+    ],
+    "saved_bytes": 22689,
+    "error": null
+  },
+  {
+    "slug": "varsity-0-burgundy",
+    "name": "Varsity 0 - Burgundy",
+    "category": "",
+    "file_id": "1BNY_-ZP-xug2kDlCJcGKyD84gcc1QMt5",
+    "status": "cropped",
+    "original_size": [
+      350,
+      509
+    ],
+    "new_size": [
+      306,
+      465
+    ],
+    "saved_bytes": 43857,
+    "error": null
+  },
+  {
+    "slug": "varsity-0-dark-yellow",
+    "name": "Varsity 0 - Dark Yellow",
+    "category": "",
+    "file_id": "1yTdnE3u0EmWTbqQ84HoSKo_byPzJ65V9",
+    "status": "cropped",
+    "original_size": [
+      350,
+      509
+    ],
+    "new_size": [
+      306,
+      465
+    ],
+    "saved_bytes": 56774,
+    "error": null
+  },
+  {
+    "slug": "varsity-0-light-blue",
+    "name": "Varsity 0 - Light Blue",
+    "category": "",
+    "file_id": "18ohBmJwCn9r_tAZC6hLFfmr9sgUqEhUG",
+    "status": "cropped",
+    "original_size": [
+      350,
+      509
+    ],
+    "new_size": [
+      306,
+      465
+    ],
+    "saved_bytes": 24167,
+    "error": null
+  },
+  {
+    "slug": "varsity-0-light-pink",
+    "name": "Varsity 0 - Light Pink",
+    "category": "",
+    "file_id": "1pwJonpMbnqh93C4bPmYXvLtbGwaZ96tL",
+    "status": "cropped",
+    "original_size": [
+      350,
+      509
+    ],
+    "new_size": [
+      306,
+      465
+    ],
+    "saved_bytes": 10055,
+    "error": null
+  },
+  {
+    "slug": "varsity-0-matcha",
+    "name": "Varsity 0 - Matcha",
+    "category": "",
+    "file_id": "1mv3tNxkMTBmAbvvo0klV4SCA41ijzyKR",
+    "status": "cropped",
+    "original_size": [
+      350,
+      509
+    ],
+    "new_size": [
+      306,
+      465
+    ],
+    "saved_bytes": 17780,
+    "error": null
+  },
+  {
+    "slug": "varsity-0-pink",
+    "name": "Varsity 0 - Pink",
+    "category": "",
+    "file_id": "1LMW52zxyFTaJ-JUShSF4Q9mMAkzD4R5R",
+    "status": "cropped",
+    "original_size": [
+      350,
+      509
+    ],
+    "new_size": [
+      306,
+      465
+    ],
+    "saved_bytes": 40890,
+    "error": null
+  },
+  {
+    "slug": "varsity-0-purple",
+    "name": "Varsity 0 - Purple",
+    "category": "",
+    "file_id": "1M9G2BKI0siwOp4xIZjfIS1xWVz9cxbXN",
+    "status": "cropped",
+    "original_size": [
+      350,
+      509
+    ],
+    "new_size": [
+      306,
+      465
+    ],
+    "saved_bytes": 24210,
+    "error": null
+  },
+  {
+    "slug": "varsity-0-red",
+    "name": "Varsity 0 - Red",
+    "category": "",
+    "file_id": "1LVkBJdwxkC7rF6TO70wBfLJQ8fgKCMY5",
+    "status": "cropped",
+    "original_size": [
+      350,
+      509
+    ],
+    "new_size": [
+      306,
+      465
+    ],
+    "saved_bytes": 39980,
+    "error": null
+  },
+  {
+    "slug": "varsity-0-white",
+    "name": "Varsity 0 - White",
+    "category": "",
+    "file_id": "10AZZPnygzQFT5bJ1IE2W8cj37qZq5rMT",
+    "status": "cropped",
+    "original_size": [
+      350,
+      509
+    ],
+    "new_size": [
+      306,
+      465
+    ],
+    "saved_bytes": -9272,
+    "error": null
+  },
+  {
+    "slug": "varsity-1-black",
+    "name": "Varsity 1 - Black",
+    "category": "",
+    "file_id": "1NLeWVhJxgp7RC18o4b_6fyrLYZEnrO6n",
+    "status": "cropped",
+    "original_size": [
+      213,
+      509
+    ],
+    "new_size": [
+      169,
+      465
+    ],
+    "saved_bytes": 14234,
+    "error": null
+  },
+  {
+    "slug": "varsity-1-burgundy",
+    "name": "Varsity 1 - Burgundy",
+    "category": "",
+    "file_id": "1FdeFI8X-WJUSMTEi6k7_xlUQamOFETs8",
+    "status": "cropped",
+    "original_size": [
+      213,
+      509
+    ],
+    "new_size": [
+      169,
+      465
+    ],
+    "saved_bytes": 26080,
+    "error": null
+  },
+  {
+    "slug": "varsity-1-dark-yellow",
+    "name": "Varsity 1 - Dark Yellow",
+    "category": "",
+    "file_id": "104_cwjlnHVaFj0BaMhDbYWmmH65qOTVg",
+    "status": "cropped",
+    "original_size": [
+      213,
+      509
+    ],
+    "new_size": [
+      169,
+      465
+    ],
+    "saved_bytes": 29702,
+    "error": null
+  },
+  {
+    "slug": "varsity-1-light-blue",
+    "name": "Varsity 1 - Light Blue",
+    "category": "",
+    "file_id": "1dz_k2rVbwrkSdoQxTP7Z1lBlahfWpjCN",
+    "status": "cropped",
+    "original_size": [
+      213,
+      509
+    ],
+    "new_size": [
+      169,
+      465
+    ],
+    "saved_bytes": 14627,
+    "error": null
+  },
+  {
+    "slug": "varsity-1-light-pink",
+    "name": "Varsity 1 - Light Pink",
+    "category": "",
+    "file_id": "1B-CUer1QOrGkmRKs01-cuVTMo2iM8ItQ",
+    "status": "cropped",
+    "original_size": [
+      213,
+      509
+    ],
+    "new_size": [
+      169,
+      465
+    ],
+    "saved_bytes": 6489,
+    "error": null
+  },
+  {
+    "slug": "varsity-1-matcha",
+    "name": "Varsity 1 - Matcha",
+    "category": "",
+    "file_id": "1CxdcdC8LCf6qf6ViY7-vKKfsdFLOla79",
+    "status": "cropped",
+    "original_size": [
+      213,
+      509
+    ],
+    "new_size": [
+      169,
+      465
+    ],
+    "saved_bytes": 10504,
+    "error": null
+  },
+  {
+    "slug": "varsity-1-pink",
+    "name": "Varsity 1 - Pink",
+    "category": "",
+    "file_id": "1N4ynJoaVlQTuxzPNAvfcktg4BC79nNEV",
+    "status": "cropped",
+    "original_size": [
+      213,
+      509
+    ],
+    "new_size": [
+      169,
+      465
+    ],
+    "saved_bytes": 24792,
+    "error": null
+  },
+  {
+    "slug": "varsity-1-purple",
+    "name": "Varsity 1 - Purple",
+    "category": "",
+    "file_id": "1tTciUWys45tNnGlNMNOPnInu6Z9NfuzX",
+    "status": "cropped",
+    "original_size": [
+      213,
+      509
+    ],
+    "new_size": [
+      169,
+      465
+    ],
+    "saved_bytes": 13842,
+    "error": null
+  },
+  {
+    "slug": "varsity-1-red",
+    "name": "Varsity 1 - Red",
+    "category": "",
+    "file_id": "1lgfSgwvOM25itBGzLkcRbA_LtIzfH8lZ",
+    "status": "cropped",
+    "original_size": [
+      213,
+      509
+    ],
+    "new_size": [
+      169,
+      465
+    ],
+    "saved_bytes": 21723,
+    "error": null
+  },
+  {
+    "slug": "varsity-1-white",
+    "name": "Varsity 1 - White",
+    "category": "",
+    "file_id": "1KKgXT7pwTo-7x5qXmyJnm9I6XxySlFnQ",
+    "status": "cropped",
+    "original_size": [
+      213,
+      509
+    ],
+    "new_size": [
+      169,
+      465
+    ],
+    "saved_bytes": -1337,
+    "error": null
+  },
+  {
+    "slug": "varsity-2-black",
+    "name": "Varsity 2 - Black",
+    "category": "",
+    "file_id": "1fZhsIuZyDeqE18a23rrt8dQi4NEuXfZ3",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      299,
+      465
+    ],
+    "saved_bytes": 19853,
+    "error": null
+  },
+  {
+    "slug": "varsity-2-burgundy",
+    "name": "Varsity 2 - Burgundy",
+    "category": "",
+    "file_id": "1_7tcQIZFxho-1aN3K3FiWb6SCS1fVx53",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      299,
+      465
+    ],
+    "saved_bytes": 40054,
+    "error": null
+  },
+  {
+    "slug": "varsity-2-dark-yellow",
+    "name": "Varsity 2 - Dark Yellow",
+    "category": "",
+    "file_id": "1P7EzXlJxCV1h_otOpQMQAfs1EnNStTBL",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      299,
+      465
+    ],
+    "saved_bytes": 47760,
+    "error": null
+  },
+  {
+    "slug": "varsity-2-light-blue",
+    "name": "Varsity 2 - Light Blue",
+    "category": "",
+    "file_id": "14F7ybxZua-N0xLctRAdfbRdKxn0225jb",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      299,
+      465
+    ],
+    "saved_bytes": 19877,
+    "error": null
+  },
+  {
+    "slug": "varsity-2-light-pink",
+    "name": "Varsity 2 - Light Pink",
+    "category": "",
+    "file_id": "1soG2FKfehaCiK9B-riw7WkUP-tm0gjT8",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      299,
+      465
+    ],
+    "saved_bytes": 7072,
+    "error": null
+  },
+  {
+    "slug": "varsity-2-matcha",
+    "name": "Varsity 2 - Matcha",
+    "category": "",
+    "file_id": "1C3JPpqNmyGS_Ho12TCinqcueMOcD-nUW",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      299,
+      465
+    ],
+    "saved_bytes": 14038,
+    "error": null
+  },
+  {
+    "slug": "varsity-2-pink",
+    "name": "Varsity 2 - Pink",
+    "category": "",
+    "file_id": "14NsIamuDs6zBjE_isX-rBNgsPHQ7p-Qv",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      299,
+      465
+    ],
+    "saved_bytes": 37661,
+    "error": null
+  },
+  {
+    "slug": "varsity-2-purple",
+    "name": "Varsity 2 - Purple",
+    "category": "",
+    "file_id": "1aiYlfj5g-q5W4_C0dssjNiLDLgHb9V4l",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      299,
+      465
+    ],
+    "saved_bytes": 20378,
+    "error": null
+  },
+  {
+    "slug": "varsity-2-red",
+    "name": "Varsity 2 - Red",
+    "category": "",
+    "file_id": "1JrtmmOo2hHB7oWIQVcR6IMzyAzROYdsw",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      299,
+      465
+    ],
+    "saved_bytes": 34064,
+    "error": null
+  },
+  {
+    "slug": "varsity-2-white",
+    "name": "Varsity 2 - White",
+    "category": "",
+    "file_id": "107xCHmw2VkBIEEaZnJOWHUdukPm5vNa0",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      299,
+      465
+    ],
+    "saved_bytes": -8214,
+    "error": null
+  },
+  {
+    "slug": "varsity-3-black",
+    "name": "Varsity 3 - Black",
+    "category": "",
+    "file_id": "1rbk2xFg-rNpr0V9_Dd9qwdkYkACkayK5",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 20946,
+    "error": null
+  },
+  {
+    "slug": "varsity-3-burgundy",
+    "name": "Varsity 3 - Burgundy",
+    "category": "",
+    "file_id": "1pdkj39L8C10hwe6ov8xNDPGsk8F560Fa",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 39992,
+    "error": null
+  },
+  {
+    "slug": "varsity-3-dark-yellow",
+    "name": "Varsity 3 - Dark Yellow",
+    "category": "",
+    "file_id": "1nSAufPIccJVkfhGDbQnbJAh34sIW6WGL",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 48290,
+    "error": null
+  },
+  {
+    "slug": "varsity-3-light-blue",
+    "name": "Varsity 3 - Light Blue",
+    "category": "",
+    "file_id": "1rSZ69eSbldz2HVTQqz65Di0J3h3jtpSo",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 20535,
+    "error": null
+  },
+  {
+    "slug": "varsity-3-light-pink",
+    "name": "Varsity 3 - Light Pink",
+    "category": "",
+    "file_id": "1GegtOA4jmuiZPpslB5dRocAG8DCLdAVx",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 8102,
+    "error": null
+  },
+  {
+    "slug": "varsity-3-matcha",
+    "name": "Varsity 3 - Matcha",
+    "category": "",
+    "file_id": "1BQ9yqtZp28rHeaDJFSvjO9mXuTxsI6uj",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 15324,
+    "error": null
+  },
+  {
+    "slug": "varsity-3-pink",
+    "name": "Varsity 3 - Pink",
+    "category": "",
+    "file_id": "1nqNZwOA6wE79nm0uG4sc-X7tFgeEJUI_",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 38571,
+    "error": null
+  },
+  {
+    "slug": "varsity-3-purple",
+    "name": "Varsity 3 - Purple",
+    "category": "",
+    "file_id": "1UKIk2_nfHJQVzDIkXhytQSVPJ0HHLJfh",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 21211,
+    "error": null
+  },
+  {
+    "slug": "varsity-3-red",
+    "name": "Varsity 3 - Red",
+    "category": "",
+    "file_id": "1L8xqXt9sLQqAn7HtdPzZglUObdr6_941",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 34911,
+    "error": null
+  },
+  {
+    "slug": "varsity-3-white",
+    "name": "Varsity 3 - White",
+    "category": "",
+    "file_id": "19dbGrjehPMwUnEOxlReJ18-kCf2HopT-",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": -8424,
+    "error": null
+  },
+  {
+    "slug": "varsity-4-black",
+    "name": "Varsity 4 - Black",
+    "category": "",
+    "file_id": "1xw0y0DVm2bYGcRxjPHYRK3GfhdLEmxQe",
+    "status": "cropped",
+    "original_size": [
+      373,
+      509
+    ],
+    "new_size": [
+      330,
+      465
+    ],
+    "saved_bytes": 21978,
+    "error": null
+  },
+  {
+    "slug": "varsity-4-burgundy",
+    "name": "Varsity 4 - Burgundy",
+    "category": "",
+    "file_id": "1yh-Wl08DP4PHqqodptBNB5dpC1m5veG5",
+    "status": "cropped",
+    "original_size": [
+      373,
+      509
+    ],
+    "new_size": [
+      330,
+      465
+    ],
+    "saved_bytes": 40642,
+    "error": null
+  },
+  {
+    "slug": "varsity-4-dark-yellow",
+    "name": "Varsity 4 - Dark Yellow",
+    "category": "",
+    "file_id": "13C-mC10ZueWxbmK5a9axRQXtw2f7L2Lo",
+    "status": "cropped",
+    "original_size": [
+      373,
+      509
+    ],
+    "new_size": [
+      330,
+      465
+    ],
+    "saved_bytes": 49067,
+    "error": null
+  },
+  {
+    "slug": "varsity-4-light-blue",
+    "name": "Varsity 4 - Light Blue",
+    "category": "",
+    "file_id": "13UDl0wVeVqOedIxwShz0ipNewGjeeKDG",
+    "status": "cropped",
+    "original_size": [
+      373,
+      509
+    ],
+    "new_size": [
+      330,
+      465
+    ],
+    "saved_bytes": 22736,
+    "error": null
+  },
+  {
+    "slug": "varsity-4-light-pink",
+    "name": "Varsity 4 - Light Pink",
+    "category": "",
+    "file_id": "1JDdY-n4Nuo7PeicyH3rcwNhztsH7NKu5",
+    "status": "cropped",
+    "original_size": [
+      373,
+      509
+    ],
+    "new_size": [
+      330,
+      465
+    ],
+    "saved_bytes": 9702,
+    "error": null
+  },
+  {
+    "slug": "varsity-4-matcha",
+    "name": "Varsity 4 - Matcha",
+    "category": "",
+    "file_id": "1TN5yzaPiTDoJkly0hQIAcjzrlIzVVajv",
+    "status": "cropped",
+    "original_size": [
+      373,
+      509
+    ],
+    "new_size": [
+      330,
+      465
+    ],
+    "saved_bytes": 15865,
+    "error": null
+  },
+  {
+    "slug": "varsity-4-pink",
+    "name": "Varsity 4 - Pink",
+    "category": "",
+    "file_id": "1o97o1HU9R_UyX0wDWTO6uX4o5ofsVFv9",
+    "status": "cropped",
+    "original_size": [
+      373,
+      509
+    ],
+    "new_size": [
+      330,
+      465
+    ],
+    "saved_bytes": 39462,
+    "error": null
+  },
+  {
+    "slug": "varsity-4-purple",
+    "name": "Varsity 4 - Purple",
+    "category": "",
+    "file_id": "1VeHV5eIrgJlXFETcm0cOPCrn3mMQldGO",
+    "status": "cropped",
+    "original_size": [
+      373,
+      509
+    ],
+    "new_size": [
+      330,
+      465
+    ],
+    "saved_bytes": 22325,
+    "error": null
+  },
+  {
+    "slug": "varsity-4-red",
+    "name": "Varsity 4 - Red",
+    "category": "",
+    "file_id": "1THnSuEYSEoUOtYez-W-sIdScUJhKn_eQ",
+    "status": "cropped",
+    "original_size": [
+      373,
+      509
+    ],
+    "new_size": [
+      330,
+      465
+    ],
+    "saved_bytes": 35598,
+    "error": null
+  },
+  {
+    "slug": "varsity-4-white",
+    "name": "Varsity 4 - White",
+    "category": "",
+    "file_id": "17QlvKzbFHa3XMUJnCreNNNbkNGCcPRi2",
+    "status": "cropped",
+    "original_size": [
+      373,
+      509
+    ],
+    "new_size": [
+      330,
+      465
+    ],
+    "saved_bytes": -6388,
+    "error": null
+  },
+  {
+    "slug": "varsity-5-black",
+    "name": "Varsity 5 - Black",
+    "category": "",
+    "file_id": "1Kp59_x9Vd4x67zckRhTIQyV9cCGWJN6Z",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 20027,
+    "error": null
+  },
+  {
+    "slug": "varsity-5-burgundy",
+    "name": "Varsity 5 - Burgundy",
+    "category": "",
+    "file_id": "1MySlGEydMv4bPI-lk6A8gBBf9j2KmsNz",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 39049,
+    "error": null
+  },
+  {
+    "slug": "varsity-5-dark-yellow",
+    "name": "Varsity 5 - Dark Yellow",
+    "category": "",
+    "file_id": "1QuAzPhEPhmIYeuEaZ6Q-Fcb2Jts9Al3w",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 47954,
+    "error": null
+  },
+  {
+    "slug": "varsity-5-light-blue",
+    "name": "Varsity 5 - Light Blue",
+    "category": "",
+    "file_id": "1bhepOFk-Ccxgf6T98hq2Z94O6SOWYN9Y",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 20164,
+    "error": null
+  },
+  {
+    "slug": "varsity-5-light-pink",
+    "name": "Varsity 5 - Light Pink",
+    "category": "",
+    "file_id": "1nyzqLm9Rf-9buUfnKrRJfm6wO8PoIN3O",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 8431,
+    "error": null
+  },
+  {
+    "slug": "varsity-5-matcha",
+    "name": "Varsity 5 - Matcha",
+    "category": "",
+    "file_id": "1neb_qS8aV9m5y3KoMruRzwY6KpfCkcnW",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 15318,
+    "error": null
+  },
+  {
+    "slug": "varsity-5-pink",
+    "name": "Varsity 5 - Pink",
+    "category": "",
+    "file_id": "1q2OoKxc8oKTlclIuOhkmLPoHE7N98hdA",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 37488,
+    "error": null
+  },
+  {
+    "slug": "varsity-5-purple",
+    "name": "Varsity 5 - Purple",
+    "category": "",
+    "file_id": "1ptbgIStwbg7QukdZUZl2m9BnueY6y439",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 21535,
+    "error": null
+  },
+  {
+    "slug": "varsity-5-red",
+    "name": "Varsity 5 - Red",
+    "category": "",
+    "file_id": "1UNWSfoy_0u9xt_Efd-SvEAmdu16pTnYn",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 35332,
+    "error": null
+  },
+  {
+    "slug": "varsity-5-white",
+    "name": "Varsity 5 - White",
+    "category": "",
+    "file_id": "1fCNAMAabo0-dfnlNBaUwgo7dBiczLFkS",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": -8196,
+    "error": null
+  },
+  {
+    "slug": "varsity-6-black",
+    "name": "Varsity 6 - Black",
+    "category": "",
+    "file_id": "1MtMa_6SOVzpq1i6EW5N2EstXYnPbXXg2",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 22082,
+    "error": null
+  },
+  {
+    "slug": "varsity-6-burgundy",
+    "name": "Varsity 6 - Burgundy",
+    "category": "",
+    "file_id": "11AVm62ZuBnLbH1T38l-EIzYMoExR710k",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 41308,
+    "error": null
+  },
+  {
+    "slug": "varsity-6-dark-yellow",
+    "name": "Varsity 6 - Dark Yellow",
+    "category": "",
+    "file_id": "1xJ8kiBblLRMsMAbEgZ3nAuTRretqSblc",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 51001,
+    "error": null
+  },
+  {
+    "slug": "varsity-6-light-blue",
+    "name": "Varsity 6 - Light Blue",
+    "category": "",
+    "file_id": "1zMUVccwZpCMKat6H9c0fMtpoALeGXoLk",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 20814,
+    "error": null
+  },
+  {
+    "slug": "varsity-6-light-pink",
+    "name": "Varsity 6 - Light Pink",
+    "category": "",
+    "file_id": "1f_oQWoPGIIizJVSgG7C-7Mo66zq1xala",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 7504,
+    "error": null
+  },
+  {
+    "slug": "varsity-6-matcha",
+    "name": "Varsity 6 - Matcha",
+    "category": "",
+    "file_id": "1A0QF1rep3tofBC4FCOPM31Cyf0f6u51Y",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 15506,
+    "error": null
+  },
+  {
+    "slug": "varsity-6-pink",
+    "name": "Varsity 6 - Pink",
+    "category": "",
+    "file_id": "1mrPlhuazbPQM4Tnh-Owfsg8NWLuuTV51",
+    "status": "error",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": null,
+    "error": "upload: <HttpError 403 when requesting https://www.googleapis.com/upload/drive/v3/files/1mrPlhuazbPQM4Tnh-Owfsg8NWLuuTV51?supportsAllDrives=true&alt=json&uploadType=media returned \"User rate limit exceeded.\". Details: \"[{'message': 'User rate limit exceeded.', 'domain': 'usageLimits', 'reason': 'userRateLimitExceeded'}]\">"
+  },
+  {
+    "slug": "varsity-6-purple",
+    "name": "Varsity 6 - Purple",
+    "category": "",
+    "file_id": "1HL-xw650FjhfMeplga3M-UXOXW7ToRWz",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 22316,
+    "error": null
+  },
+  {
+    "slug": "varsity-6-red",
+    "name": "Varsity 6 - Red",
+    "category": "",
+    "file_id": "1BtczzieBZ_OXpkotWEuyyAqIJETT4k-9",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 36943,
+    "error": null
+  },
+  {
+    "slug": "varsity-6-white",
+    "name": "Varsity 6 - White",
+    "category": "",
+    "file_id": "1vUceqO3LcTmrdQDj8GCe1UyTO_HPSxnc",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": -9425,
+    "error": null
+  },
+  {
+    "slug": "varsity-7-black",
+    "name": "Varsity 7 - Black",
+    "category": "",
+    "file_id": "1OxLBkmfDmNAl1bqIPtM8Pf1VjzlWEceE",
+    "status": "cropped",
+    "original_size": [
+      308,
+      509
+    ],
+    "new_size": [
+      263,
+      465
+    ],
+    "saved_bytes": 14905,
+    "error": null
+  },
+  {
+    "slug": "varsity-7-burgundy",
+    "name": "Varsity 7 - Burgundy",
+    "category": "",
+    "file_id": "1leiVTmISyWJF80byqNmzNQ6SGdfrGZz-",
+    "status": "cropped",
+    "original_size": [
+      308,
+      509
+    ],
+    "new_size": [
+      263,
+      465
+    ],
+    "saved_bytes": 29591,
+    "error": null
+  },
+  {
+    "slug": "varsity-7-dark-yellow",
+    "name": "Varsity 7 - Dark Yellow",
+    "category": "",
+    "file_id": "1n1fQFsZGI_pSWrxiOlemO5XTqTYxK1-x",
+    "status": "cropped",
+    "original_size": [
+      308,
+      509
+    ],
+    "new_size": [
+      263,
+      465
+    ],
+    "saved_bytes": 32875,
+    "error": null
+  },
+  {
+    "slug": "varsity-7-light-blue",
+    "name": "Varsity 7 - Light Blue",
+    "category": "",
+    "file_id": "1teFklT7gOyegXmczIA4bsgSszPZ5XoS5",
+    "status": "cropped",
+    "original_size": [
+      308,
+      509
+    ],
+    "new_size": [
+      263,
+      465
+    ],
+    "saved_bytes": 14026,
+    "error": null
+  },
+  {
+    "slug": "varsity-7-light-pink",
+    "name": "Varsity 7 - Light Pink",
+    "category": "",
+    "file_id": "1F212EWI14Dtyq9riJXKr-ZlcnMCzUy9x",
+    "status": "cropped",
+    "original_size": [
+      308,
+      509
+    ],
+    "new_size": [
+      263,
+      465
+    ],
+    "saved_bytes": 6244,
+    "error": null
+  },
+  {
+    "slug": "varsity-7-matcha",
+    "name": "Varsity 7 - Matcha",
+    "category": "",
+    "file_id": "1xHEjm2Eg1kp28I4LeyLtkqSfcoobJ5xJ",
+    "status": "cropped",
+    "original_size": [
+      308,
+      509
+    ],
+    "new_size": [
+      263,
+      465
+    ],
+    "saved_bytes": 11084,
+    "error": null
+  },
+  {
+    "slug": "varsity-7-pink",
+    "name": "Varsity 7 - Pink",
+    "category": "",
+    "file_id": "1CYHjSvz52bB4EiqOU9VEor5WnQIYsuT-",
+    "status": "cropped",
+    "original_size": [
+      308,
+      509
+    ],
+    "new_size": [
+      263,
+      465
+    ],
+    "saved_bytes": 28969,
+    "error": null
+  },
+  {
+    "slug": "varsity-7-purple",
+    "name": "Varsity 7 - Purple",
+    "category": "",
+    "file_id": "1R2cLDqmhOxf0_SFlFTCoZ-tfO3Tzmh9Q",
+    "status": "cropped",
+    "original_size": [
+      308,
+      509
+    ],
+    "new_size": [
+      263,
+      465
+    ],
+    "saved_bytes": 15501,
+    "error": null
+  },
+  {
+    "slug": "varsity-7-red",
+    "name": "Varsity 7 - Red",
+    "category": "",
+    "file_id": "18e-e1BA0a7k2Q-Fnt9OmdJgvqf2XKZq7",
+    "status": "cropped",
+    "original_size": [
+      308,
+      509
+    ],
+    "new_size": [
+      263,
+      465
+    ],
+    "saved_bytes": 24879,
+    "error": null
+  },
+  {
+    "slug": "varsity-7-white",
+    "name": "Varsity 7 - White",
+    "category": "",
+    "file_id": "1XI85JeVQ-6wbmS8lXOAbhQ9Y2Z0ZB561",
+    "status": "cropped",
+    "original_size": [
+      308,
+      509
+    ],
+    "new_size": [
+      263,
+      465
+    ],
+    "saved_bytes": -3908,
+    "error": null
+  },
+  {
+    "slug": "varsity-8-black",
+    "name": "Varsity 8 - Black",
+    "category": "",
+    "file_id": "1sWybC7mP4kkcdokwar8_9g2bH_CFYWHh",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      299,
+      465
+    ],
+    "saved_bytes": 23426,
+    "error": null
+  },
+  {
+    "slug": "varsity-8-burgundy",
+    "name": "Varsity 8 - Burgundy",
+    "category": "",
+    "file_id": "1v5sMpHMCshrbxJJTDy9ryDhNFHGJSUXB",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      299,
+      465
+    ],
+    "saved_bytes": 43381,
+    "error": null
+  },
+  {
+    "slug": "varsity-8-dark-yellow",
+    "name": "Varsity 8 - Dark Yellow",
+    "category": "",
+    "file_id": "1no_cJOy7Wban-gezocto_7FaUTI1_wFU",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      299,
+      465
+    ],
+    "saved_bytes": 55107,
+    "error": null
+  },
+  {
+    "slug": "varsity-8-light-blue",
+    "name": "Varsity 8 - Light Blue",
+    "category": "",
+    "file_id": "1SnnjkMQ9yGbJr4uW9DVN5C5PsIBAF9Rz",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      299,
+      465
+    ],
+    "saved_bytes": 24288,
+    "error": null
+  },
+  {
+    "slug": "varsity-8-light-pink",
+    "name": "Varsity 8 - Light Pink",
+    "category": "",
+    "file_id": "1EP5sSyphWgZepOy2ZWExims6lzgJsS9B",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      299,
+      465
+    ],
+    "saved_bytes": 9238,
+    "error": null
+  },
+  {
+    "slug": "varsity-8-matcha",
+    "name": "Varsity 8 - Matcha",
+    "category": "",
+    "file_id": "13gJm4YY9dA7XgqJ0WmE4lPa2TSBCbArg",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      299,
+      465
+    ],
+    "saved_bytes": 19391,
+    "error": null
+  },
+  {
+    "slug": "varsity-8-pink",
+    "name": "Varsity 8 - Pink",
+    "category": "",
+    "file_id": "1HtDrIpgtNewP3yJLoS6GxR-1f4rYfnNr",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      299,
+      465
+    ],
+    "saved_bytes": 39691,
+    "error": null
+  },
+  {
+    "slug": "varsity-8-purple",
+    "name": "Varsity 8 - Purple",
+    "category": "",
+    "file_id": "1ytfEQOeX3Vac36jy2JW3Lk1iTg0euHd9",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      299,
+      465
+    ],
+    "saved_bytes": 25406,
+    "error": null
+  },
+  {
+    "slug": "varsity-8-red",
+    "name": "Varsity 8 - Red",
+    "category": "",
+    "file_id": "1A-BhotVc73VW79YQAaqdodUMC9B5vLAN",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      299,
+      465
+    ],
+    "saved_bytes": 39313,
+    "error": null
+  },
+  {
+    "slug": "varsity-8-white",
+    "name": "Varsity 8 - White",
+    "category": "",
+    "file_id": "1K7e8uMJWk1pDPWPZPxqJQXqa8i1GuDRa",
+    "status": "cropped",
+    "original_size": [
+      343,
+      509
+    ],
+    "new_size": [
+      299,
+      465
+    ],
+    "saved_bytes": -9333,
+    "error": null
+  },
+  {
+    "slug": "varsity-9-black",
+    "name": "Varsity 9 - Black",
+    "category": "",
+    "file_id": "1gKh2GI0HQu19EG8KaKyh5dI4u2oZ7An8",
+    "status": "cropped",
+    "original_size": [
+      344,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 22285,
+    "error": null
+  },
+  {
+    "slug": "varsity-9-burgundy",
+    "name": "Varsity 9 - Burgundy",
+    "category": "",
+    "file_id": "1FmJAR-6HfIfc-cahqYLmdPrLam9PVf1O",
+    "status": "cropped",
+    "original_size": [
+      344,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 42156,
+    "error": null
+  },
+  {
+    "slug": "varsity-9-dark-yellow",
+    "name": "Varsity 9 - Dark Yellow",
+    "category": "",
+    "file_id": "1sj6Z4fJb1bTDB8NehJ-QLUK0JWSppNm5",
+    "status": "cropped",
+    "original_size": [
+      344,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 51979,
+    "error": null
+  },
+  {
+    "slug": "varsity-9-light-blue",
+    "name": "Varsity 9 - Light Blue",
+    "category": "",
+    "file_id": "1jvfge6sn9vLW5MeWu81LJieC7zTwtCs8",
+    "status": "cropped",
+    "original_size": [
+      344,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 22413,
+    "error": null
+  },
+  {
+    "slug": "varsity-9-light-pink",
+    "name": "Varsity 9 - Light Pink",
+    "category": "",
+    "file_id": "1m-ldQ6ycPFBpwJ6FdOIQBo2HvUxQoBu0",
+    "status": "cropped",
+    "original_size": [
+      344,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 9155,
+    "error": null
+  },
+  {
+    "slug": "varsity-9-matcha",
+    "name": "Varsity 9 - Matcha",
+    "category": "",
+    "file_id": "1Y2aNr-89QfH-XyflRPlPssU7Edp-d-7r",
+    "status": "cropped",
+    "original_size": [
+      344,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 17347,
+    "error": null
+  },
+  {
+    "slug": "varsity-9-pink",
+    "name": "Varsity 9 - Pink",
+    "category": "",
+    "file_id": "1DAPGEkoC_YJHHtKoCOJkMoHNgQx_eYD5",
+    "status": "cropped",
+    "original_size": [
+      344,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 38733,
+    "error": null
+  },
+  {
+    "slug": "varsity-9-purple",
+    "name": "Varsity 9 - Purple",
+    "category": "",
+    "file_id": "1pm3iViZjTHLssog4WJOftnCi0Mc5qEJP",
+    "status": "cropped",
+    "original_size": [
+      344,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 23817,
+    "error": null
+  },
+  {
+    "slug": "varsity-9-red",
+    "name": "Varsity 9 - Red",
+    "category": "",
+    "file_id": "1A2w3tA5ohEbCqDGo-86NETbcAJL5F_nA",
+    "status": "cropped",
+    "original_size": [
+      344,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": 37932,
+    "error": null
+  },
+  {
+    "slug": "varsity-9-white",
+    "name": "Varsity 9 - White",
+    "category": "",
+    "file_id": "1rKMEWlt_LsHYue0hDfBUptJCkJHy4YtV",
+    "status": "cropped",
+    "original_size": [
+      344,
+      509
+    ],
+    "new_size": [
+      300,
+      465
+    ],
+    "saved_bytes": -8892,
+    "error": null
+  },
+  {
+    "slug": "varsity-a-black",
+    "name": "Varsity A - Black",
+    "category": "",
+    "file_id": "1pIY0LLzW8C8CuO7HzNst0ClMeE2N5nsC",
+    "status": "cropped",
+    "original_size": [
+      353,
+      510
+    ],
+    "new_size": [
+      310,
+      465
+    ],
+    "saved_bytes": 21727,
+    "error": null
+  },
+  {
+    "slug": "varsity-a-burgundy",
+    "name": "Varsity A - Burgundy",
+    "category": "",
+    "file_id": "1hBjnASYCEg9LseTIKUDRnOUK3kKPUEsv",
+    "status": "cropped",
+    "original_size": [
+      353,
+      510
+    ],
+    "new_size": [
+      310,
+      465
+    ],
+    "saved_bytes": 39547,
+    "error": null
+  },
+  {
+    "slug": "varsity-a-dark-yellow",
+    "name": "Varsity A - Dark Yellow",
+    "category": "",
+    "file_id": "1rj-tEKkwra1RkBF6Xh_F9XcqpxvuI2Kj",
+    "status": "cropped",
+    "original_size": [
+      353,
+      510
+    ],
+    "new_size": [
+      310,
+      465
+    ],
+    "saved_bytes": 47355,
+    "error": null
+  },
+  {
+    "slug": "varsity-a-light-blue",
+    "name": "Varsity A - Light Blue",
+    "category": "",
+    "file_id": "1RK4_mHBVhzeKpH4IqgtaTj_yXueIhyke",
+    "status": "cropped",
+    "original_size": [
+      353,
+      510
+    ],
+    "new_size": [
+      310,
+      465
+    ],
+    "saved_bytes": 19810,
+    "error": null
+  },
+  {
+    "slug": "varsity-a-light-pink",
+    "name": "Varsity A - Light Pink",
+    "category": "",
+    "file_id": "1lDt9ttj2bFILGrRpYb41MOglymtL4hyL",
+    "status": "cropped",
+    "original_size": [
+      353,
+      510
+    ],
+    "new_size": [
+      310,
+      465
+    ],
+    "saved_bytes": 7642,
+    "error": null
+  },
+  {
+    "slug": "varsity-a-matcha",
+    "name": "Varsity A - Matcha",
+    "category": "",
+    "file_id": "1XBab4IT4JXMI-IOZBMeOZjZSnfO0h30F",
+    "status": "cropped",
+    "original_size": [
+      353,
+      510
+    ],
+    "new_size": [
+      310,
+      465
+    ],
+    "saved_bytes": 15498,
+    "error": null
+  },
+  {
+    "slug": "varsity-a-pink",
+    "name": "Varsity A - Pink",
+    "category": "",
+    "file_id": "1cnd7I-uVyQPdcw-2H9DWOm38f0XintU6",
+    "status": "cropped",
+    "original_size": [
+      353,
+      510
+    ],
+    "new_size": [
+      310,
+      465
+    ],
+    "saved_bytes": 36730,
+    "error": null
+  },
+  {
+    "slug": "varsity-a-purple",
+    "name": "Varsity A - Purple",
+    "category": "",
+    "file_id": "1DjSABIz5ATzvXqzqsdEMUwuKfZ9OLre-",
+    "status": "cropped",
+    "original_size": [
+      353,
+      510
+    ],
+    "new_size": [
+      310,
+      465
+    ],
+    "saved_bytes": 23625,
+    "error": null
+  },
+  {
+    "slug": "varsity-a-red",
+    "name": "Varsity A - Red",
+    "category": "",
+    "file_id": "1OPP4EG_Pj14MhEMM1nZ2U7oSFLD3S130",
+    "status": "cropped",
+    "original_size": [
+      353,
+      510
+    ],
+    "new_size": [
+      310,
+      465
+    ],
+    "saved_bytes": 36971,
+    "error": null
+  },
+  {
+    "slug": "varsity-a-white",
+    "name": "Varsity A - White",
+    "category": "",
+    "file_id": "1a7p6utVkEY8s2ZANhoErqoM7BXV2NwmT",
+    "status": "cropped",
+    "original_size": [
+      353,
+      510
+    ],
+    "new_size": [
+      310,
+      465
+    ],
+    "saved_bytes": -9738,
+    "error": null
+  },
+  {
+    "slug": "varsity-b-black",
+    "name": "Varsity B - Black",
+    "category": "",
+    "file_id": "1nOaNnaOUQw9pu0NykF88eKqX7ySDJOxE",
+    "status": "cropped",
+    "original_size": [
+      341,
+      509
+    ],
+    "new_size": [
+      297,
+      464
+    ],
+    "saved_bytes": 18275,
+    "error": null
+  },
+  {
+    "slug": "varsity-b-burgundy",
+    "name": "Varsity B - Burgundy",
+    "category": "",
+    "file_id": "12rSnOn1bvu4z5KVqfQye9tYi-3NZCeCg",
+    "status": "cropped",
+    "original_size": [
+      341,
+      509
+    ],
+    "new_size": [
+      297,
+      464
+    ],
+    "saved_bytes": 38529,
+    "error": null
+  },
+  {
+    "slug": "varsity-b-dark-yellow",
+    "name": "Varsity B - Dark Yellow",
+    "category": "",
+    "file_id": "1DLpJpN1dBcC5THFgnXdRKEd7U6RsyqPE",
+    "status": "cropped",
+    "original_size": [
+      341,
+      509
+    ],
+    "new_size": [
+      297,
+      464
+    ],
+    "saved_bytes": 45249,
+    "error": null
+  },
+  {
+    "slug": "varsity-b-light-blue",
+    "name": "Varsity B - Light Blue",
+    "category": "",
+    "file_id": "1tX1IXxrN1qKUnooLKNI1s9PSHLd625ul",
+    "status": "cropped",
+    "original_size": [
+      341,
+      509
+    ],
+    "new_size": [
+      297,
+      464
+    ],
+    "saved_bytes": 15421,
+    "error": null
+  },
+  {
+    "slug": "varsity-b-light-pink",
+    "name": "Varsity B - Light Pink",
+    "category": "",
+    "file_id": "1GR8pKU1opJK-U5CpmcKFunauldhPWbf5",
+    "status": "cropped",
+    "original_size": [
+      341,
+      509
+    ],
+    "new_size": [
+      297,
+      464
+    ],
+    "saved_bytes": 3408,
+    "error": null
+  },
+  {
+    "slug": "varsity-b-matcha",
+    "name": "Varsity B - Matcha",
+    "category": "",
+    "file_id": "1RyZutlbc_UaM6hwD2WZfuDF7JpeqsKvM",
+    "status": "cropped",
+    "original_size": [
+      341,
+      509
+    ],
+    "new_size": [
+      297,
+      464
+    ],
+    "saved_bytes": 12381,
+    "error": null
+  },
+  {
+    "slug": "varsity-b-pink",
+    "name": "Varsity B - Pink",
+    "category": "",
+    "file_id": "1p8l1jXbV0lEWmwfwXH3XLqK_dlKdx73h",
+    "status": "cropped",
+    "original_size": [
+      341,
+      509
+    ],
+    "new_size": [
+      297,
+      464
+    ],
+    "saved_bytes": 35003,
+    "error": null
+  },
+  {
+    "slug": "varsity-b-purple",
+    "name": "Varsity B - Purple",
+    "category": "",
+    "file_id": "1zQsxl-lDvgDgAVrvTn0o6tYtIHDLOJsy",
+    "status": "cropped",
+    "original_size": [
+      341,
+      509
+    ],
+    "new_size": [
+      297,
+      464
+    ],
+    "saved_bytes": 20925,
+    "error": null
+  },
+  {
+    "slug": "varsity-b-red",
+    "name": "Varsity B - Red",
+    "category": "",
+    "file_id": "1QePTvnW1Ac07zwpcCxCjcVP7zd8SQ6-3",
+    "status": "cropped",
+    "original_size": [
+      341,
+      509
+    ],
+    "new_size": [
+      297,
+      464
+    ],
+    "saved_bytes": 36686,
+    "error": null
+  },
+  {
+    "slug": "varsity-b-white",
+    "name": "Varsity B - White",
+    "category": "",
+    "file_id": "1fHkme34PCxeyegx_iJkGOI6CuB3OOVkZ",
+    "status": "cropped",
+    "original_size": [
+      341,
+      509
+    ],
+    "new_size": [
+      297,
+      464
+    ],
+    "saved_bytes": -17349,
+    "error": null
+  },
+  {
+    "slug": "varsity-c-black",
+    "name": "Varsity C - Black",
+    "category": "",
+    "file_id": "144Jlm3z2oc0ujC4iik81QqyviK3ZuBAd",
+    "status": "cropped",
+    "original_size": [
+      343,
+      511
+    ],
+    "new_size": [
+      299,
+      467
+    ],
+    "saved_bytes": 15849,
+    "error": null
+  },
+  {
+    "slug": "varsity-c-burgundy",
+    "name": "Varsity C - Burgundy",
+    "category": "",
+    "file_id": "18zkQ5W4zXl1JmxmU2K1bj4UNXR7ywg6C",
+    "status": "cropped",
+    "original_size": [
+      343,
+      511
+    ],
+    "new_size": [
+      299,
+      467
+    ],
+    "saved_bytes": 32120,
+    "error": null
+  },
+  {
+    "slug": "varsity-c-dark-yellow",
+    "name": "Varsity C - Dark Yellow",
+    "category": "",
+    "file_id": "1lkztDy8mHdzbpHwn6iCgbspbzDRKp8ho",
+    "status": "cropped",
+    "original_size": [
+      343,
+      511
+    ],
+    "new_size": [
+      299,
+      467
+    ],
+    "saved_bytes": 38280,
+    "error": null
+  },
+  {
+    "slug": "varsity-c-light-blue",
+    "name": "Varsity C - Light Blue",
+    "category": "",
+    "file_id": "1jsMcR508GX0hhxjvpQivdAP6sPLjOjOh",
+    "status": "cropped",
+    "original_size": [
+      343,
+      511
+    ],
+    "new_size": [
+      299,
+      467
+    ],
+    "saved_bytes": 14608,
+    "error": null
+  },
+  {
+    "slug": "varsity-c-light-pink",
+    "name": "Varsity C - Light Pink",
+    "category": "",
+    "file_id": "1XCrHVwVmHVBxqe7JNbaBXL2-EXg3e2NI",
+    "status": "cropped",
+    "original_size": [
+      343,
+      511
+    ],
+    "new_size": [
+      299,
+      467
+    ],
+    "saved_bytes": 4094,
+    "error": null
+  },
+  {
+    "slug": "varsity-c-matcha",
+    "name": "Varsity C - Matcha",
+    "category": "",
+    "file_id": "1WAgUoNBapoyhpiRHB41ckWz26hRrsknj",
+    "status": "cropped",
+    "original_size": [
+      343,
+      511
+    ],
+    "new_size": [
+      299,
+      467
+    ],
+    "saved_bytes": 10995,
+    "error": null
+  },
+  {
+    "slug": "varsity-c-pink",
+    "name": "Varsity C - Pink",
+    "category": "",
+    "file_id": "18T0w5XEhGJINLrsPgD7xpKDjwghGKDrJ",
+    "status": "cropped",
+    "original_size": [
+      343,
+      511
+    ],
+    "new_size": [
+      299,
+      467
+    ],
+    "saved_bytes": 30453,
+    "error": null
+  },
+  {
+    "slug": "varsity-c-purple",
+    "name": "Varsity C - Purple",
+    "category": "",
+    "file_id": "1miXBiRUXmcmnQu0k0VYlpopu_l30XVFO",
+    "status": "cropped",
+    "original_size": [
+      343,
+      511
+    ],
+    "new_size": [
+      299,
+      467
+    ],
+    "saved_bytes": 18131,
+    "error": null
+  },
+  {
+    "slug": "varsity-c-red",
+    "name": "Varsity C - Red",
+    "category": "",
+    "file_id": "17_3F3LXhJ318Cp5_7tdTjVM0UwXtChpy",
+    "status": "cropped",
+    "original_size": [
+      343,
+      511
+    ],
+    "new_size": [
+      299,
+      467
+    ],
+    "saved_bytes": 29818,
+    "error": null
+  },
+  {
+    "slug": "varsity-c-white",
+    "name": "Varsity C - White",
+    "category": "",
+    "file_id": "1l5HHfZ1EQJyv-jWWNKp3NAI7Ap7V30Uq",
+    "status": "cropped",
+    "original_size": [
+      343,
+      511
+    ],
+    "new_size": [
+      299,
+      467
+    ],
+    "saved_bytes": -10312,
+    "error": null
+  },
+  {
+    "slug": "varsity-d-black",
+    "name": "Varsity D - Black",
+    "category": "",
+    "file_id": "1aKGM-tTytg_KqntIux6sc-jggh9Iux4W",
+    "status": "cropped",
+    "original_size": [
+      339,
+      509
+    ],
+    "new_size": [
+      296,
+      465
+    ],
+    "saved_bytes": 17127,
+    "error": null
+  },
+  {
+    "slug": "varsity-d-burgundy",
+    "name": "Varsity D - Burgundy",
+    "category": "",
+    "file_id": "1l9_H5_2kAeGSofMYOWGR6jJVd9WVjGM1",
+    "status": "cropped",
+    "original_size": [
+      339,
+      509
+    ],
+    "new_size": [
+      296,
+      465
+    ],
+    "saved_bytes": 36075,
+    "error": null
+  },
+  {
+    "slug": "varsity-d-dark-yellow",
+    "name": "Varsity D - Dark Yellow",
+    "category": "",
+    "file_id": "1qOogNungydJqD3cjBq3PjGoc3MG_rKjw",
+    "status": "cropped",
+    "original_size": [
+      339,
+      509
+    ],
+    "new_size": [
+      296,
+      465
+    ],
+    "saved_bytes": 42061,
+    "error": null
+  },
+  {
+    "slug": "varsity-d-light-blue",
+    "name": "Varsity D - Light Blue",
+    "category": "",
+    "file_id": "1SEydNXjNSG-IV-UnOapx3bkHIG9c5kxd",
+    "status": "cropped",
+    "original_size": [
+      339,
+      509
+    ],
+    "new_size": [
+      296,
+      465
+    ],
+    "saved_bytes": 13472,
+    "error": null
+  },
+  {
+    "slug": "varsity-d-light-pink",
+    "name": "Varsity D - Light Pink",
+    "category": "",
+    "file_id": "1LXIFt8c-08CNGxHHWb8tkFukCanCfJDv",
+    "status": "cropped",
+    "original_size": [
+      339,
+      509
+    ],
+    "new_size": [
+      296,
+      465
+    ],
+    "saved_bytes": 2460,
+    "error": null
+  },
+  {
+    "slug": "varsity-d-matcha",
+    "name": "Varsity D - Matcha",
+    "category": "",
+    "file_id": "1injHwY4Xc1bv70gJdQN-DBC8F7wAtzR-",
+    "status": "cropped",
+    "original_size": [
+      339,
+      509
+    ],
+    "new_size": [
+      296,
+      465
+    ],
+    "saved_bytes": 10449,
+    "error": null
+  },
+  {
+    "slug": "varsity-d-pink",
+    "name": "Varsity D - Pink",
+    "category": "",
+    "file_id": "1KK-PJjV39PNWL3aHnOFhvesJNx3LAzSe",
+    "status": "cropped",
+    "original_size": [
+      339,
+      509
+    ],
+    "new_size": [
+      296,
+      465
+    ],
+    "saved_bytes": 33248,
+    "error": null
+  },
+  {
+    "slug": "varsity-d-purple",
+    "name": "Varsity D - Purple",
+    "category": "",
+    "file_id": "1dWXflB4tl-oqt8KQzkbH5300StUcPRxo",
+    "status": "cropped",
+    "original_size": [
+      339,
+      509
+    ],
+    "new_size": [
+      296,
+      465
+    ],
+    "saved_bytes": 18908,
+    "error": null
+  },
+  {
+    "slug": "varsity-d-red",
+    "name": "Varsity D - Red",
+    "category": "",
+    "file_id": "1tIv_8rXGeij0ZkmWwu3_EZFWyYlbJHli",
+    "status": "cropped",
+    "original_size": [
+      339,
+      509
+    ],
+    "new_size": [
+      296,
+      465
+    ],
+    "saved_bytes": 33929,
+    "error": null
+  },
+  {
+    "slug": "varsity-d-white",
+    "name": "Varsity D - White",
+    "category": "",
+    "file_id": "1tKZwCmoBdF9VJDYs0BupmAX5qioMpCNL",
+    "status": "cropped",
+    "original_size": [
+      339,
+      509
+    ],
+    "new_size": [
+      296,
+      465
+    ],
+    "saved_bytes": -16443,
+    "error": null
+  },
+  {
+    "slug": "varsity-e-black",
+    "name": "Varsity E - Black",
+    "category": "",
+    "file_id": "1ZSYKpQ7kgRhpFFgdFePEs_Ci1e5lFww-",
+    "status": "cropped",
+    "original_size": [
+      319,
+      509
+    ],
+    "new_size": [
+      276,
+      465
+    ],
+    "saved_bytes": 15944,
+    "error": null
+  },
+  {
+    "slug": "varsity-e-burgundy",
+    "name": "Varsity E - Burgundy",
+    "category": "",
+    "file_id": "1LUUcXaMXaJjwyKkIBq357BrFc2XWAEi4",
+    "status": "cropped",
+    "original_size": [
+      319,
+      509
+    ],
+    "new_size": [
+      276,
+      465
+    ],
+    "saved_bytes": 34314,
+    "error": null
+  },
+  {
+    "slug": "varsity-e-dark-yellow",
+    "name": "Varsity E - Dark Yellow",
+    "category": "",
+    "file_id": "1yJ0GVBdmREMVTvIIopfyUY3_Y_Ekmzbh",
+    "status": "cropped",
+    "original_size": [
+      319,
+      509
+    ],
+    "new_size": [
+      276,
+      465
+    ],
+    "saved_bytes": 40028,
+    "error": null
+  },
+  {
+    "slug": "varsity-e-light-blue",
+    "name": "Varsity E - Light Blue",
+    "category": "",
+    "file_id": "1UEWqe2h0ucZHfkxPaMzo8C4oNIfiQYLi",
+    "status": "cropped",
+    "original_size": [
+      319,
+      509
+    ],
+    "new_size": [
+      276,
+      465
+    ],
+    "saved_bytes": 15831,
+    "error": null
+  },
+  {
+    "slug": "varsity-e-light-pink",
+    "name": "Varsity E - Light Pink",
+    "category": "",
+    "file_id": "1dp6h77YIkyMkx9OKzk08lrWAezOSkrBL",
+    "status": "cropped",
+    "original_size": [
+      319,
+      509
+    ],
+    "new_size": [
+      276,
+      465
+    ],
+    "saved_bytes": 5131,
+    "error": null
+  },
+  {
+    "slug": "varsity-e-matcha",
+    "name": "Varsity E - Matcha",
+    "category": "",
+    "file_id": "1mvCk67x7H6j1TAbsX7qdzWRrZyBUSdHU",
+    "status": "cropped",
+    "original_size": [
+      319,
+      509
+    ],
+    "new_size": [
+      276,
+      465
+    ],
+    "saved_bytes": 12353,
+    "error": null
+  },
+  {
+    "slug": "varsity-e-pink",
+    "name": "Varsity E - Pink",
+    "category": "",
+    "file_id": "1qig19RQ6MGQVJeWak5SovUqUSLKovS30",
+    "status": "cropped",
+    "original_size": [
+      319,
+      509
+    ],
+    "new_size": [
+      276,
+      465
+    ],
+    "saved_bytes": 31924,
+    "error": null
+  },
+  {
+    "slug": "varsity-e-purple",
+    "name": "Varsity E - Purple",
+    "category": "",
+    "file_id": "1-AIof20ZOmRvZFM2SBwDmnC9nGKSi01a",
+    "status": "cropped",
+    "original_size": [
+      319,
+      509
+    ],
+    "new_size": [
+      276,
+      465
+    ],
+    "saved_bytes": 18869,
+    "error": null
+  },
+  {
+    "slug": "varsity-e-red",
+    "name": "Varsity E - Red",
+    "category": "",
+    "file_id": "1Uj0ivPOs9XEolv71WYgo8XGmwJkDZtAN",
+    "status": "cropped",
+    "original_size": [
+      319,
+      509
+    ],
+    "new_size": [
+      276,
+      465
+    ],
+    "saved_bytes": 30254,
+    "error": null
+  },
+  {
+    "slug": "varsity-e-white",
+    "name": "Varsity E - White",
+    "category": "",
+    "file_id": "1m5_6b2UjYv2ktOEUffUIfbsSKYUJJ7AI",
+    "status": "cropped",
+    "original_size": [
+      319,
+      509
+    ],
+    "new_size": [
+      276,
+      465
+    ],
+    "saved_bytes": -9101,
+    "error": null
+  },
+  {
+    "slug": "varsity-f-black",
+    "name": "Varsity F - Black",
+    "category": "",
+    "file_id": "1HjDV6EHZSHjmqvmv7HVHiye38kHnB-bd",
+    "status": "cropped",
+    "original_size": [
+      320,
+      509
+    ],
+    "new_size": [
+      276,
+      463
+    ],
+    "saved_bytes": 14061,
+    "error": null
+  },
+  {
+    "slug": "varsity-f-burgundy",
+    "name": "Varsity F - Burgundy",
+    "category": "",
+    "file_id": "1cjiEm8D74G74KPKfo4I_WdW4FWnf8guV",
+    "status": "cropped",
+    "original_size": [
+      320,
+      509
+    ],
+    "new_size": [
+      276,
+      463
+    ],
+    "saved_bytes": 29046,
+    "error": null
+  },
+  {
+    "slug": "varsity-f-dark-yellow",
+    "name": "Varsity F - Dark Yellow",
+    "category": "",
+    "file_id": "1Z2NFxEjuu2YCBLZDcBLvluzN6igKKUwE",
+    "status": "cropped",
+    "original_size": [
+      320,
+      509
+    ],
+    "new_size": [
+      276,
+      463
+    ],
+    "saved_bytes": 33267,
+    "error": null
+  },
+  {
+    "slug": "varsity-f-light-blue",
+    "name": "Varsity F - Light Blue",
+    "category": "",
+    "file_id": "176uITuWke_2mJoREu0ggCO5t8NbYRfv3",
+    "status": "cropped",
+    "original_size": [
+      320,
+      509
+    ],
+    "new_size": [
+      276,
+      463
+    ],
+    "saved_bytes": 13186,
+    "error": null
+  },
+  {
+    "slug": "varsity-f-light-pink",
+    "name": "Varsity F - Light Pink",
+    "category": "",
+    "file_id": "1RHmaiudmhSpwejvZ2hCbVw3ci4NK9GgI",
+    "status": "cropped",
+    "original_size": [
+      320,
+      509
+    ],
+    "new_size": [
+      276,
+      463
+    ],
+    "saved_bytes": 4042,
+    "error": null
+  },
+  {
+    "slug": "varsity-f-matcha",
+    "name": "Varsity F - Matcha",
+    "category": "",
+    "file_id": "1ZIqUhorppp0t8eRMiqrFY8ZYD1ALcnhg",
+    "status": "cropped",
+    "original_size": [
+      320,
+      509
+    ],
+    "new_size": [
+      276,
+      463
+    ],
+    "saved_bytes": 10365,
+    "error": null
+  },
+  {
+    "slug": "varsity-f-pink",
+    "name": "Varsity F - Pink",
+    "category": "",
+    "file_id": "14mQZ0i4DAAibWWEPM6_05cTcuZuyIUuy",
+    "status": "cropped",
+    "original_size": [
+      320,
+      509
+    ],
+    "new_size": [
+      276,
+      463
+    ],
+    "saved_bytes": 27606,
+    "error": null
+  },
+  {
+    "slug": "varsity-f-purple",
+    "name": "Varsity F - Purple",
+    "category": "",
+    "file_id": "1tJo1RYY4xkYEFI1hQ07kveQC4Fjx-2kd",
+    "status": "cropped",
+    "original_size": [
+      320,
+      509
+    ],
+    "new_size": [
+      276,
+      463
+    ],
+    "saved_bytes": 16385,
+    "error": null
+  },
+  {
+    "slug": "varsity-f-red",
+    "name": "Varsity F - Red",
+    "category": "",
+    "file_id": "1a86t2fOgSNXKbvsI0NycxJauHysD6Rmf",
+    "status": "cropped",
+    "original_size": [
+      320,
+      509
+    ],
+    "new_size": [
+      276,
+      463
+    ],
+    "saved_bytes": 26788,
+    "error": null
+  },
+  {
+    "slug": "varsity-f-white",
+    "name": "Varsity F - White",
+    "category": "",
+    "file_id": "1E_yX8wf51sPQQKCoaAp7rQq84tS-wTxD",
+    "status": "cropped",
+    "original_size": [
+      320,
+      509
+    ],
+    "new_size": [
+      276,
+      463
+    ],
+    "saved_bytes": -9943,
+    "error": null
+  },
+  {
+    "slug": "varsity-g-black",
+    "name": "Varsity G - Black",
+    "category": "",
+    "file_id": "1uWE8UJFGcSd7_JvpCS63VCbJ_KXMVXTr",
+    "status": "cropped",
+    "original_size": [
+      345,
+      510
+    ],
+    "new_size": [
+      301,
+      465
+    ],
+    "saved_bytes": 16311,
+    "error": null
+  },
+  {
+    "slug": "varsity-g-burgundy",
+    "name": "Varsity G - Burgundy",
+    "category": "",
+    "file_id": "1gj9mB3N3sHQhHO42EGH1gFKh3hWgrhZw",
+    "status": "cropped",
+    "original_size": [
+      345,
+      510
+    ],
+    "new_size": [
+      301,
+      465
+    ],
+    "saved_bytes": 34592,
+    "error": null
+  },
+  {
+    "slug": "varsity-g-dark-yellow",
+    "name": "Varsity G - Dark Yellow",
+    "category": "",
+    "file_id": "1ohTTfAD094kKj7vZLt-c5ancZ9l09zo2",
+    "status": "cropped",
+    "original_size": [
+      345,
+      510
+    ],
+    "new_size": [
+      301,
+      465
+    ],
+    "saved_bytes": 42494,
+    "error": null
+  },
+  {
+    "slug": "varsity-g-light-blue",
+    "name": "Varsity G - Light Blue",
+    "category": "",
+    "file_id": "1mjrb7cyAdHzGryKHfIFtCDo4DfK3HtJ8",
+    "status": "cropped",
+    "original_size": [
+      345,
+      510
+    ],
+    "new_size": [
+      301,
+      465
+    ],
+    "saved_bytes": 13855,
+    "error": null
+  },
+  {
+    "slug": "varsity-g-light-pink",
+    "name": "Varsity G - Light Pink",
+    "category": "",
+    "file_id": "1ksvSqYMTPGaUViR8gh8Qd01UB0pxJmO0",
+    "status": "cropped",
+    "original_size": [
+      345,
+      510
+    ],
+    "new_size": [
+      301,
+      465
+    ],
+    "saved_bytes": 2937,
+    "error": null
+  },
+  {
+    "slug": "varsity-g-matcha",
+    "name": "Varsity G - Matcha",
+    "category": "",
+    "file_id": "1bFcXmlNq-YGCRxfKvaZVk78AG9mHwHN_",
+    "status": "cropped",
+    "original_size": [
+      345,
+      510
+    ],
+    "new_size": [
+      301,
+      465
+    ],
+    "saved_bytes": 10484,
+    "error": null
+  },
+  {
+    "slug": "varsity-g-pink",
+    "name": "Varsity G - Pink",
+    "category": "",
+    "file_id": "1MqeVqS7svMt9PEQzHFu89oqsyxWS9Eco",
+    "status": "cropped",
+    "original_size": [
+      345,
+      510
+    ],
+    "new_size": [
+      301,
+      465
+    ],
+    "saved_bytes": 32558,
+    "error": null
+  },
+  {
+    "slug": "varsity-g-purple",
+    "name": "Varsity G - Purple",
+    "category": "",
+    "file_id": "1TUeWNnSKYdnCc037zr_G1uqDwR7xCGoJ",
+    "status": "cropped",
+    "original_size": [
+      345,
+      510
+    ],
+    "new_size": [
+      301,
+      465
+    ],
+    "saved_bytes": 18504,
+    "error": null
+  },
+  {
+    "slug": "varsity-g-red",
+    "name": "Varsity G - Red",
+    "category": "",
+    "file_id": "1CeSK586MLv5UxJEiBVID3xowLfz5dfCk",
+    "status": "cropped",
+    "original_size": [
+      345,
+      510
+    ],
+    "new_size": [
+      301,
+      465
+    ],
+    "saved_bytes": 33010,
+    "error": null
+  },
+  {
+    "slug": "varsity-g-white",
+    "name": "Varsity G - White",
+    "category": "",
+    "file_id": "1auzOfECzySa_48rfXnWF8231IK8qUBkx",
+    "status": "cropped",
+    "original_size": [
+      345,
+      510
+    ],
+    "new_size": [
+      301,
+      465
+    ],
+    "saved_bytes": -15348,
+    "error": null
+  },
+  {
+    "slug": "varsity-h-black",
+    "name": "Varsity H - Black",
+    "category": "",
+    "file_id": "1unM6Ln7mNGj3ezF8KIjuiTnr_c4C4PS0",
+    "status": "cropped",
+    "original_size": [
+      333,
+      511
+    ],
+    "new_size": [
+      289,
+      465
+    ],
+    "saved_bytes": 14421,
+    "error": null
+  },
+  {
+    "slug": "varsity-h-burgundy",
+    "name": "Varsity H - Burgundy",
+    "category": "",
+    "file_id": "1tCKf8x0Ary-ohT7rkATKdxYl9SPjd_Bs",
+    "status": "cropped",
+    "original_size": [
+      333,
+      511
+    ],
+    "new_size": [
+      289,
+      465
+    ],
+    "saved_bytes": 32845,
+    "error": null
+  },
+  {
+    "slug": "varsity-h-dark-yellow",
+    "name": "Varsity H - Dark Yellow",
+    "category": "",
+    "file_id": "1vEQv3TeIhfwx474fUBOdhCTLyhlKLdPy",
+    "status": "cropped",
+    "original_size": [
+      333,
+      511
+    ],
+    "new_size": [
+      289,
+      465
+    ],
+    "saved_bytes": 38547,
+    "error": null
+  },
+  {
+    "slug": "varsity-h-light-blue",
+    "name": "Varsity H - Light Blue",
+    "category": "",
+    "file_id": "1KKvi5r7tGJyTZ7C4N3Xfxn2oH1bv7NH5",
+    "status": "cropped",
+    "original_size": [
+      333,
+      511
+    ],
+    "new_size": [
+      289,
+      465
+    ],
+    "saved_bytes": 11045,
+    "error": null
+  },
+  {
+    "slug": "varsity-h-light-pink",
+    "name": "Varsity H - Light Pink",
+    "category": "",
+    "file_id": "1l9DxnWI4NsMyGPfhOdCT4rGHUfGGuMSM",
+    "status": "cropped",
+    "original_size": [
+      333,
+      511
+    ],
+    "new_size": [
+      289,
+      465
+    ],
+    "saved_bytes": 553,
+    "error": null
+  },
+  {
+    "slug": "varsity-h-matcha",
+    "name": "Varsity H - Matcha",
+    "category": "",
+    "file_id": "1Vf1qA9M8dQdMl8f7ODqxojfRpEGltn_j",
+    "status": "cropped",
+    "original_size": [
+      333,
+      511
+    ],
+    "new_size": [
+      289,
+      465
+    ],
+    "saved_bytes": 8244,
+    "error": null
+  },
+  {
+    "slug": "varsity-h-pink",
+    "name": "Varsity H - Pink",
+    "category": "",
+    "file_id": "1eZcTNdm5PKzo9xaPfuTOdklxsF2rhvTs",
+    "status": "cropped",
+    "original_size": [
+      333,
+      511
+    ],
+    "new_size": [
+      289,
+      465
+    ],
+    "saved_bytes": 30909,
+    "error": null
+  },
+  {
+    "slug": "varsity-h-purple",
+    "name": "Varsity H - Purple",
+    "category": "",
+    "file_id": "1dDcveJ05QO2oaHPSAiFncW26I35kbj_T",
+    "status": "cropped",
+    "original_size": [
+      333,
+      511
+    ],
+    "new_size": [
+      289,
+      465
+    ],
+    "saved_bytes": 16978,
+    "error": null
+  },
+  {
+    "slug": "varsity-h-red",
+    "name": "Varsity H - Red",
+    "category": "",
+    "file_id": "1vo5Fu1TGKViRsGHJmch3Jpd3q3c0f_3T",
+    "status": "cropped",
+    "original_size": [
+      333,
+      511
+    ],
+    "new_size": [
+      289,
+      465
+    ],
+    "saved_bytes": 30866,
+    "error": null
+  },
+  {
+    "slug": "varsity-h-white",
+    "name": "Varsity H - White",
+    "category": "",
+    "file_id": "16bGPrSSx_5hpqvP3BUFRxKIP4Btlbptz",
+    "status": "cropped",
+    "original_size": [
+      333,
+      511
+    ],
+    "new_size": [
+      289,
+      465
+    ],
+    "saved_bytes": -17053,
+    "error": null
+  },
+  {
+    "slug": "varsity-i-black",
+    "name": "Varsity I - Black",
+    "category": "",
+    "file_id": "1ttWIGcqSD6QMGN3-jvrIgSkc1WxsTUpD",
+    "status": "cropped",
+    "original_size": [
+      170,
+      513
+    ],
+    "new_size": [
+      127,
+      469
+    ],
+    "saved_bytes": 6404,
+    "error": null
+  },
+  {
+    "slug": "varsity-i-burgundy",
+    "name": "Varsity I - Burgundy",
+    "category": "",
+    "file_id": "1LmGOvQXOPvNIu-xv8jFHx4-S1IytL6A9",
+    "status": "cropped",
+    "original_size": [
+      170,
+      513
+    ],
+    "new_size": [
+      127,
+      469
+    ],
+    "saved_bytes": 15505,
+    "error": null
+  },
+  {
+    "slug": "varsity-i-dark-yellow",
+    "name": "Varsity I - Dark Yellow",
+    "category": "",
+    "file_id": "1q6GxUR5_-qdWG5EoBWlUt5AJ8jIiyLbw",
+    "status": "cropped",
+    "original_size": [
+      170,
+      513
+    ],
+    "new_size": [
+      127,
+      469
+    ],
+    "saved_bytes": 17857,
+    "error": null
+  },
+  {
+    "slug": "varsity-i-light-blue",
+    "name": "Varsity I - Light Blue",
+    "category": "",
+    "file_id": "1RbaMZYkdpXlbCeUk2qb5XSPcJibohtJT",
+    "status": "cropped",
+    "original_size": [
+      170,
+      513
+    ],
+    "new_size": [
+      127,
+      469
+    ],
+    "saved_bytes": 4180,
+    "error": null
+  },
+  {
+    "slug": "varsity-i-light-pink",
+    "name": "Varsity I - Light Pink",
+    "category": "",
+    "file_id": "16QkbERsMX-JH41hLczCaZKmNy86ohTmo",
+    "status": "cropped",
+    "original_size": [
+      170,
+      513
+    ],
+    "new_size": [
+      127,
+      469
+    ],
+    "saved_bytes": -301,
+    "error": null
+  },
+  {
+    "slug": "varsity-i-matcha",
+    "name": "Varsity I - Matcha",
+    "category": "",
+    "file_id": "1mGh16YOUqeXivUzW8EqXyop1Ndqg8vH_",
+    "status": "cropped",
+    "original_size": [
+      170,
+      513
+    ],
+    "new_size": [
+      127,
+      469
+    ],
+    "saved_bytes": 3947,
+    "error": null
+  },
+  {
+    "slug": "varsity-i-pink",
+    "name": "Varsity I - Pink",
+    "category": "",
+    "file_id": "1UbpEpsC-rvTOchYCA62ms1n30MSkG9ow",
+    "status": "cropped",
+    "original_size": [
+      170,
+      513
+    ],
+    "new_size": [
+      127,
+      469
+    ],
+    "saved_bytes": 15336,
+    "error": null
+  },
+  {
+    "slug": "varsity-i-purple",
+    "name": "Varsity I - Purple",
+    "category": "",
+    "file_id": "1CPYOq2UjLRLQ8FTEzDs54Dy4rTdvl8xB",
+    "status": "cropped",
+    "original_size": [
+      170,
+      513
+    ],
+    "new_size": [
+      127,
+      469
+    ],
+    "saved_bytes": 7620,
+    "error": null
+  },
+  {
+    "slug": "varsity-i-red",
+    "name": "Varsity I - Red",
+    "category": "",
+    "file_id": "1URftW16puGR1iuGZZ9YSvoyYNbixInyl",
+    "status": "cropped",
+    "original_size": [
+      170,
+      513
+    ],
+    "new_size": [
+      127,
+      469
+    ],
+    "saved_bytes": 14483,
+    "error": null
+  },
+  {
+    "slug": "varsity-i-white",
+    "name": "Varsity I - White",
+    "category": "",
+    "file_id": "1IuvzrIPf_kpDaLu_quvRXKEAg5vhvBcK",
+    "status": "cropped",
+    "original_size": [
+      170,
+      513
+    ],
+    "new_size": [
+      127,
+      469
+    ],
+    "saved_bytes": -8725,
+    "error": null
+  },
+  {
+    "slug": "varsity-j-black",
+    "name": "Varsity J - Black",
+    "category": "",
+    "file_id": "1LygSKYr73gm1MQw404FaC-P9sJ0_Tkxh",
+    "status": "cropped",
+    "original_size": [
+      341,
+      508
+    ],
+    "new_size": [
+      298,
+      464
+    ],
+    "saved_bytes": 13268,
+    "error": null
+  },
+  {
+    "slug": "varsity-j-burgundy",
+    "name": "Varsity J - Burgundy",
+    "category": "",
+    "file_id": "1qhxrnDbKHWK4snppEo4s04IzWjLNHYTb",
+    "status": "cropped",
+    "original_size": [
+      341,
+      508
+    ],
+    "new_size": [
+      298,
+      464
+    ],
+    "saved_bytes": 26209,
+    "error": null
+  },
+  {
+    "slug": "varsity-j-dark-yellow",
+    "name": "Varsity J - Dark Yellow",
+    "category": "",
+    "file_id": "14Mb7KvNGxG8NcrWmOppRGU9MPW8wupqU",
+    "status": "cropped",
+    "original_size": [
+      341,
+      508
+    ],
+    "new_size": [
+      298,
+      464
+    ],
+    "saved_bytes": 29508,
+    "error": null
+  },
+  {
+    "slug": "varsity-j-light-blue",
+    "name": "Varsity J - Light Blue",
+    "category": "",
+    "file_id": "1dYEF9UolD1lxaAmgpXlwr0i9ZGc7edT_",
+    "status": "cropped",
+    "original_size": [
+      341,
+      508
+    ],
+    "new_size": [
+      298,
+      464
+    ],
+    "saved_bytes": 11336,
+    "error": null
+  },
+  {
+    "slug": "varsity-j-light-pink",
+    "name": "Varsity J - Light Pink",
+    "category": "",
+    "file_id": "1nvxLDmFZ6vgBfuiInRI2oU0_JZ-HX6WL",
+    "status": "cropped",
+    "original_size": [
+      341,
+      508
+    ],
+    "new_size": [
+      298,
+      464
+    ],
+    "saved_bytes": 3094,
+    "error": null
+  },
+  {
+    "slug": "varsity-j-matcha",
+    "name": "Varsity J - Matcha",
+    "category": "",
+    "file_id": "1pd_Jclb1cShu66MwXkv7xa3kulH1qjT2",
+    "status": "cropped",
+    "original_size": [
+      341,
+      508
+    ],
+    "new_size": [
+      298,
+      464
+    ],
+    "saved_bytes": 9770,
+    "error": null
+  },
+  {
+    "slug": "varsity-j-pink",
+    "name": "Varsity J - Pink",
+    "category": "",
+    "file_id": "1iLqZsc0a9mbbHSRNb2V4llOONaKSyjoV",
+    "status": "cropped",
+    "original_size": [
+      341,
+      508
+    ],
+    "new_size": [
+      298,
+      464
+    ],
+    "saved_bytes": 25603,
+    "error": null
+  },
+  {
+    "slug": "varsity-j-purple",
+    "name": "Varsity J - Purple",
+    "category": "",
+    "file_id": "1bUT8gXqGBiPJQW6hOrqV8y_-uTKO6hVV",
+    "status": "cropped",
+    "original_size": [
+      341,
+      508
+    ],
+    "new_size": [
+      298,
+      464
+    ],
+    "saved_bytes": 15218,
+    "error": null
+  },
+  {
+    "slug": "varsity-j-red",
+    "name": "Varsity J - Red",
+    "category": "",
+    "file_id": "1FXgcru-FzjDv1vhEymTf6e-zQeIpFfh9",
+    "status": "cropped",
+    "original_size": [
+      341,
+      508
+    ],
+    "new_size": [
+      298,
+      464
+    ],
+    "saved_bytes": 24596,
+    "error": null
+  },
+  {
+    "slug": "varsity-j-white",
+    "name": "Varsity J - White",
+    "category": "",
+    "file_id": "1UpUCVfYCrEFkFYlB_V_PG0tOnfcrUaKW",
+    "status": "cropped",
+    "original_size": [
+      341,
+      508
+    ],
+    "new_size": [
+      298,
+      464
+    ],
+    "saved_bytes": -10096,
+    "error": null
+  },
+  {
+    "slug": "varsity-k-black",
+    "name": "Varsity K - Black",
+    "category": "",
+    "file_id": "1_eNU3xrhvNpyReDc-jgkrjyNWxGbp0sO",
+    "status": "cropped",
+    "original_size": [
+      347,
+      513
+    ],
+    "new_size": [
+      303,
+      466
+    ],
+    "saved_bytes": 16907,
+    "error": null
+  },
+  {
+    "slug": "varsity-k-burgundy",
+    "name": "Varsity K - Burgundy",
+    "category": "",
+    "file_id": "1LekIEYtLpGnnojD7Hp9b2_j-WGxuaH6y",
+    "status": "cropped",
+    "original_size": [
+      347,
+      513
+    ],
+    "new_size": [
+      303,
+      466
+    ],
+    "saved_bytes": 33692,
+    "error": null
+  },
+  {
+    "slug": "varsity-k-dark-yellow",
+    "name": "Varsity K - Dark Yellow",
+    "category": "",
+    "file_id": "1ENiDn2t3YEOkA4CUSsJR2mRCETtzvwN0",
+    "status": "cropped",
+    "original_size": [
+      347,
+      513
+    ],
+    "new_size": [
+      303,
+      466
+    ],
+    "saved_bytes": 39957,
+    "error": null
+  },
+  {
+    "slug": "varsity-k-light-blue",
+    "name": "Varsity K - Light Blue",
+    "category": "",
+    "file_id": "1rLbaYxwe8ljMflL8L67FgtSjqo5ZdJkw",
+    "status": "cropped",
+    "original_size": [
+      347,
+      513
+    ],
+    "new_size": [
+      303,
+      466
+    ],
+    "saved_bytes": 13586,
+    "error": null
+  },
+  {
+    "slug": "varsity-k-light-pink",
+    "name": "Varsity K - Light Pink",
+    "category": "",
+    "file_id": "1k2hxvF_KZgCA4L-2sQV4Oa7Ln66FpI_9",
+    "status": "cropped",
+    "original_size": [
+      347,
+      513
+    ],
+    "new_size": [
+      303,
+      466
+    ],
+    "saved_bytes": 4133,
+    "error": null
+  },
+  {
+    "slug": "varsity-k-matcha",
+    "name": "Varsity K - Matcha",
+    "category": "",
+    "file_id": "12soS17D4R32_vQ9cpLntEs4lqZFEujKL",
+    "status": "cropped",
+    "original_size": [
+      347,
+      513
+    ],
+    "new_size": [
+      303,
+      466
+    ],
+    "saved_bytes": 11921,
+    "error": null
+  },
+  {
+    "slug": "varsity-k-pink",
+    "name": "Varsity K - Pink",
+    "category": "",
+    "file_id": "1sApZj0Cd0m-VFRyU7kmNReSuZH5ItIxS",
+    "status": "cropped",
+    "original_size": [
+      347,
+      513
+    ],
+    "new_size": [
+      303,
+      466
+    ],
+    "saved_bytes": 31570,
+    "error": null
+  },
+  {
+    "slug": "varsity-k-purple",
+    "name": "Varsity K - Purple",
+    "category": "",
+    "file_id": "1smy94lmsba-01GThhV5kn2-Lotn7buxG",
+    "status": "cropped",
+    "original_size": [
+      347,
+      513
+    ],
+    "new_size": [
+      303,
+      466
+    ],
+    "saved_bytes": 18495,
+    "error": null
+  },
+  {
+    "slug": "varsity-k-red",
+    "name": "Varsity K - Red",
+    "category": "",
+    "file_id": "1IOlHF8fy8oFN5u-Cx06Apuj2IL_xRbC7",
+    "status": "cropped",
+    "original_size": [
+      347,
+      513
+    ],
+    "new_size": [
+      303,
+      466
+    ],
+    "saved_bytes": 32061,
+    "error": null
+  },
+  {
+    "slug": "varsity-k-white",
+    "name": "Varsity K - White",
+    "category": "",
+    "file_id": "1a_Pfpgw6XXMB8QE8W57XltrGD7kucsUZ",
+    "status": "cropped",
+    "original_size": [
+      347,
+      513
+    ],
+    "new_size": [
+      303,
+      466
+    ],
+    "saved_bytes": -12839,
+    "error": null
+  },
+  {
+    "slug": "varsity-l-black",
+    "name": "Varsity L - Black",
+    "category": "",
+    "file_id": "18LZCf9gFJPG8HlzN0S1v-PnH0AMcMkGE",
+    "status": "cropped",
+    "original_size": [
+      313,
+      511
+    ],
+    "new_size": [
+      269,
+      467
+    ],
+    "saved_bytes": 15199,
+    "error": null
+  },
+  {
+    "slug": "varsity-l-burgundy",
+    "name": "Varsity L - Burgundy",
+    "category": "",
+    "file_id": "1iN9Wx8f5GYpuL7laTdxzDOkISrKR52g7",
+    "status": "cropped",
+    "original_size": [
+      313,
+      511
+    ],
+    "new_size": [
+      269,
+      467
+    ],
+    "saved_bytes": 27917,
+    "error": null
+  },
+  {
+    "slug": "varsity-l-dark-yellow",
+    "name": "Varsity L - Dark Yellow",
+    "category": "",
+    "file_id": "1nDj2nJI7Nliccz7wkJie__knSGzWC_OQ",
+    "status": "cropped",
+    "original_size": [
+      313,
+      511
+    ],
+    "new_size": [
+      269,
+      467
+    ],
+    "saved_bytes": 31453,
+    "error": null
+  },
+  {
+    "slug": "varsity-l-light-blue",
+    "name": "Varsity L - Light Blue",
+    "category": "",
+    "file_id": "1225uEg045VixHEZNK6mrBiI1s3HISMB-",
+    "status": "cropped",
+    "original_size": [
+      313,
+      511
+    ],
+    "new_size": [
+      269,
+      467
+    ],
+    "saved_bytes": 14043,
+    "error": null
+  },
+  {
+    "slug": "varsity-l-light-pink",
+    "name": "Varsity L - Light Pink",
+    "category": "",
+    "file_id": "13_iX9ne-Xq_Z8ldqkEn93nuo7HgSNcoi",
+    "status": "cropped",
+    "original_size": [
+      313,
+      511
+    ],
+    "new_size": [
+      269,
+      467
+    ],
+    "saved_bytes": 5254,
+    "error": null
+  },
+  {
+    "slug": "varsity-l-matcha",
+    "name": "Varsity L - Matcha",
+    "category": "",
+    "file_id": "1b3T8z-WWkV5ZMVUp3onbZQlOgjkI8PHo",
+    "status": "cropped",
+    "original_size": [
+      313,
+      511
+    ],
+    "new_size": [
+      269,
+      467
+    ],
+    "saved_bytes": 10876,
+    "error": null
+  },
+  {
+    "slug": "varsity-l-pink",
+    "name": "Varsity L - Pink",
+    "category": "",
+    "file_id": "1pAvOnnUyQT0Hwoso0ibNudnAC5s_RIsR",
+    "status": "cropped",
+    "original_size": [
+      313,
+      511
+    ],
+    "new_size": [
+      269,
+      467
+    ],
+    "saved_bytes": 27635,
+    "error": null
+  },
+  {
+    "slug": "varsity-l-purple",
+    "name": "Varsity L - Purple",
+    "category": "",
+    "file_id": "1C-48qSBJEQu5pNJ77yxtsKrqFFW4lUas",
+    "status": "cropped",
+    "original_size": [
+      313,
+      511
+    ],
+    "new_size": [
+      269,
+      467
+    ],
+    "saved_bytes": 15884,
+    "error": null
+  },
+  {
+    "slug": "varsity-l-red",
+    "name": "Varsity L - Red",
+    "category": "",
+    "file_id": "1-2cSLt-NjK2_eFsIjVU1I5YsDZSGraRz",
+    "status": "cropped",
+    "original_size": [
+      313,
+      511
+    ],
+    "new_size": [
+      269,
+      467
+    ],
+    "saved_bytes": 25270,
+    "error": null
+  },
+  {
+    "slug": "varsity-l-white",
+    "name": "Varsity L - White",
+    "category": "",
+    "file_id": "1MWXBICuyTRLGGAOPZFUuY_5fLZrbmB3b",
+    "status": "cropped",
+    "original_size": [
+      313,
+      511
+    ],
+    "new_size": [
+      269,
+      467
+    ],
+    "saved_bytes": -4856,
+    "error": null
+  },
+  {
+    "slug": "varsity-m-black",
+    "name": "Varsity M - Black",
+    "category": "",
+    "file_id": "1UmBjSExJD9iR84lIHIlv4BV50ZjmCfIF",
+    "status": "cropped",
+    "original_size": [
+      364,
+      513
+    ],
+    "new_size": [
+      321,
+      467
+    ],
+    "saved_bytes": 16425,
+    "error": null
+  },
+  {
+    "slug": "varsity-m-burgundy",
+    "name": "Varsity M - Burgundy",
+    "category": "",
+    "file_id": "1zg8Y14FOyofVf9pudDW9OamEtIcKiOgW",
+    "status": "cropped",
+    "original_size": [
+      364,
+      513
+    ],
+    "new_size": [
+      321,
+      467
+    ],
+    "saved_bytes": 35026,
+    "error": null
+  },
+  {
+    "slug": "varsity-m-dark-yellow",
+    "name": "Varsity M - Dark Yellow",
+    "category": "",
+    "file_id": "1bAJI8jfzlhd6rZOjEfUyGNgaNS6hS-M2",
+    "status": "cropped",
+    "original_size": [
+      364,
+      513
+    ],
+    "new_size": [
+      321,
+      467
+    ],
+    "saved_bytes": 43005,
+    "error": null
+  },
+  {
+    "slug": "varsity-m-light-blue",
+    "name": "Varsity M - Light Blue",
+    "category": "",
+    "file_id": "1TOQMw40JKMRR4rVwM_lD3wcASyjj0eR4",
+    "status": "cropped",
+    "original_size": [
+      364,
+      513
+    ],
+    "new_size": [
+      321,
+      467
+    ],
+    "saved_bytes": 11180,
+    "error": null
+  },
+  {
+    "slug": "varsity-m-light-pink",
+    "name": "Varsity M - Light Pink",
+    "category": "",
+    "file_id": "1r69k6ht5lTjV3Zbm0LvZv_X9cx5PdIIA",
+    "status": "cropped",
+    "original_size": [
+      364,
+      513
+    ],
+    "new_size": [
+      321,
+      467
+    ],
+    "saved_bytes": -949,
+    "error": null
+  },
+  {
+    "slug": "varsity-m-matcha",
+    "name": "Varsity M - Matcha",
+    "category": "",
+    "file_id": "1t59M7JFm8hTJ_LOmYz1VdPb0n_EByp4r",
+    "status": "cropped",
+    "original_size": [
+      364,
+      513
+    ],
+    "new_size": [
+      321,
+      467
+    ],
+    "saved_bytes": 9875,
+    "error": null
+  },
+  {
+    "slug": "varsity-m-pink",
+    "name": "Varsity M - Pink",
+    "category": "",
+    "file_id": "1tZOvrukP4_M9JRfKYvq2HGyDSBPC8rUk",
+    "status": "cropped",
+    "original_size": [
+      364,
+      513
+    ],
+    "new_size": [
+      321,
+      467
+    ],
+    "saved_bytes": 30784,
+    "error": null
+  },
+  {
+    "slug": "varsity-m-purple",
+    "name": "Varsity M - Purple",
+    "category": "",
+    "file_id": "1jq02AdB_0dLGh1VEjC9iqB3Z7biz3pPf",
+    "status": "cropped",
+    "original_size": [
+      364,
+      513
+    ],
+    "new_size": [
+      321,
+      467
+    ],
+    "saved_bytes": 19241,
+    "error": null
+  },
+  {
+    "slug": "varsity-m-red",
+    "name": "Varsity M - Red",
+    "category": "",
+    "file_id": "1duPnTALjz1BlPHTLWv3WQqQicRWvDMIf",
+    "status": "cropped",
+    "original_size": [
+      364,
+      513
+    ],
+    "new_size": [
+      321,
+      467
+    ],
+    "saved_bytes": 35063,
+    "error": null
+  },
+  {
+    "slug": "varsity-m-white",
+    "name": "Varsity M - White",
+    "category": "",
+    "file_id": "1ghlNZkIZOSNMuvjap2Y8pfG8fIJ-Egrd",
+    "status": "cropped",
+    "original_size": [
+      364,
+      513
+    ],
+    "new_size": [
+      321,
+      467
+    ],
+    "saved_bytes": -25101,
+    "error": null
+  },
+  {
+    "slug": "varsity-n-black",
+    "name": "Varsity N - Black",
+    "category": "",
+    "file_id": "14Do2UlTzr6X9r0Q6mX_hQmHkdP5G-b2j",
+    "status": "cropped",
+    "original_size": [
+      345,
+      510
+    ],
+    "new_size": [
+      301,
+      465
+    ],
+    "saved_bytes": 18047,
+    "error": null
+  },
+  {
+    "slug": "varsity-n-burgundy",
+    "name": "Varsity N - Burgundy",
+    "category": "",
+    "file_id": "11Sy7hr2tnoF8hN5niE__OFz3x_6BIx4_",
+    "status": "cropped",
+    "original_size": [
+      345,
+      510
+    ],
+    "new_size": [
+      301,
+      465
+    ],
+    "saved_bytes": 36418,
+    "error": null
+  },
+  {
+    "slug": "varsity-n-dark-yellow",
+    "name": "Varsity N - Dark Yellow",
+    "category": "",
+    "file_id": "1LOHjcOKfgQLgD8eyxNTiPFkiii3jVYkc",
+    "status": "cropped",
+    "original_size": [
+      345,
+      510
+    ],
+    "new_size": [
+      301,
+      465
+    ],
+    "saved_bytes": 43946,
+    "error": null
+  },
+  {
+    "slug": "varsity-n-light-blue",
+    "name": "Varsity N - Light Blue",
+    "category": "",
+    "file_id": "1I2_owFG1yjksrn5SYpKV6gVJg2MHEB6S",
+    "status": "cropped",
+    "original_size": [
+      345,
+      510
+    ],
+    "new_size": [
+      301,
+      465
+    ],
+    "saved_bytes": 13689,
+    "error": null
+  },
+  {
+    "slug": "varsity-n-light-pink",
+    "name": "Varsity N - Light Pink",
+    "category": "",
+    "file_id": "1yDiWooR7qaBfVeyg1AYHMvoQK-DbwSZO",
+    "status": "cropped",
+    "original_size": [
+      345,
+      510
+    ],
+    "new_size": [
+      301,
+      465
+    ],
+    "saved_bytes": 1778,
+    "error": null
+  },
+  {
+    "slug": "varsity-n-matcha",
+    "name": "Varsity N - Matcha",
+    "category": "",
+    "file_id": "11RKqcIDldAXb_ui9IgTeAsfmviSJJE4S",
+    "status": "cropped",
+    "original_size": [
+      345,
+      510
+    ],
+    "new_size": [
+      301,
+      465
+    ],
+    "saved_bytes": 11270,
+    "error": null
+  },
+  {
+    "slug": "varsity-n-pink",
+    "name": "Varsity N - Pink",
+    "category": "",
+    "file_id": "17eo9cnRWJjovJJ4Z47VC9oIhM21ctCen",
+    "status": "cropped",
+    "original_size": [
+      345,
+      510
+    ],
+    "new_size": [
+      301,
+      465
+    ],
+    "saved_bytes": 33468,
+    "error": null
+  },
+  {
+    "slug": "varsity-n-purple",
+    "name": "Varsity N - Purple",
+    "category": "",
+    "file_id": "1dKRleUqnEVYZ2MbBgTW4kKwqxz5mSmmD",
+    "status": "cropped",
+    "original_size": [
+      345,
+      510
+    ],
+    "new_size": [
+      301,
+      465
+    ],
+    "saved_bytes": 20135,
+    "error": null
+  },
+  {
+    "slug": "varsity-n-red",
+    "name": "Varsity N - Red",
+    "category": "",
+    "file_id": "1czPf-pGaIg-FtAtPyBsD5z-6ORxkoOTj",
+    "status": "cropped",
+    "original_size": [
+      345,
+      510
+    ],
+    "new_size": [
+      301,
+      465
+    ],
+    "saved_bytes": 36065,
+    "error": null
+  },
+  {
+    "slug": "varsity-n-white",
+    "name": "Varsity N - White",
+    "category": "",
+    "file_id": "1YzjtpsXzBvEf7hRhTmx1S4sZKapcSIjx",
+    "status": "cropped",
+    "original_size": [
+      345,
+      510
+    ],
+    "new_size": [
+      301,
+      465
+    ],
+    "saved_bytes": -20099,
+    "error": null
+  },
+  {
+    "slug": "varsity-o-black",
+    "name": "Varsity O - Black",
+    "category": "",
+    "file_id": "1Jf_VgKlnM_Zd1xedKZN6p0QH39ad3R0s",
+    "status": "cropped",
+    "original_size": [
+      348,
+      509
+    ],
+    "new_size": [
+      306,
+      464
+    ],
+    "saved_bytes": 16901,
+    "error": null
+  },
+  {
+    "slug": "varsity-o-burgundy",
+    "name": "Varsity O - Burgundy",
+    "category": "",
+    "file_id": "1nd9HTmWEL64BgyZ9Od6OjoCyYDGADsYM",
+    "status": "cropped",
+    "original_size": [
+      348,
+      509
+    ],
+    "new_size": [
+      306,
+      464
+    ],
+    "saved_bytes": 35818,
+    "error": null
+  },
+  {
+    "slug": "varsity-o-dark-yellow",
+    "name": "Varsity O - Dark Yellow",
+    "category": "",
+    "file_id": "1k0sYF49epaN7_M0VcCJVhN5NMQ332uZ0",
+    "status": "cropped",
+    "original_size": [
+      348,
+      509
+    ],
+    "new_size": [
+      306,
+      464
+    ],
+    "saved_bytes": 42796,
+    "error": null
+  },
+  {
+    "slug": "varsity-o-light-blue",
+    "name": "Varsity O - Light Blue",
+    "category": "",
+    "file_id": "1FopaLO-fNlCeR9cH4wCVorAZnr8YLS74",
+    "status": "cropped",
+    "original_size": [
+      348,
+      509
+    ],
+    "new_size": [
+      306,
+      464
+    ],
+    "saved_bytes": 14063,
+    "error": null
+  },
+  {
+    "slug": "varsity-o-light-pink",
+    "name": "Varsity O - Light Pink",
+    "category": "",
+    "file_id": "1IpiVSLqq9y3zhwfFbWiaq2giDNhfahvJ",
+    "status": "cropped",
+    "original_size": [
+      348,
+      509
+    ],
+    "new_size": [
+      306,
+      464
+    ],
+    "saved_bytes": 3668,
+    "error": null
+  },
+  {
+    "slug": "varsity-o-matcha",
+    "name": "Varsity O - Matcha",
+    "category": "",
+    "file_id": "1kP-qDzfNg0Vg391UCUgim6lDXmE7wyQr",
+    "status": "cropped",
+    "original_size": [
+      348,
+      509
+    ],
+    "new_size": [
+      306,
+      464
+    ],
+    "saved_bytes": 10959,
+    "error": null
+  },
+  {
+    "slug": "varsity-o-pink",
+    "name": "Varsity O - Pink",
+    "category": "",
+    "file_id": "12LSURq6E6a5P-VlaZgaQVV2ekDgR39mI",
+    "status": "cropped",
+    "original_size": [
+      348,
+      509
+    ],
+    "new_size": [
+      306,
+      464
+    ],
+    "saved_bytes": 32854,
+    "error": null
+  },
+  {
+    "slug": "varsity-o-purple",
+    "name": "Varsity O - Purple",
+    "category": "",
+    "file_id": "1eC7a00L2d8LZ4t_uE7ikrMRBHR38ORDL",
+    "status": "cropped",
+    "original_size": [
+      348,
+      509
+    ],
+    "new_size": [
+      306,
+      464
+    ],
+    "saved_bytes": 19860,
+    "error": null
+  },
+  {
+    "slug": "varsity-o-red",
+    "name": "Varsity O - Red",
+    "category": "",
+    "file_id": "1K59aQhhU635EzPd8lSHPXQ58pJWLo6wg",
+    "status": "cropped",
+    "original_size": [
+      348,
+      509
+    ],
+    "new_size": [
+      306,
+      464
+    ],
+    "saved_bytes": 34955,
+    "error": null
+  },
+  {
+    "slug": "varsity-o-white",
+    "name": "Varsity O - White",
+    "category": "",
+    "file_id": "1EpsiSL2YG54s-kIud_ca9oPuy4mM6fl5",
+    "status": "cropped",
+    "original_size": [
+      348,
+      509
+    ],
+    "new_size": [
+      306,
+      464
+    ],
+    "saved_bytes": -16967,
+    "error": null
+  },
+  {
+    "slug": "varsity-p-black",
+    "name": "Varsity P - Black",
+    "category": "",
+    "file_id": "1Zu4-ILSVZjY5XiQjMBSOnrelkWRH8n7_",
+    "status": "cropped",
+    "original_size": [
+      340,
+      513
+    ],
+    "new_size": [
+      297,
+      469
+    ],
+    "saved_bytes": 14994,
+    "error": null
+  },
+  {
+    "slug": "varsity-p-burgundy",
+    "name": "Varsity P - Burgundy",
+    "category": "",
+    "file_id": "1aIdxhjluHYj9BG11BfDXZba7UCFSiFje",
+    "status": "cropped",
+    "original_size": [
+      340,
+      513
+    ],
+    "new_size": [
+      297,
+      469
+    ],
+    "saved_bytes": 32123,
+    "error": null
+  },
+  {
+    "slug": "varsity-p-dark-yellow",
+    "name": "Varsity P - Dark Yellow",
+    "category": "",
+    "file_id": "1zxUZ1Yn3q5DLndxdfBgRWYnividSVhjG",
+    "status": "cropped",
+    "original_size": [
+      340,
+      513
+    ],
+    "new_size": [
+      297,
+      469
+    ],
+    "saved_bytes": 37250,
+    "error": null
+  },
+  {
+    "slug": "varsity-p-light-blue",
+    "name": "Varsity P - Light Blue",
+    "category": "",
+    "file_id": "1Td40t25-NhemhDurrBRKu0LoCBJ3Gxyu",
+    "status": "cropped",
+    "original_size": [
+      340,
+      513
+    ],
+    "new_size": [
+      297,
+      469
+    ],
+    "saved_bytes": 13047,
+    "error": null
+  },
+  {
+    "slug": "varsity-p-light-pink",
+    "name": "Varsity P - Light Pink",
+    "category": "",
+    "file_id": "14IUftzBByFdic2Y8hEc95kBFi6H-XAii",
+    "status": "cropped",
+    "original_size": [
+      340,
+      513
+    ],
+    "new_size": [
+      297,
+      469
+    ],
+    "saved_bytes": 3223,
+    "error": null
+  },
+  {
+    "slug": "varsity-p-matcha",
+    "name": "Varsity P - Matcha",
+    "category": "",
+    "file_id": "1jj4PLVhNOp7Up-hSc4_cDfSNYqzlBEbU",
+    "status": "cropped",
+    "original_size": [
+      340,
+      513
+    ],
+    "new_size": [
+      297,
+      469
+    ],
+    "saved_bytes": 10882,
+    "error": null
+  },
+  {
+    "slug": "varsity-p-pink",
+    "name": "Varsity P - Pink",
+    "category": "",
+    "file_id": "1lnGRpCuzc595pcR_HF7EokkGeWPDaj73",
+    "status": "cropped",
+    "original_size": [
+      340,
+      513
+    ],
+    "new_size": [
+      297,
+      469
+    ],
+    "saved_bytes": 30480,
+    "error": null
+  },
+  {
+    "slug": "varsity-p-purple",
+    "name": "Varsity P - Purple",
+    "category": "",
+    "file_id": "16ctOQuqjE7CQKYeA_3BSxgiQZGlw5sbg",
+    "status": "cropped",
+    "original_size": [
+      340,
+      513
+    ],
+    "new_size": [
+      297,
+      469
+    ],
+    "saved_bytes": 18279,
+    "error": null
+  },
+  {
+    "slug": "varsity-p-red",
+    "name": "Varsity P - Red",
+    "category": "",
+    "file_id": "1Lou5fqXiU7UMqnMpbnH6r8V6EGhl_g3m",
+    "status": "cropped",
+    "original_size": [
+      340,
+      513
+    ],
+    "new_size": [
+      297,
+      469
+    ],
+    "saved_bytes": 30737,
+    "error": null
+  },
+  {
+    "slug": "varsity-p-white",
+    "name": "Varsity P - White",
+    "category": "",
+    "file_id": "11Rvp4Hd6WWsCqq6NC44P9EkqlYGk8KVN",
+    "status": "cropped",
+    "original_size": [
+      340,
+      513
+    ],
+    "new_size": [
+      297,
+      469
+    ],
+    "saved_bytes": -15033,
+    "error": null
+  },
+  {
+    "slug": "varsity-q-black",
+    "name": "Varsity Q - Black",
+    "category": "",
+    "file_id": "1xMrYHD0HWVYj13MTJaji-KTOtFHf2vux",
+    "status": "cropped",
+    "original_size": [
+      301,
+      511
+    ],
+    "new_size": [
+      258,
+      465
+    ],
+    "saved_bytes": 15588,
+    "error": null
+  },
+  {
+    "slug": "varsity-q-burgundy",
+    "name": "Varsity Q - Burgundy",
+    "category": "",
+    "file_id": "1Z5pqaazQVa3y3tgnKR4z-RI3BMUax1Gu",
+    "status": "cropped",
+    "original_size": [
+      301,
+      511
+    ],
+    "new_size": [
+      258,
+      465
+    ],
+    "saved_bytes": 30481,
+    "error": null
+  },
+  {
+    "slug": "varsity-q-dark-yellow",
+    "name": "Varsity Q - Dark Yellow",
+    "category": "",
+    "file_id": "1cKT2vfJGVcuK5Uo9zEC8cCio0kHXGj_Q",
+    "status": "cropped",
+    "original_size": [
+      301,
+      511
+    ],
+    "new_size": [
+      258,
+      465
+    ],
+    "saved_bytes": 35732,
+    "error": null
+  },
+  {
+    "slug": "varsity-q-light-blue",
+    "name": "Varsity Q - Light Blue",
+    "category": "",
+    "file_id": "13PJYOs70KE2WZrFn2K7Tz45qGaXref2G",
+    "status": "cropped",
+    "original_size": [
+      301,
+      511
+    ],
+    "new_size": [
+      258,
+      465
+    ],
+    "saved_bytes": 11822,
+    "error": null
+  },
+  {
+    "slug": "varsity-q-light-pink",
+    "name": "Varsity Q - Light Pink",
+    "category": "",
+    "file_id": "1HBc44EWuUMdVkHUb27u5TmvYPbhTpQ8V",
+    "status": "cropped",
+    "original_size": [
+      301,
+      511
+    ],
+    "new_size": [
+      258,
+      465
+    ],
+    "saved_bytes": 3791,
+    "error": null
+  },
+  {
+    "slug": "varsity-q-matcha",
+    "name": "Varsity Q - Matcha",
+    "category": "",
+    "file_id": "1howRvAxcNL0bS_s9f8HH1mOM4BkT2zPI",
+    "status": "cropped",
+    "original_size": [
+      301,
+      511
+    ],
+    "new_size": [
+      258,
+      465
+    ],
+    "saved_bytes": 10607,
+    "error": null
+  },
+  {
+    "slug": "varsity-q-pink",
+    "name": "Varsity Q - Pink",
+    "category": "",
+    "file_id": "15Z_HrO0ySGEWdHAbGWQWbkG81-rgI6ji",
+    "status": "cropped",
+    "original_size": [
+      301,
+      511
+    ],
+    "new_size": [
+      258,
+      465
+    ],
+    "saved_bytes": 28810,
+    "error": null
+  },
+  {
+    "slug": "varsity-q-purple",
+    "name": "Varsity Q - Purple",
+    "category": "",
+    "file_id": "1dgAyXl9U35iaYqgBKPYOjdjm9Dp4xAff",
+    "status": "cropped",
+    "original_size": [
+      301,
+      511
+    ],
+    "new_size": [
+      258,
+      465
+    ],
+    "saved_bytes": 17791,
+    "error": null
+  },
+  {
+    "slug": "varsity-q-red",
+    "name": "Varsity Q - Red",
+    "category": "",
+    "file_id": "1n07YMhLCAXI83I2Wz8ia_NG4uVq4F8D_",
+    "status": "cropped",
+    "original_size": [
+      301,
+      511
+    ],
+    "new_size": [
+      258,
+      465
+    ],
+    "saved_bytes": 29728,
+    "error": null
+  },
+  {
+    "slug": "varsity-q-white",
+    "name": "Varsity Q - White",
+    "category": "",
+    "file_id": "137Cg894ii_ZeCdSsBQ7hbG8sOe-Nsrhj",
+    "status": "cropped",
+    "original_size": [
+      301,
+      511
+    ],
+    "new_size": [
+      258,
+      465
+    ],
+    "saved_bytes": -13499,
+    "error": null
+  },
+  {
+    "slug": "varsity-r-black",
+    "name": "Varsity R - Black",
+    "category": "",
+    "file_id": "1NnkfY5PtwDTP2D3Uzk0Hams_z3d7c78u",
+    "status": "cropped",
+    "original_size": [
+      341,
+      514
+    ],
+    "new_size": [
+      297,
+      469
+    ],
+    "saved_bytes": 16556,
+    "error": null
+  },
+  {
+    "slug": "varsity-r-burgundy",
+    "name": "Varsity R - Burgundy",
+    "category": "",
+    "file_id": "1vPWO8QFETOyk_08s3_RVDcKhy1eWSz_7",
+    "status": "cropped",
+    "original_size": [
+      341,
+      514
+    ],
+    "new_size": [
+      297,
+      469
+    ],
+    "saved_bytes": 34860,
+    "error": null
+  },
+  {
+    "slug": "varsity-r-dark-yellow",
+    "name": "Varsity R - Dark Yellow",
+    "category": "",
+    "file_id": "1CDRX3HRiDJ-HTvSRPXS4LfdKW7Hx3pQ-",
+    "status": "cropped",
+    "original_size": [
+      341,
+      514
+    ],
+    "new_size": [
+      297,
+      469
+    ],
+    "saved_bytes": 41503,
+    "error": null
+  },
+  {
+    "slug": "varsity-r-light-blue",
+    "name": "Varsity R - Light Blue",
+    "category": "",
+    "file_id": "1uYiVH80_TO4uyTasDw58CXE_Iz9mnRO0",
+    "status": "cropped",
+    "original_size": [
+      341,
+      514
+    ],
+    "new_size": [
+      297,
+      469
+    ],
+    "saved_bytes": 12167,
+    "error": null
+  },
+  {
+    "slug": "varsity-r-light-pink",
+    "name": "Varsity R - Light Pink",
+    "category": "",
+    "file_id": "1K6ru7uVxFkPzyeiA5JxKfTuxMut6Tuvs",
+    "status": "cropped",
+    "original_size": [
+      341,
+      514
+    ],
+    "new_size": [
+      297,
+      469
+    ],
+    "saved_bytes": 1672,
+    "error": null
+  },
+  {
+    "slug": "varsity-r-matcha",
+    "name": "Varsity R - Matcha",
+    "category": "",
+    "file_id": "1GUn6HbFosPj-Ds3leju0qyvmKkpIoAbY",
+    "status": "cropped",
+    "original_size": [
+      341,
+      514
+    ],
+    "new_size": [
+      297,
+      469
+    ],
+    "saved_bytes": 9815,
+    "error": null
+  },
+  {
+    "slug": "varsity-r-pink",
+    "name": "Varsity R - Pink",
+    "category": "",
+    "file_id": "11ZVzBoIe0umly2fGwlCnHp71NFIx79mM",
+    "status": "cropped",
+    "original_size": [
+      341,
+      514
+    ],
+    "new_size": [
+      297,
+      469
+    ],
+    "saved_bytes": 32045,
+    "error": null
+  },
+  {
+    "slug": "varsity-r-purple",
+    "name": "Varsity R - Purple",
+    "category": "",
+    "file_id": "11YCiV1fme6q3zPOAVmFkxexd1CaYaer-",
+    "status": "cropped",
+    "original_size": [
+      341,
+      514
+    ],
+    "new_size": [
+      297,
+      469
+    ],
+    "saved_bytes": 19193,
+    "error": null
+  },
+  {
+    "slug": "varsity-r-red",
+    "name": "Varsity R - Red",
+    "category": "",
+    "file_id": "1q_1nQFJqDnrqLwxRUhB4-bjbg7jAQkAU",
+    "status": "cropped",
+    "original_size": [
+      341,
+      514
+    ],
+    "new_size": [
+      297,
+      469
+    ],
+    "saved_bytes": 34073,
+    "error": null
+  },
+  {
+    "slug": "varsity-r-white",
+    "name": "Varsity R - White",
+    "category": "",
+    "file_id": "12YK9R_S3l1DiWX-FaAe1kDrc2j1UzqMY",
+    "status": "cropped",
+    "original_size": [
+      341,
+      514
+    ],
+    "new_size": [
+      297,
+      469
+    ],
+    "saved_bytes": -17801,
+    "error": null
+  },
+  {
+    "slug": "varsity-s-black",
+    "name": "Varsity S - Black",
+    "category": "",
+    "file_id": "1AsBGIQhjxtwNr9NW1ItjQbF9N4PCYIM4",
+    "status": "cropped",
+    "original_size": [
+      338,
+      511
+    ],
+    "new_size": [
+      294,
+      467
+    ],
+    "saved_bytes": 16120,
+    "error": null
+  },
+  {
+    "slug": "varsity-s-burgundy",
+    "name": "Varsity S - Burgundy",
+    "category": "",
+    "file_id": "1VWP7I71Knj5bLutYL909qFKYziHkL0-G",
+    "status": "cropped",
+    "original_size": [
+      338,
+      511
+    ],
+    "new_size": [
+      294,
+      467
+    ],
+    "saved_bytes": 33585,
+    "error": null
+  },
+  {
+    "slug": "varsity-s-dark-yellow",
+    "name": "Varsity S - Dark Yellow",
+    "category": "",
+    "file_id": "1fJk4DV1pfmAWtmmTiTntyOmUN2e2ysX0",
+    "status": "cropped",
+    "original_size": [
+      338,
+      511
+    ],
+    "new_size": [
+      294,
+      467
+    ],
+    "saved_bytes": 40467,
+    "error": null
+  },
+  {
+    "slug": "varsity-s-light-blue",
+    "name": "Varsity S - Light Blue",
+    "category": "",
+    "file_id": "1lIhCTVuDTccjAAmDVg94lQVcNvjNoHfo",
+    "status": "cropped",
+    "original_size": [
+      338,
+      511
+    ],
+    "new_size": [
+      294,
+      467
+    ],
+    "saved_bytes": 15299,
+    "error": null
+  },
+  {
+    "slug": "varsity-s-light-pink",
+    "name": "Varsity S - Light Pink",
+    "category": "",
+    "file_id": "1mjrzMUhc383bbzV_H-lQEuuHHlv3Rq3s",
+    "status": "cropped",
+    "original_size": [
+      338,
+      511
+    ],
+    "new_size": [
+      294,
+      467
+    ],
+    "saved_bytes": 4058,
+    "error": null
+  },
+  {
+    "slug": "varsity-s-matcha",
+    "name": "Varsity S - Matcha",
+    "category": "",
+    "file_id": "1Hla2NgT46NXUZhP6sv4j1FcfE-P2DkBq",
+    "status": "cropped",
+    "original_size": [
+      338,
+      511
+    ],
+    "new_size": [
+      294,
+      467
+    ],
+    "saved_bytes": 12258,
+    "error": null
+  },
+  {
+    "slug": "varsity-s-pink",
+    "name": "Varsity S - Pink",
+    "category": "",
+    "file_id": "1L-neTKNFtKucu0MPH7zwaffjfxgn6_tl",
+    "status": "cropped",
+    "original_size": [
+      338,
+      511
+    ],
+    "new_size": [
+      294,
+      467
+    ],
+    "saved_bytes": 31408,
+    "error": null
+  },
+  {
+    "slug": "varsity-s-purple",
+    "name": "Varsity S - Purple",
+    "category": "",
+    "file_id": "1ZdL1xV4f6rvMJyLzln1U1tNkesM28iwD",
+    "status": "cropped",
+    "original_size": [
+      338,
+      511
+    ],
+    "new_size": [
+      294,
+      467
+    ],
+    "saved_bytes": 19008,
+    "error": null
+  },
+  {
+    "slug": "varsity-s-red",
+    "name": "Varsity S - Red",
+    "category": "",
+    "file_id": "1suxTh97ufwRa2I0Ik6SA2N9vsS3QW2OG",
+    "status": "cropped",
+    "original_size": [
+      338,
+      511
+    ],
+    "new_size": [
+      294,
+      467
+    ],
+    "saved_bytes": 32351,
+    "error": null
+  },
+  {
+    "slug": "varsity-s-white",
+    "name": "Varsity S - White",
+    "category": "",
+    "file_id": "1nm1Cd7AHHUyhF-7Km4im_uA5TqlvPdSP",
+    "status": "cropped",
+    "original_size": [
+      338,
+      511
+    ],
+    "new_size": [
+      294,
+      467
+    ],
+    "saved_bytes": -13538,
+    "error": null
+  },
+  {
+    "slug": "varsity-t-black",
+    "name": "Varsity T - Black",
+    "category": "",
+    "file_id": "1y8wMIC387jjdoic2TfGG2DIxaqEt-WHM",
+    "status": "cropped",
+    "original_size": [
+      352,
+      508
+    ],
+    "new_size": [
+      308,
+      463
+    ],
+    "saved_bytes": 13635,
+    "error": null
+  },
+  {
+    "slug": "varsity-t-burgundy",
+    "name": "Varsity T - Burgundy",
+    "category": "",
+    "file_id": "1C8C8iPp9JsLWzv9lTEelWwH1T1H54lSx",
+    "status": "cropped",
+    "original_size": [
+      352,
+      508
+    ],
+    "new_size": [
+      308,
+      463
+    ],
+    "saved_bytes": 26355,
+    "error": null
+  },
+  {
+    "slug": "varsity-t-dark-yellow",
+    "name": "Varsity T - Dark Yellow",
+    "category": "",
+    "file_id": "171AgUWoGkS_A_dgkIXqi1_r8OjzCga4L",
+    "status": "cropped",
+    "original_size": [
+      352,
+      508
+    ],
+    "new_size": [
+      308,
+      463
+    ],
+    "saved_bytes": 29391,
+    "error": null
+  },
+  {
+    "slug": "varsity-t-light-blue",
+    "name": "Varsity T - Light Blue",
+    "category": "",
+    "file_id": "1JsMtZ21Wmm8No-CrelBHQcoGRXUN3s5g",
+    "status": "cropped",
+    "original_size": [
+      352,
+      508
+    ],
+    "new_size": [
+      308,
+      463
+    ],
+    "saved_bytes": 12140,
+    "error": null
+  },
+  {
+    "slug": "varsity-t-light-pink",
+    "name": "Varsity T - Light Pink",
+    "category": "",
+    "file_id": "1inaNDzxjT85DuA498cEsSDtktimvWeyH",
+    "status": "cropped",
+    "original_size": [
+      352,
+      508
+    ],
+    "new_size": [
+      308,
+      463
+    ],
+    "saved_bytes": 3240,
+    "error": null
+  },
+  {
+    "slug": "varsity-t-matcha",
+    "name": "Varsity T - Matcha",
+    "category": "",
+    "file_id": "1gKHUZl2ONisjkcFniLT14zquw68oE1pN",
+    "status": "cropped",
+    "original_size": [
+      352,
+      508
+    ],
+    "new_size": [
+      308,
+      463
+    ],
+    "saved_bytes": 10109,
+    "error": null
+  },
+  {
+    "slug": "varsity-t-pink",
+    "name": "Varsity T - Pink",
+    "category": "",
+    "file_id": "1Y1vOjoi6QiVsUzEvweLp-hAgqErb5TZp",
+    "status": "cropped",
+    "original_size": [
+      352,
+      508
+    ],
+    "new_size": [
+      308,
+      463
+    ],
+    "saved_bytes": 26050,
+    "error": null
+  },
+  {
+    "slug": "varsity-t-purple",
+    "name": "Varsity T - Purple",
+    "category": "",
+    "file_id": "1V5-0GvliFOhcnvSNuoz6brCo69u5G0D5",
+    "status": "cropped",
+    "original_size": [
+      352,
+      508
+    ],
+    "new_size": [
+      308,
+      463
+    ],
+    "saved_bytes": 16053,
+    "error": null
+  },
+  {
+    "slug": "varsity-t-red",
+    "name": "Varsity T - Red",
+    "category": "",
+    "file_id": "1J6EJG9PTQYmHR8P9zCQBRqVd7wBV_HF2",
+    "status": "cropped",
+    "original_size": [
+      352,
+      508
+    ],
+    "new_size": [
+      308,
+      463
+    ],
+    "saved_bytes": 24904,
+    "error": null
+  },
+  {
+    "slug": "varsity-t-white",
+    "name": "Varsity T - White",
+    "category": "",
+    "file_id": "13WzOq0RDUjujG16oBSDOiC0XwHnEHwql",
+    "status": "cropped",
+    "original_size": [
+      352,
+      508
+    ],
+    "new_size": [
+      308,
+      463
+    ],
+    "saved_bytes": -9702,
+    "error": null
+  },
+  {
+    "slug": "varsity-u-black",
+    "name": "Varsity U - Black",
+    "category": "",
+    "file_id": "1ycDGUyC3s2U5BMS0WEC3daKwZ99yy7ZZ",
+    "status": "cropped",
+    "original_size": [
+      344,
+      511
+    ],
+    "new_size": [
+      299,
+      466
+    ],
+    "saved_bytes": 16246,
+    "error": null
+  },
+  {
+    "slug": "varsity-u-burgundy",
+    "name": "Varsity U - Burgundy",
+    "category": "",
+    "file_id": "1WDhe2s8NkMW3mbRf7SGU2BAXWn_fxFQs",
+    "status": "cropped",
+    "original_size": [
+      344,
+      511
+    ],
+    "new_size": [
+      299,
+      466
+    ],
+    "saved_bytes": 34482,
+    "error": null
+  },
+  {
+    "slug": "varsity-u-dark-yellow",
+    "name": "Varsity U - Dark Yellow",
+    "category": "",
+    "file_id": "1FSqCWlJ0nt6mPjH35hMk446C0E1jOnOB",
+    "status": "cropped",
+    "original_size": [
+      344,
+      511
+    ],
+    "new_size": [
+      299,
+      466
+    ],
+    "saved_bytes": 40424,
+    "error": null
+  },
+  {
+    "slug": "varsity-u-light-blue",
+    "name": "Varsity U - Light Blue",
+    "category": "",
+    "file_id": "1eEs0YDpuuDoompHP3G0kcpQNBslFGsU9",
+    "status": "cropped",
+    "original_size": [
+      344,
+      511
+    ],
+    "new_size": [
+      299,
+      466
+    ],
+    "saved_bytes": 12657,
+    "error": null
+  },
+  {
+    "slug": "varsity-u-light-pink",
+    "name": "Varsity U - Light Pink",
+    "category": "",
+    "file_id": "1bibAnZYPvzH3qcFW51pK-3vxgHFR_9un",
+    "status": "cropped",
+    "original_size": [
+      344,
+      511
+    ],
+    "new_size": [
+      299,
+      466
+    ],
+    "saved_bytes": 2590,
+    "error": null
+  },
+  {
+    "slug": "varsity-u-matcha",
+    "name": "Varsity U - Matcha",
+    "category": "",
+    "file_id": "1tOLgFAWyJZDRbXqmVCi6FjsWfuY_PyaK",
+    "status": "cropped",
+    "original_size": [
+      344,
+      511
+    ],
+    "new_size": [
+      299,
+      466
+    ],
+    "saved_bytes": 10022,
+    "error": null
+  },
+  {
+    "slug": "varsity-u-pink",
+    "name": "Varsity U - Pink",
+    "category": "",
+    "file_id": "1hCjdH7she92wE7SXLYl9ekp0sgDS4TOc",
+    "status": "cropped",
+    "original_size": [
+      344,
+      511
+    ],
+    "new_size": [
+      299,
+      466
+    ],
+    "saved_bytes": 32928,
+    "error": null
+  },
+  {
+    "slug": "varsity-u-purple",
+    "name": "Varsity U - Purple",
+    "category": "",
+    "file_id": "1D7yQ7eDNGIiBxv2yx8jROurKcBLPW5P2",
+    "status": "cropped",
+    "original_size": [
+      344,
+      511
+    ],
+    "new_size": [
+      299,
+      466
+    ],
+    "saved_bytes": 18053,
+    "error": null
+  },
+  {
+    "slug": "varsity-u-red",
+    "name": "Varsity U - Red",
+    "category": "",
+    "file_id": "1jyPV7OFRm-zktrsd0bOWWkpNzrUMirCm",
+    "status": "cropped",
+    "original_size": [
+      344,
+      511
+    ],
+    "new_size": [
+      299,
+      466
+    ],
+    "saved_bytes": 32895,
+    "error": null
+  },
+  {
+    "slug": "varsity-u-white",
+    "name": "Varsity U - White",
+    "category": "",
+    "file_id": "1FrbDmbYfKeb6txFy8xx69HVUoI5CLk9e",
+    "status": "cropped",
+    "original_size": [
+      344,
+      511
+    ],
+    "new_size": [
+      299,
+      466
+    ],
+    "saved_bytes": -15315,
+    "error": null
+  },
+  {
+    "slug": "varsity-v-black",
+    "name": "Varsity V - Black",
+    "category": "",
+    "file_id": "1Ru1S6PQOC6A9TnG_jLBAQl_bT6auJL6R",
+    "status": "cropped",
+    "original_size": [
+      356,
+      510
+    ],
+    "new_size": [
+      312,
+      466
+    ],
+    "saved_bytes": 16587,
+    "error": null
+  },
+  {
+    "slug": "varsity-v-burgundy",
+    "name": "Varsity V - Burgundy",
+    "category": "",
+    "file_id": "1ypQKLfdaz4TRN1Mw9PjUz2Z1PEjEPWjG",
+    "status": "cropped",
+    "original_size": [
+      356,
+      510
+    ],
+    "new_size": [
+      312,
+      466
+    ],
+    "saved_bytes": 34385,
+    "error": null
+  },
+  {
+    "slug": "varsity-v-dark-yellow",
+    "name": "Varsity V - Dark Yellow",
+    "category": "",
+    "file_id": "1xRPXizkwad5dFN_WfR5ypGi-VWiNyzTl",
+    "status": "cropped",
+    "original_size": [
+      356,
+      510
+    ],
+    "new_size": [
+      312,
+      466
+    ],
+    "saved_bytes": 39673,
+    "error": null
+  },
+  {
+    "slug": "varsity-v-light-blue",
+    "name": "Varsity V - Light Blue",
+    "category": "",
+    "file_id": "114Q2mRe4qA74U_Nz_SbbHvhB2mu-xDU4",
+    "status": "cropped",
+    "original_size": [
+      356,
+      510
+    ],
+    "new_size": [
+      312,
+      466
+    ],
+    "saved_bytes": 13654,
+    "error": null
+  },
+  {
+    "slug": "varsity-v-light-pink",
+    "name": "Varsity V - Light Pink",
+    "category": "",
+    "file_id": "1hZ7jiBxQfh158cVNZ83UyDi4b51XLjYb",
+    "status": "cropped",
+    "original_size": [
+      356,
+      510
+    ],
+    "new_size": [
+      312,
+      466
+    ],
+    "saved_bytes": 3760,
+    "error": null
+  },
+  {
+    "slug": "varsity-v-matcha",
+    "name": "Varsity V - Matcha",
+    "category": "",
+    "file_id": "1O5QlPimQthvKfEg6WkcJly1rx5yH5fu8",
+    "status": "cropped",
+    "original_size": [
+      356,
+      510
+    ],
+    "new_size": [
+      312,
+      466
+    ],
+    "saved_bytes": 11331,
+    "error": null
+  },
+  {
+    "slug": "varsity-v-pink",
+    "name": "Varsity V - Pink",
+    "category": "",
+    "file_id": "1UAq7FKv4N5pmHsaAiouQ6-4h1_Kq2hH9",
+    "status": "cropped",
+    "original_size": [
+      356,
+      510
+    ],
+    "new_size": [
+      312,
+      466
+    ],
+    "saved_bytes": 32523,
+    "error": null
+  },
+  {
+    "slug": "varsity-v-purple",
+    "name": "Varsity V - Purple",
+    "category": "",
+    "file_id": "163jGkM-D-15dLuIAAs4DYwk4K4Ve4RPD",
+    "status": "cropped",
+    "original_size": [
+      356,
+      510
+    ],
+    "new_size": [
+      312,
+      466
+    ],
+    "saved_bytes": 18911,
+    "error": null
+  },
+  {
+    "slug": "varsity-v-red",
+    "name": "Varsity V - Red",
+    "category": "",
+    "file_id": "171WoXgF66-imfO38nfnkSfK8DsZOqhRT",
+    "status": "cropped",
+    "original_size": [
+      356,
+      510
+    ],
+    "new_size": [
+      312,
+      466
+    ],
+    "saved_bytes": 32282,
+    "error": null
+  },
+  {
+    "slug": "varsity-v-white",
+    "name": "Varsity V - White",
+    "category": "",
+    "file_id": "1gxC3GxtsXZjJ7s82HYpVh4K7pa2jKu1P",
+    "status": "cropped",
+    "original_size": [
+      356,
+      510
+    ],
+    "new_size": [
+      312,
+      466
+    ],
+    "saved_bytes": -13928,
+    "error": null
+  },
+  {
+    "slug": "varsity-w-black",
+    "name": "Varsity W - Black",
+    "category": "",
+    "file_id": "1JKDLRBBWm4L7zDOOp2k8ixla87q-nZqI",
+    "status": "cropped",
+    "original_size": [
+      433,
+      511
+    ],
+    "new_size": [
+      390,
+      466
+    ],
+    "saved_bytes": 23447,
+    "error": null
+  },
+  {
+    "slug": "varsity-w-burgundy",
+    "name": "Varsity W - Burgundy",
+    "category": "",
+    "file_id": "1bOo99O6HgVdjdrXZ2gEGgUlaeuJTpM8u",
+    "status": "cropped",
+    "original_size": [
+      433,
+      511
+    ],
+    "new_size": [
+      390,
+      466
+    ],
+    "saved_bytes": 45385,
+    "error": null
+  },
+  {
+    "slug": "varsity-w-dark-yellow",
+    "name": "Varsity W - Dark Yellow",
+    "category": "",
+    "file_id": "1y5epBvAl15_cJKCjhHbthrg_ojbHn0Gx",
+    "status": "cropped",
+    "original_size": [
+      433,
+      511
+    ],
+    "new_size": [
+      390,
+      466
+    ],
+    "saved_bytes": 54872,
+    "error": null
+  },
+  {
+    "slug": "varsity-w-light-blue",
+    "name": "Varsity W - Light Blue",
+    "category": "",
+    "file_id": "1S5cjSAWf5V68klz_r37WVs6e0VT5OYaM",
+    "status": "cropped",
+    "original_size": [
+      433,
+      511
+    ],
+    "new_size": [
+      390,
+      466
+    ],
+    "saved_bytes": 19249,
+    "error": null
+  },
+  {
+    "slug": "varsity-w-light-pink",
+    "name": "Varsity W - Light Pink",
+    "category": "",
+    "file_id": "1QLJGAaFfcCucKXFC4b4a-vXpIs7YBpCy",
+    "status": "cropped",
+    "original_size": [
+      433,
+      511
+    ],
+    "new_size": [
+      390,
+      466
+    ],
+    "saved_bytes": 5030,
+    "error": null
+  },
+  {
+    "slug": "varsity-w-matcha",
+    "name": "Varsity W - Matcha",
+    "category": "",
+    "file_id": "1k8WKA4ps8EMQ9QMQLWfcU-ptqC5gqgRR",
+    "status": "cropped",
+    "original_size": [
+      433,
+      511
+    ],
+    "new_size": [
+      390,
+      466
+    ],
+    "saved_bytes": 15707,
+    "error": null
+  },
+  {
+    "slug": "varsity-w-pink",
+    "name": "Varsity W - Pink",
+    "category": "",
+    "file_id": "1MXwhDZoUVcr9ysuXwCG4MKdtteq6u-vt",
+    "status": "cropped",
+    "original_size": [
+      433,
+      511
+    ],
+    "new_size": [
+      390,
+      466
+    ],
+    "saved_bytes": 41069,
+    "error": null
+  },
+  {
+    "slug": "varsity-w-purple",
+    "name": "Varsity W - Purple",
+    "category": "",
+    "file_id": "1wvV-y7wgJqXOZH2wtvIaz82OyELkDqXa",
+    "status": "cropped",
+    "original_size": [
+      433,
+      511
+    ],
+    "new_size": [
+      390,
+      466
+    ],
+    "saved_bytes": 26460,
+    "error": null
+  },
+  {
+    "slug": "varsity-w-red",
+    "name": "Varsity W - Red",
+    "category": "",
+    "file_id": "1Lr9kU3F-iMLXOjpP5w7sJJyHbzr7Tb-N",
+    "status": "cropped",
+    "original_size": [
+      433,
+      511
+    ],
+    "new_size": [
+      390,
+      466
+    ],
+    "saved_bytes": 43773,
+    "error": null
+  },
+  {
+    "slug": "varsity-w-white",
+    "name": "Varsity W - White",
+    "category": "",
+    "file_id": "1JAefylVFHb0HjlslOosQrfREDCdBE3Hu",
+    "status": "cropped",
+    "original_size": [
+      433,
+      511
+    ],
+    "new_size": [
+      390,
+      466
+    ],
+    "saved_bytes": -20331,
+    "error": null
+  },
+  {
+    "slug": "varsity-x-black",
+    "name": "Varsity X - Black",
+    "category": "",
+    "file_id": "1ljASWONMxnsVMEgcV2NnVPr287cCGwZh",
+    "status": "cropped",
+    "original_size": [
+      381,
+      507
+    ],
+    "new_size": [
+      336,
+      463
+    ],
+    "saved_bytes": 18677,
+    "error": null
+  },
+  {
+    "slug": "varsity-x-burgundy",
+    "name": "Varsity X - Burgundy",
+    "category": "",
+    "file_id": "1-XdHkYfY-o2K3MeUFP31_w8Hut-k158j",
+    "status": "cropped",
+    "original_size": [
+      381,
+      507
+    ],
+    "new_size": [
+      336,
+      463
+    ],
+    "saved_bytes": 37534,
+    "error": null
+  },
+  {
+    "slug": "varsity-x-dark-yellow",
+    "name": "Varsity X - Dark Yellow",
+    "category": "",
+    "file_id": "1N8MiAUBWduSgDt89qtYn6B3oZf2OmpkO",
+    "status": "cropped",
+    "original_size": [
+      381,
+      507
+    ],
+    "new_size": [
+      336,
+      463
+    ],
+    "saved_bytes": 43860,
+    "error": null
+  },
+  {
+    "slug": "varsity-x-light-blue",
+    "name": "Varsity X - Light Blue",
+    "category": "",
+    "file_id": "1UESmGrYJpjv21venqEss1ygQZNFzGcXp",
+    "status": "cropped",
+    "original_size": [
+      381,
+      507
+    ],
+    "new_size": [
+      336,
+      463
+    ],
+    "saved_bytes": 18085,
+    "error": null
+  },
+  {
+    "slug": "varsity-x-light-pink",
+    "name": "Varsity X - Light Pink",
+    "category": "",
+    "file_id": "1D44XHPqPy-I6n9WZHAaZoa6xfjyeEmwT",
+    "status": "cropped",
+    "original_size": [
+      381,
+      507
+    ],
+    "new_size": [
+      336,
+      463
+    ],
+    "saved_bytes": 7877,
+    "error": null
+  },
+  {
+    "slug": "varsity-x-matcha",
+    "name": "Varsity X - Matcha",
+    "category": "",
+    "file_id": "1fGY8JElzCz6-qwVPm098tZjBocKkgXU8",
+    "status": "cropped",
+    "original_size": [
+      381,
+      507
+    ],
+    "new_size": [
+      336,
+      463
+    ],
+    "saved_bytes": 14341,
+    "error": null
+  },
+  {
+    "slug": "varsity-x-pink",
+    "name": "Varsity X - Pink",
+    "category": "",
+    "file_id": "1AGNrA8x3IvkOC2YENnEOU34vPFRLKcj1",
+    "status": "cropped",
+    "original_size": [
+      381,
+      507
+    ],
+    "new_size": [
+      336,
+      463
+    ],
+    "saved_bytes": 36469,
+    "error": null
+  },
+  {
+    "slug": "varsity-x-purple",
+    "name": "Varsity X - Purple",
+    "category": "",
+    "file_id": "1mkIxpK9P7KEMDMf4ROVYMi-8A3yHF6H7",
+    "status": "cropped",
+    "original_size": [
+      381,
+      507
+    ],
+    "new_size": [
+      336,
+      463
+    ],
+    "saved_bytes": 19553,
+    "error": null
+  },
+  {
+    "slug": "varsity-x-red",
+    "name": "Varsity X - Red",
+    "category": "",
+    "file_id": "1RLq1F1TXTNxcDvqp_ndgJ2jtTfp2jcZo",
+    "status": "cropped",
+    "original_size": [
+      381,
+      507
+    ],
+    "new_size": [
+      336,
+      463
+    ],
+    "saved_bytes": 33156,
+    "error": null
+  },
+  {
+    "slug": "varsity-x-white",
+    "name": "Varsity X - White",
+    "category": "",
+    "file_id": "1TEAi19s-oK43qQJFx9zkDNuAGlycvs7M",
+    "status": "cropped",
+    "original_size": [
+      381,
+      507
+    ],
+    "new_size": [
+      336,
+      463
+    ],
+    "saved_bytes": -8318,
+    "error": null
+  },
+  {
+    "slug": "varsity-y-black",
+    "name": "Varsity Y - Black",
+    "category": "",
+    "file_id": "1_vdnOqmeG3aDw_21di_BYW6iyWI7gle-",
+    "status": "cropped",
+    "original_size": [
+      381,
+      507
+    ],
+    "new_size": [
+      335,
+      462
+    ],
+    "saved_bytes": 17401,
+    "error": null
+  },
+  {
+    "slug": "varsity-y-burgundy",
+    "name": "Varsity Y - Burgundy",
+    "category": "",
+    "file_id": "1jIDFiFFetzgCljpDgoqdW4hQK0gtCGh2",
+    "status": "cropped",
+    "original_size": [
+      381,
+      507
+    ],
+    "new_size": [
+      335,
+      462
+    ],
+    "saved_bytes": 32504,
+    "error": null
+  },
+  {
+    "slug": "varsity-y-dark-yellow",
+    "name": "Varsity Y - Dark Yellow",
+    "category": "",
+    "file_id": "1gnvvXv9bGpoEw3u4IXlSPic6Y82DlFVN",
+    "status": "cropped",
+    "original_size": [
+      381,
+      507
+    ],
+    "new_size": [
+      335,
+      462
+    ],
+    "saved_bytes": 37221,
+    "error": null
+  },
+  {
+    "slug": "varsity-y-light-blue",
+    "name": "Varsity Y - Light Blue",
+    "category": "",
+    "file_id": "1StV7VcuZBf_AlPhmroknydf23VvfbofG",
+    "status": "cropped",
+    "original_size": [
+      381,
+      507
+    ],
+    "new_size": [
+      335,
+      462
+    ],
+    "saved_bytes": 16683,
+    "error": null
+  },
+  {
+    "slug": "varsity-y-light-pink",
+    "name": "Varsity Y - Light Pink",
+    "category": "",
+    "file_id": "1EAC2JSiMarCMoaESL7KHon4QueLVnPp3",
+    "status": "cropped",
+    "original_size": [
+      381,
+      507
+    ],
+    "new_size": [
+      335,
+      462
+    ],
+    "saved_bytes": 6516,
+    "error": null
+  },
+  {
+    "slug": "varsity-y-matcha",
+    "name": "Varsity Y - Matcha",
+    "category": "",
+    "file_id": "17YyxZQnrWdmnCj81jSVzEHNNKWWe3E32",
+    "status": "cropped",
+    "original_size": [
+      381,
+      507
+    ],
+    "new_size": [
+      335,
+      462
+    ],
+    "saved_bytes": 12917,
+    "error": null
+  },
+  {
+    "slug": "varsity-y-pink",
+    "name": "Varsity Y - Pink",
+    "category": "",
+    "file_id": "1cSKqUpE_iz29M9Sh0z7EnhbSAdhqINJ0",
+    "status": "cropped",
+    "original_size": [
+      381,
+      507
+    ],
+    "new_size": [
+      335,
+      462
+    ],
+    "saved_bytes": 32767,
+    "error": null
+  },
+  {
+    "slug": "varsity-y-purple",
+    "name": "Varsity Y - Purple",
+    "category": "",
+    "file_id": "1JeCTU27JUJTirDwfMq7T53NcB1r-w3o9",
+    "status": "cropped",
+    "original_size": [
+      381,
+      507
+    ],
+    "new_size": [
+      335,
+      462
+    ],
+    "saved_bytes": 18292,
+    "error": null
+  },
+  {
+    "slug": "varsity-y-red",
+    "name": "Varsity Y - Red",
+    "category": "",
+    "file_id": "1kmUNBRH4Xw2jQe9mbFQVDfDG_wpIcQCh",
+    "status": "cropped",
+    "original_size": [
+      381,
+      507
+    ],
+    "new_size": [
+      335,
+      462
+    ],
+    "saved_bytes": 28662,
+    "error": null
+  },
+  {
+    "slug": "varsity-y-white",
+    "name": "Varsity Y - White",
+    "category": "",
+    "file_id": "1SaVLZEwgnqao0MTI0J_Xgs41Pk3ufw3A",
+    "status": "cropped",
+    "original_size": [
+      381,
+      507
+    ],
+    "new_size": [
+      335,
+      462
+    ],
+    "saved_bytes": -5281,
+    "error": null
+  },
+  {
+    "slug": "varsity-z-black",
+    "name": "Varsity Z - Black",
+    "category": "",
+    "file_id": "1RZ4GoznJ5FUFtVRBNRSEFg0py2HTi9Fd",
+    "status": "cropped",
+    "original_size": [
+      309,
+      508
+    ],
+    "new_size": [
+      267,
+      462
+    ],
+    "saved_bytes": 17190,
+    "error": null
+  },
+  {
+    "slug": "varsity-z-burgundy",
+    "name": "Varsity Z - Burgundy",
+    "category": "",
+    "file_id": "15TK_0z7-ZVjeSP7Z9ceSVw75X0x7abl5",
+    "status": "cropped",
+    "original_size": [
+      309,
+      508
+    ],
+    "new_size": [
+      267,
+      462
+    ],
+    "saved_bytes": 34611,
+    "error": null
+  },
+  {
+    "slug": "varsity-z-dark-yellow",
+    "name": "Varsity Z - Dark Yellow",
+    "category": "",
+    "file_id": "12wGJKtlCnoGefT6OoqQ9sdG3zRChCEYa",
+    "status": "cropped",
+    "original_size": [
+      309,
+      508
+    ],
+    "new_size": [
+      267,
+      462
+    ],
+    "saved_bytes": 39109,
+    "error": null
+  },
+  {
+    "slug": "varsity-z-light-blue",
+    "name": "Varsity Z - Light Blue",
+    "category": "",
+    "file_id": "1exfZEaPWo4-v7RjUN4VnzfgT4VvuHLPd",
+    "status": "cropped",
+    "original_size": [
+      309,
+      508
+    ],
+    "new_size": [
+      267,
+      462
+    ],
+    "saved_bytes": 17160,
+    "error": null
+  },
+  {
+    "slug": "varsity-z-light-pink",
+    "name": "Varsity Z - Light Pink",
+    "category": "",
+    "file_id": "1euhPdJDaPXjVogLuuNRLoi3fVWm2EO_S",
+    "status": "cropped",
+    "original_size": [
+      309,
+      508
+    ],
+    "new_size": [
+      267,
+      462
+    ],
+    "saved_bytes": 6885,
+    "error": null
+  },
+  {
+    "slug": "varsity-z-matcha",
+    "name": "Varsity Z - Matcha",
+    "category": "",
+    "file_id": "1xNYEN9lmpKtzBSVLSEaR_I7YWyHmH78c",
+    "status": "cropped",
+    "original_size": [
+      309,
+      508
+    ],
+    "new_size": [
+      267,
+      462
+    ],
+    "saved_bytes": 12722,
+    "error": null
+  },
+  {
+    "slug": "varsity-z-pink",
+    "name": "Varsity Z - Pink",
+    "category": "",
+    "file_id": "1pk7pUy_NrOHV5_qVAZTJiHNmZysO8x-0",
+    "status": "cropped",
+    "original_size": [
+      309,
+      508
+    ],
+    "new_size": [
+      267,
+      462
+    ],
+    "saved_bytes": 33895,
+    "error": null
+  },
+  {
+    "slug": "varsity-z-purple",
+    "name": "Varsity Z - Purple",
+    "category": "",
+    "file_id": "1gQjy4owyClC1sQHLBDMB0vKogdyf0IB3",
+    "status": "cropped",
+    "original_size": [
+      309,
+      508
+    ],
+    "new_size": [
+      267,
+      462
+    ],
+    "saved_bytes": 17713,
+    "error": null
+  },
+  {
+    "slug": "varsity-z-red",
+    "name": "Varsity Z - Red",
+    "category": "",
+    "file_id": "1oTT4KflRdTcsHHVEr8MTM9T83IlnsqpI",
+    "status": "cropped",
+    "original_size": [
+      309,
+      508
+    ],
+    "new_size": [
+      267,
+      462
+    ],
+    "saved_bytes": 28706,
+    "error": null
+  },
+  {
+    "slug": "varsity-z-white",
+    "name": "Varsity Z - White",
+    "category": "",
+    "file_id": "1VTB3fxukyvJhD2pXXtuKVdyTpCCP7eP5",
+    "status": "cropped",
+    "original_size": [
+      309,
+      508
+    ],
+    "new_size": [
+      267,
+      462
+    ],
+    "saved_bytes": -6244,
+    "error": null
+  }
+]

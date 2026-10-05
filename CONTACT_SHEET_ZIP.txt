@@ -1,0 +1,41 @@
+CONTACT SHEET — DOWNLOAD THE ICONS' FILES AS A ZIP
+==================================================
+
+WHAT'S NEW
+  A new "Icon files" card on the contact sheet page (under the existing
+  PNG / PDF / HTML sheet export). It zips the actual files for every icon
+  currently on the sheet.
+
+    File type  [x] PNG  [x] OFM  [x] DST      (all on by default)
+    Size       [x] Small [x] Medium [x] Large (applies to OFM/DST; PNG is single)
+    [ Download ZIP (N files) ]
+
+  The button shows the exact file count for your current checkboxes, and
+  live progress while zipping. The ZIP is one folder per type — PNG/, OFM/,
+  DST/ — with the original Drive filenames, named <sheet>-files.zip.
+
+HOW IT WORKS
+  The sheet itself only knows each icon's name + PNG. The embroidery files'
+  IDs live on the full catalog, so the first time a sheet has icons the page
+  fetches /api/icons once and joins by slug. Files are pulled through the same
+  /api/download route and bounded-concurrency zip the downloads page uses
+  (lifted into lib/zipDownload.ts), so nothing downloads until the whole
+  archive is assembled — no empty placeholder file.
+
+  An icon that's been removed from the catalog since the sheet was saved is
+  simply skipped (and not counted). Any single file that fails to fetch is
+  skipped and reported in the status line after the ZIP completes.
+
+FILES (merge, keeping paths)
+  components/ContactSheetGenerator.tsx   the card + data flow
+  lib/zipDownload.ts                     (new) shared zip helper
+
+VALIDATED
+  Built from your live main (6fd89fe). tsc clean + full next build passes.
+
+INSTALL — app code, needs a redeploy
+  cd /d "C:\Users\abbod\Dropbox\File Processing (Don't Open)\ICON APP\abbode-icons"
+  git add -A
+  git commit -m "Contact sheet: download the sheet's icon files as a ZIP (type + size options)"
+  git push
+  Then hard-refresh the contact sheet page.
