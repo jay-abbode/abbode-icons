@@ -1,0 +1,46 @@
+CONTACT SHEET — WHY "HOLIDAY" STOPPED AT ~24 (and the fix)
+==========================================================
+
+WHAT WAS HAPPENING
+  There's no hard cap at 24 (the count goes to 40). The model was choosing to
+  stop. The system prompt frames the job as "a SMALL, tasteful set", then says
+  PRECISION BEATS QUANTITY / "returning far fewer is better", and the request
+  adds "fewer is completely fine". Right for vague themes — but for a broad one
+  like "holiday", where 50 icons literally sit in Holiday categories, it makes
+  the model stop scanning an ~800-line catalog once it has a comfortable
+  handful. Hence ~24, never 50.
+
+THE FIX (lib/contactSheet.ts)
+  1. Deterministic category seeding. If the theme names a category — "holiday"
+     matches Holiday / Holidays / Holiday Party / Winter Holiday — every icon in
+     those categories is seeded first, exhaustively, in catalog order. That part
+     no longer depends on the model at all. If the seed alone covers your count,
+     the model isn't even called (faster, fully repeatable).
+  2. The model fills whatever the seed doesn't — and it's asked for a deeper
+     list when seeds exist so re-picked seeds don't eat slots.
+  3. New prompt rule: on broad themes (a whole category, a season, a holiday)
+     scan the ENTIRE catalog and include every genuine match up to the limit;
+     "fewer" is only for when real matches run out. "christmas" (no category by
+     that name) still goes through the model's semantic matching as before.
+  Everything downstream is unchanged: color limits, palette, Allow drafts,
+  exclusions, and the per-sheet budget all still apply to seeded icons.
+
+FILE (overwrite in place)
+  lib/contactSheet.ts
+
+VALIDATED
+  Built from your live main (f1033a5) with the project's own toolchain
+  (Next 14.2.5, TS 5.9.3): tsc 0 errors, full next build passes.
+
+INSTALL — app code, needs a redeploy
+  cd /d "C:\Users\abbod\Dropbox\File Processing (Don't Open)\ICON APP\abbode-icons"
+  git add -A
+  git commit -m "Contact sheet: seed category matches exhaustively; model fills the rest"
+  git push
+
+HOUSEKEEPING (separate, optional, worth doing)
+  package.json and package-lock.json are out of sync: client-zip is in
+  package.json but missing from the lock file. Vercel's `npm install` tolerates
+  it (deploys work), but strict `npm ci` refuses. To fix, in the repo run:
+      npm install
+  and commit the updated package-lock.json.

@@ -54,6 +54,7 @@ Rules, in priority order:
 - Return ONLY a JSON array of the id numbers, most relevant first. No prose, no markdown, no code fences. Example: [12, 3, 87]
 - Use only ids that appear in the catalog. Never invent one.
 - PRECISION BEATS QUANTITY. Only include icons that genuinely fit the theme. Aim for N, but NEVER pad the list with weak, generic, or tenuous matches just to reach it — returning far fewer strong matches (even 2 or 3) is much better than filling with junk.
+- BUT BE EXHAUSTIVE ON BROAD THEMES. When a theme is broad and many icons genuinely fit — a whole category, a season, a holiday — scan the ENTIRE catalog and include every genuine match up to the limit. "Fewer" is only for when the real matches run out; it is never a reason to stop at a comfortable number. Pay special attention to the (category) on each line: a theme that names a category matches every icon in it.
 - HONOR EXCLUSIONS. If the theme rules something out ("no cats", "not letters", "without red"), never include anything matching it.
 - AVOID ALPHABET ICONS. Single letters and monogram/alphabet sets (categories like Plaid Letters, Cheetah Letters, Cross Stitch, Bandana letters, or any name that is essentially one letter) are a large, generic part of the catalog. Leave them out UNLESS the theme is explicitly about letters, monograms, or initials.
 - Favor recognizable, on-theme picks with visual variety over near-duplicates.`;
@@ -66,6 +67,33 @@ export function normalizeCount(raw: unknown): number {
 }
 
 /** Normalize an optional positive-integer color cap; anything else → null. */
+/** Lowercase word tokens: "Holiday Party!" -> ["holiday", "party"]. */
+function tokenize(s: string): string[] {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+/**
+ * Does the theme name this category? A theme token matches a category word
+ * when they're equal, or when one is a prefix of the other and both are at
+ * least 4 chars — so "holiday" matches "Holidays" and "Holiday Party", while
+ * short noise words never match anything.
+ */
+function categoryMatchesTheme(category: string, themeTokens: string[]): boolean {
+  const catTokens = tokenize(category);
+  return themeTokens.some((tt) =>
+    catTokens.some(
+      (ct) =>
+        ct === tt ||
+        (ct.length >= 4 && tt.length >= 4 && (ct.startsWith(tt) || tt.startsWith(ct)))
+    )
+  );
+}
+
 function normalizeCap(raw: number | null | undefined): number | null {
   return typeof raw === "number" && Number.isFinite(raw) && raw > 0
     ? Math.floor(raw)
@@ -192,43 +220,67 @@ export async function selectIconsForTheme(
     })
     .join("\n");
 
-  // When a per-sheet color budget is active, some relevant picks get dropped for
-  // using colors that don't fit the running budget — so ask Claude for a deeper
-  // ranked list to choose from. We still return at most `n`.
-  const candidateN =
-    perSheet != null ? Math.min(MAX_COUNT, Math.max(n, n * 2)) : n;
+  // ---- Deterministic category seeding ----
+  // If the theme names a category (e.g. "holiday" when 50 icons live in
+  // Holiday categories), every icon in that category is a definite match.
+  // Seed them first, exhaustively, in catalog order — so a broad category
+  // theme never depends on how far the model happens to scan an ~800-line
+  // catalog before it decides it has "enough".
+  const themeTokens = tokenize(cleanTheme).filter((t) => t.length >= 4);
+  const seedIds: number[] = [];
+  if (themeTokens.length > 0) {
+    pool.forEach((icon, idx) => {
+      if (categoryMatchesTheme(icon.category, themeTokens)) seedIds.push(idx);
+    });
+  }
 
-  // The catalog is the same on every request, so it's sent as its own cached
-  // block: repeat generations within ~5 minutes reuse it (cheaper + faster).
-  const requestBody = {
-    model: MATCH_MODEL,
-    max_tokens: 1024,
-    system: SYSTEM_PROMPT,
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: `CATALOG (id  name  (category)):\n${catalogText}`,
-            cache_control: { type: "ephemeral" },
-          },
-          {
-            type: "text",
-            text: `THEME: ${cleanTheme}\nN: ${n}\n\nReturn a JSON array of up to ${candidateN} id numbers that genuinely fit the theme, most relevant first — fewer is completely fine. I'll use the top ${n}.`,
-          },
-        ],
-      },
-    ],
-  };
+  // The model fills whatever the seed doesn't cover. If the seed alone
+  // satisfies N there's nothing to ask it — faster, and fully deterministic.
+  let modelIds: number[] = [];
+  if (seedIds.length < n) {
+    // Ask for a deeper ranked list when a per-sheet color budget is active
+    // (some picks get dropped for busting the budget) or when seeds exist (the
+    // model may re-pick seeded icons, and dedupe would eat those slots).
+    const candidateN =
+      perSheet != null || seedIds.length > 0
+        ? Math.min(MAX_COUNT, Math.max(n, n * 2))
+        : n;
 
-  const data = await callClaude(apiKey, requestBody);
-  const text = (data.content || [])
-    .filter((b) => b.type === "text" && typeof b.text === "string")
-    .map((b) => b.text as string)
-    .join("");
+    // The catalog is the same on every request, so it's sent as its own cached
+    // block: repeat generations within ~5 minutes reuse it (cheaper + faster).
+    const requestBody = {
+      model: MATCH_MODEL,
+      max_tokens: 2048,
+      system: SYSTEM_PROMPT,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `CATALOG (id  name  (category)):\n${catalogText}`,
+              cache_control: { type: "ephemeral" },
+            },
+            {
+              type: "text",
+              text: `THEME: ${cleanTheme}\nN: ${n}\n\nReturn a JSON array of up to ${candidateN} id numbers that genuinely fit the theme, most relevant first. Scan the whole catalog: if many icons genuinely fit, include them all (up to ${candidateN}) — only return fewer when the real matches run out, never to stop at a comfortable number. I'll use the top ${n}.`,
+            },
+          ],
+        },
+      ],
+    };
 
-  const ids = parseIndexArray(text);
+    const data = await callClaude(apiKey, requestBody);
+    const text = (data.content || [])
+      .filter((b) => b.type === "text" && typeof b.text === "string")
+      .map((b) => b.text as string)
+      .join("");
+    modelIds = parseIndexArray(text);
+  }
+
+  // Seeds first (definite matches), then the model's ranked picks. The walk
+  // below dedupes, enforces the sheet color budget, and stops at `n`.
+  const ids = [...seedIds, ...modelIds];
 
   // Walk Claude's ranked ids, validate + dedupe, and (when a per-sheet cap is
   // set) greedily enforce the sheet-wide color budget: an icon is added only if
