@@ -1,0 +1,32 @@
+CONTACT SHEET — ALLOW DRAFTS + STICKY EXCLUDE / REGENERATE
+==========================================================
+
+ALLOW DRAFTS
+  New "Allow drafts" checkbox in the color-limits row (next to Limit Palette).
+  Off by default = active designs only (unchanged). On = DRAFT icons can be
+  picked by the model AND show up in the add-by-name list.
+
+EXCLUDE + REGENERATE
+  The ✕ on an icon now does two things: removes it from the sheet AND marks it
+  excluded. Excluded icons are sent with every Regenerate, filtered out of the
+  pool BEFORE the model picks, so they can't come back — and the sheet refills
+  to your requested count with other icons.
+
+  A "Kept out on regenerate" strip appears under the Regenerate button listing
+  the excluded icons. Click an icon's ✕ there to allow it again, or Clear to
+  reset. Exclusions clear automatically when you change the theme (a new theme
+  is a fresh start), and hand-adding an excluded icon by name un-excludes it.
+
+FILES (merge, keeping paths)
+  components/ContactSheetGenerator.tsx      checkbox, ✕ -> exclude, chips
+  lib/contactSheet.ts                       pool honors allowDrafts + exclude
+  app/api/contact-sheet/match/route.ts      passes both through
+
+VALIDATED
+  Built from your live main (e48ee60). tsc clean + full next build passes.
+
+INSTALL — app code, needs a redeploy
+  cd /d "C:\Users\abbod\Dropbox\File Processing (Don't Open)\ICON APP\abbode-icons"
+  git add -A
+  git commit -m "Contact sheet: Allow drafts option + sticky exclude on regenerate"
+  git push

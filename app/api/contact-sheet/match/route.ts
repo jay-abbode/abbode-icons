@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * POST /api/contact-sheet/match
- * Body: { theme: string, count: number }
+ * Body: { theme, count, maxPerIcon?, maxPerSheet?, palette?, allowDrafts?, exclude? }
  * Returns: { theme, requested, icons: [{slug,name,category,pngFileId}], note }
  *
  * Protected by the app's middleware, so only signed-in users reach it.
@@ -18,6 +18,8 @@ export async function POST(request: Request) {
     maxPerIcon?: unknown;
     maxPerSheet?: unknown;
     palette?: unknown;
+    allowDrafts?: unknown;
+    exclude?: unknown;
   };
   try {
     body = await request.json();
@@ -36,6 +38,10 @@ export async function POST(request: Request) {
         .map((v) => (typeof v === "number" ? Math.floor(v) : NaN))
         .filter((n) => Number.isInteger(n))
     : [];
+  const allowDrafts = body.allowDrafts === true;
+  const exclude = Array.isArray(body.exclude)
+    ? body.exclude.filter((v): v is string => typeof v === "string" && v.length > 0)
+    : [];
 
   if (!theme.trim()) {
     return NextResponse.json({ error: "Please enter a theme." }, { status: 400 });
@@ -46,6 +52,8 @@ export async function POST(request: Request) {
       maxPerIcon,
       maxPerSheet,
       palette,
+      allowDrafts,
+      exclude,
     });
     return NextResponse.json(selection);
   } catch (error) {

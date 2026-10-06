@@ -85,6 +85,11 @@ export interface ColorCaps {
   /** Fixed set of thread slots the sheet may draw from; an icon qualifies only
    *  if every color it uses is in this set. Empty/undefined = no palette limit. */
   palette?: number[] | null;
+  /** Let DRAFT icons into the pool. Default false: active designs only. */
+  allowDrafts?: boolean;
+  /** Slugs the user has removed from this sheet. They're kept out of the pool,
+   *  so a regenerate can never bring them back and fills their spots instead. */
+  exclude?: string[] | null;
 }
 
 export async function selectIconsForTheme(
@@ -105,16 +110,27 @@ export async function selectIconsForTheme(
 
   const catalog = await getIconCatalog();
 
-  // Only active designs that actually have a rendered PNG can go on a sheet.
-  // Premade Designs are finished, fixed-size products — they're never used as
-  // building blocks on a curated contact sheet, so they're excluded from the
-  // pool the model picks from.
-  let pool = catalog.icons.filter(
-    (i) =>
-      i.status.toUpperCase() === "ACTIVE" &&
-      i.pngFileId &&
-      !isPremadeCategory(i.category)
+  // Only active designs (plus drafts, when allowed) that actually have a
+  // rendered PNG can go on a sheet. Premade Designs are finished, fixed-size
+  // products — never building blocks on a curated sheet — so they're out.
+  // Slugs the user excluded are removed here, before the model ever sees the
+  // pool, so a regenerate fills their spots rather than re-picking them.
+  const allowDrafts = caps.allowDrafts === true;
+  const excluded = new Set(
+    Array.isArray(caps.exclude)
+      ? caps.exclude.filter((s): s is string => typeof s === "string" && s.length > 0)
+      : []
   );
+  let pool = catalog.icons.filter((i) => {
+    const s = i.status.toUpperCase();
+    const statusOk = s === "ACTIVE" || (allowDrafts && s === "DRAFT");
+    return (
+      statusOk &&
+      !!i.pngFileId &&
+      !isPremadeCategory(i.category) &&
+      !excluded.has(i.slug)
+    );
+  });
 
   // Two independent color caps (both optional):
   //   • maxPerIcon  — the most thread SLOTS any single icon may use.

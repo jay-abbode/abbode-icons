@@ -34,7 +34,7 @@ const LOGO_W = 200;
 const LOGO_RATIO = 582.48 / 1428.87; // wordmark viewBox aspect
 
 type SheetIconLite = { slug: string; name: string; pngFileId: string };
-type PoolIcon = { slug: string; name: string; pngFileId: string };
+type PoolIcon = { slug: string; name: string; pngFileId: string; status: string };
 type MatchResponse = {
   theme: string;
   requested: number;
@@ -173,6 +173,12 @@ export default function ContactSheetGenerator({ loadId }: { loadId?: string }) {
   const [labelTouched, setLabelTouched] = useState(false);
 
   const [pool, setPool] = useState<PoolIcon[]>([]);
+  // Let DRAFT icons into the pool (model picks + add-by-name). Off by default.
+  const [allowDrafts, setAllowDrafts] = useState(false);
+  // Icons removed from this sheet, by slug -> name. Sent to the API on every
+  // generate/regenerate so they're kept out of the pool and their spots refill.
+  // Cleared when the theme changes (a new theme is a fresh start).
+  const [excluded, setExcluded] = useState<Map<string, string>>(new Map());
   const [exporting, setExporting] = useState<string | null>(null);
   const [saving, setSaving] = useState<"idle" | "saving" | "saved">("idle");
 
@@ -230,13 +236,20 @@ export default function ContactSheetGenerator({ loadId }: { loadId?: string }) {
         if (cancelled || !cat?.icons) return;
         setPool(
           cat.icons
-            .filter(
-              (i) =>
-                i.status?.toUpperCase() === "ACTIVE" &&
+            .filter((i) => {
+              const st = i.status?.toUpperCase();
+              return (
+                (st === "ACTIVE" || st === "DRAFT") &&
                 i.pngFileId &&
                 !isPremadeCategory(i.category)
-            )
-            .map((i) => ({ slug: i.slug, name: i.name, pngFileId: i.pngFileId as string }))
+              );
+            })
+            .map((i) => ({
+              slug: i.slug,
+              name: i.name,
+              pngFileId: i.pngFileId as string,
+              status: (i.status || "").toUpperCase(),
+            }))
         );
       })
       .catch(() => {});
@@ -265,6 +278,7 @@ export default function ContactSheetGenerator({ loadId }: { loadId?: string }) {
         };
         if (cancelled) return;
         setTheme(s.theme || "");
+        setExcluded(new Map());
         setCount(s.count || s.icons.length || 12);
         setRenderLogo(s.renderLogo);
         setRenderCategory(s.renderCategory);
@@ -355,7 +369,15 @@ export default function ContactSheetGenerator({ loadId }: { loadId?: string }) {
       const res = await fetch("/api/contact-sheet/match", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ theme: t, count, maxPerIcon, maxPerSheet, palette }),
+        body: JSON.stringify({
+          theme: t,
+          count,
+          maxPerIcon,
+          maxPerSheet,
+          palette,
+          allowDrafts,
+          exclude: Array.from(excluded.keys()),
+        }),
       });
       const data = (await res.json()) as MatchResponse & { error?: string };
       if (!res.ok) throw new Error(data.error || "Something went wrong.");
@@ -367,15 +389,40 @@ export default function ContactSheetGenerator({ loadId }: { loadId?: string }) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
       setStatus("ready");
     }
-  }, [theme, count, maxPerIcon, maxPerSheet, palette, labelTouched]);
+  }, [theme, count, maxPerIcon, maxPerSheet, palette, labelTouched, allowDrafts, excluded]);
 
-  const removeIcon = useCallback((slug: string) => {
-    setIcons((prev) => prev.filter((i) => i.slug !== slug));
+  // Removing an icon also EXCLUDES it, so Regenerate can't bring it back and
+  // fills its spot with something else instead.
+  const removeIcon = useCallback((ic: SheetIconLite) => {
+    setIcons((prev) => prev.filter((i) => i.slug !== ic.slug));
+    setExcluded((prev) => new Map(prev).set(ic.slug, ic.name));
     setNote(null);
   }, []);
 
+  const unexclude = useCallback((slug: string) => {
+    setExcluded((prev) => {
+      const next = new Map(prev);
+      next.delete(slug);
+      return next;
+    });
+  }, []);
+
+  // The add-by-name list honors the same draft switch as the model's pool.
+  const visiblePool = useMemo(
+    () => pool.filter((p) => p.status === "ACTIVE" || (allowDrafts && p.status === "DRAFT")),
+    [pool, allowDrafts]
+  );
+
   const addIcon = useCallback((p: PoolIcon) => {
-    setIcons((prev) => (prev.some((i) => i.slug === p.slug) ? prev : [...prev, p]));
+    const lite: SheetIconLite = { slug: p.slug, name: p.name, pngFileId: p.pngFileId };
+    setIcons((prev) => (prev.some((i) => i.slug === p.slug) ? prev : [...prev, lite]));
+    // Hand-adding an icon you'd removed is a change of mind: stop excluding it.
+    setExcluded((prev) => {
+      if (!prev.has(p.slug)) return prev;
+      const next = new Map(prev);
+      next.delete(p.slug);
+      return next;
+    });
     setNote(null);
   }, []);
 
@@ -650,7 +697,10 @@ ${parts.join("\n")}
             <input
               id="cs-theme"
               value={theme}
-              onChange={(e) => setTheme(e.target.value)}
+              onChange={(e) => {
+                setTheme(e.target.value);
+                if (excluded.size) setExcluded(new Map());
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") generate();
               }}
@@ -728,6 +778,15 @@ ${parts.join("\n")}
               <option value="16">16 or fewer</option>
             </select>
           </div>
+          <label className="font-ui flex cursor-pointer items-center gap-2 self-end rounded-lg border border-cream-200 bg-porcelain px-3 py-2.5 text-sm text-espresso hover:bg-pink-soft">
+            <input
+              type="checkbox"
+              checked={allowDrafts}
+              onChange={() => setAllowDrafts((v) => !v)}
+              className="h-4 w-4 accent-berry"
+            />
+            Allow drafts
+          </label>
           <div className="w-full sm:w-auto">
             <button
               type="button"
@@ -894,6 +953,40 @@ ${parts.join("\n")}
                   {status === "matching" ? "…" : "Regenerate"}
                 </button>
               </div>
+              {excluded.size > 0 && (
+                <div className="mt-2 rounded-lg border border-cream-200 bg-porcelain px-2.5 py-2">
+                  <div className="flex items-center justify-between">
+                    <p className="font-ui text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
+                      Kept out on regenerate
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setExcluded(new Map())}
+                      className="font-ui text-[11px] font-semibold text-cherry hover:text-berry"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {Array.from(excluded.entries()).map(([slug, name]) => (
+                      <span
+                        key={slug}
+                        className="font-ui inline-flex items-center gap-1 rounded-full border border-cream-200 bg-white px-2 py-0.5 text-[11px] text-espresso"
+                      >
+                        {name}
+                        <button
+                          type="button"
+                          onClick={() => unexclude(slug)}
+                          aria-label={`Allow ${name} again`}
+                          className="text-ink-muted hover:text-cherry"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="mt-3 grid grid-cols-4 gap-2">
                 {icons.map((ic) => (
                   <div
@@ -909,7 +1002,7 @@ ${parts.join("\n")}
                     />
                     <button
                       type="button"
-                      onClick={() => removeIcon(ic.slug)}
+                      onClick={() => removeIcon(ic)}
                       aria-label={`Remove ${ic.name}`}
                       className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-espresso text-[10px] text-porcelain opacity-0 shadow transition-opacity hover:bg-cherry group-hover:opacity-100"
                     >
@@ -918,7 +1011,7 @@ ${parts.join("\n")}
                   </div>
                 ))}
               </div>
-              <AddIcon pool={pool} existing={icons} onAdd={addIcon} />
+              <AddIcon pool={visiblePool} existing={icons} onAdd={addIcon} />
             </div>
 
             {/* Save to library */}
