@@ -1,0 +1,87 @@
+[
+  {
+    "slug": "blonde-doodle",
+    "name": "Blonde Doodle",
+    "category": "Dogs",
+    "file_id": "1qdZO7RQSWFQnubrj3kjtYNHd5jrzMw01",
+    "status": "cropped",
+    "original_size": [
+      644,
+      557
+    ],
+    "new_size": [
+      599,
+      511
+    ],
+    "saved_bytes": -9505,
+    "error": null
+  },
+  {
+    "slug": "brown-doodle",
+    "name": "Brown Doodle",
+    "category": "Dogs",
+    "file_id": "1A1t3HKqyvQ42iaSaROXuG8ggXP15zyKL",
+    "status": "cropped",
+    "original_size": [
+      644,
+      557
+    ],
+    "new_size": [
+      598,
+      511
+    ],
+    "saved_bytes": -237,
+    "error": null
+  },
+  {
+    "slug": "black-doodle",
+    "name": "Black Doodle",
+    "category": "Dogs",
+    "file_id": "1wwC9SehaQY48zn4KPTlq9d3TD6O20WF_",
+    "status": "cropped",
+    "original_size": [
+      644,
+      557
+    ],
+    "new_size": [
+      599,
+      511
+    ],
+    "saved_bytes": -19302,
+    "error": null
+  },
+  {
+    "slug": "ski-brown-doodle",
+    "name": "Ski Brown Doodle",
+    "category": "Ski Dogs",
+    "file_id": "1JKcOeWn4tGtmQZsyz5wH8rppSR7UD9CY",
+    "status": "cropped",
+    "original_size": [
+      1031,
+      568
+    ],
+    "new_size": [
+      984,
+      520
+    ],
+    "saved_bytes": 45210,
+    "error": null
+  },
+  {
+    "slug": "ski-black-doodle",
+    "name": "Ski Black Doodle",
+    "category": "Ski Dogs",
+    "file_id": "1mVrOuc_g0_1CxKgUaqzQAXrmFfjrRMYe",
+    "status": "cropped",
+    "original_size": [
+      1031,
+      568
+    ],
+    "new_size": [
+      984,
+      520
+    ],
+    "saved_bytes": 10481,
+    "error": null
+  }
+]

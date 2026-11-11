@@ -1,0 +1,19 @@
+[
+  {
+    "slug": "chipmunk",
+    "name": "Chipmunk",
+    "category": "Fall 26",
+    "file_id": "1WuiDqanZ14wPrRvTlO1gVLcLi3eseIAY",
+    "status": "cropped",
+    "original_size": [
+      508,
+      384
+    ],
+    "new_size": [
+      465,
+      336
+    ],
+    "saved_bytes": 24115,
+    "error": null
+  }
+]

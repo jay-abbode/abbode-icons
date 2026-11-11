@@ -110,7 +110,21 @@ export default async function BrowsePage({
   // catalog.icons at all.
   const isCollabView =
     !!category && catalog.collabCategories.includes(category);
-  const sourceIcons = isCollabView ? catalog.collabIcons : catalog.icons;
+
+  // Alphabets (Varsity Letters, Bandana, Yacht Flags …) are flagged in the
+  // catalog rather than removed from it. Here they're split out: the main
+  // view — "All categories", every regular category, and search — never
+  // includes them, and they only show when one of the alphabet categories is
+  // selected.
+  const isAlphabetView =
+    !!category && catalog.alphabetCategories.includes(category);
+  const mainIcons = catalog.icons.filter((i) => !i.isAlphabet);
+  const alphabetIcons = catalog.icons.filter((i) => i.isAlphabet);
+  const sourceIcons = isCollabView
+    ? catalog.collabIcons
+    : isAlphabetView
+      ? alphabetIcons
+      : mainIcons;
   const scopedIcons = sourceIcons.filter(inCurrentView);
 
   const filtered = applyFilters(scopedIcons, {
@@ -136,9 +150,16 @@ export default async function BrowsePage({
   // Catalog-wide counts for the Draft and Archived links in the sidebar.
   // These don't change as the user navigates between views — they always
   // reflect the totals across the whole catalog.
+  // Counted over what the link will actually show. Normally that's the main
+  // icons. Inside an alphabet the Draft/Archived links stay in that alphabet
+  // (see viewScopeCategory below), so they count its designs — otherwise a set
+  // that's still all DRAFT would sit behind a link reading "DRAFT 0".
+  const viewScope = isAlphabetView
+    ? alphabetIcons.filter((i) => i.category === category)
+    : mainIcons;
   let draftCount = 0;
   let archivedCount = 0;
-  for (const i of catalog.icons) {
+  for (const i of viewScope) {
     const s = (i.status || "").toUpperCase();
     if (s === "DRAFT") draftCount++;
     else if (s === "ARCHIVED") archivedCount++;
@@ -151,13 +172,22 @@ export default async function BrowsePage({
   //
   // Regular categories always count from the MAIN catalog (never the collab
   // list), so switching into a collab category doesn't disturb their numbers.
-  const regularScoped = catalog.icons.filter(inCurrentView);
+  const regularScoped = mainIcons.filter(inCurrentView);
   const categoryCounts: Record<string, number> = {};
   for (const i of regularScoped) {
     if (!i.category) continue;
     categoryCounts[i.category] = (categoryCounts[i.category] || 0) + 1;
   }
   const totalCount = regularScoped.length;
+
+  // Alphabet categories: same view scoping, counted from the alphabet icons.
+  const alphabetCategoryCounts: Record<string, number> = {};
+  for (const i of alphabetIcons.filter(inCurrentView)) {
+    alphabetCategoryCounts[i.category] = (alphabetCategoryCounts[i.category] || 0) + 1;
+  }
+  // The regular category list is everything that isn't an alphabet.
+  const alphabetCategorySet = new Set(catalog.alphabetCategories);
+  const mainCategories = catalog.categories.filter((c) => !alphabetCategorySet.has(c));
 
   // Collab categories count from the isolated collab list, same view scoping.
   const collabCategoryCounts: Record<string, number> = {};
@@ -196,6 +226,14 @@ export default async function BrowsePage({
             Home
           </Link>
           <span aria-hidden>›</span>
+          {isAlphabetView && (
+            <>
+              <Link href="/alphabets" className="hover:text-espresso transition-colors">
+                Alphabets
+              </Link>
+              <span aria-hidden>›</span>
+            </>
+          )}
           <span className="text-espresso">{heading}</span>
         </nav>
 
@@ -292,7 +330,9 @@ export default async function BrowsePage({
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-[220px_1fr]">
           <aside className="lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-2">
             <FilterControls
-              categories={catalog.categories}
+              categories={mainCategories}
+              alphabetCategories={catalog.alphabetCategories}
+              alphabetCategoryCounts={alphabetCategoryCounts}
               collabCategories={catalog.collabCategories}
               collabCategoryCounts={collabCategoryCounts}
               currentCategory={category}
@@ -303,6 +343,7 @@ export default async function BrowsePage({
               currentStatusView={statusView}
               draftCount={draftCount}
               archivedCount={archivedCount}
+              viewScopeCategory={isAlphabetView ? category : ""}
               currentSort={sort}
             />
           </aside>

@@ -1,6 +1,6 @@
 @echo off
-cd /d "C:\Users\abbod\Dropbox\File Processing (Don't Open)\ICON APP\abbode-icons"
+cd /d "%~dp0"
 git add -A
-git commit -m "Contact sheet: seed category matches exhaustively; model fills the rest"
+git commit -m "Alphabets section: /alphabets page, lettering sets out of the main catalog views"
 git push
 pause

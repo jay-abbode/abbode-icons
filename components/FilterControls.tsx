@@ -8,6 +8,13 @@ import { isPremadeCategory } from "@/lib/categories";
 interface Props {
   categories: string[];
   /**
+   * Lettering sets (Varsity Letters, Bandana …). They're kept out of the
+   * regular category list; the "Alphabets" group links to the /alphabets page
+   * and shows the open set while one is being browsed. Empty when none exist.
+   */
+  alphabetCategories?: string[];
+  alphabetCategoryCounts?: Record<string, number>;
+  /**
    * Collab (brand-partner) categories, shown under their own "Collabs"
    * subheader beneath the regular categories. Empty when none exist.
    */
@@ -25,15 +32,22 @@ interface Props {
    * view. Used to highlight the matching link below the category section.
    */
   currentStatusView: "DRAFT" | "ARCHIVED" | null;
-  /** Catalog-wide draft/archived counts shown on the view links. */
+  /** Draft/archived counts shown on the view links. */
   draftCount: number;
   archivedCount: number;
+  /**
+   * When set (an alphabet is open), the Draft/Archived links stay inside that
+   * category instead of jumping back to the main catalog.
+   */
+  viewScopeCategory?: string;
   /** Current sort mode: "popular", "az", or null for the default ordering. */
   currentSort: "popular" | "az" | null;
 }
 
 export default function FilterControls({
   categories,
+  alphabetCategories = [],
+  alphabetCategoryCounts,
   collabCategories = [],
   collabCategoryCounts,
   currentCategory,
@@ -44,6 +58,7 @@ export default function FilterControls({
   currentStatusView,
   draftCount,
   archivedCount,
+  viewScopeCategory = "",
   currentSort,
 }: Props) {
   const router = useRouter();
@@ -70,6 +85,13 @@ export default function FilterControls({
   // "Clear all filters" resets all the way to the default Active view —
   // including dropping the status param — so it's a true reset, not just a
   // sub-filter clear within the current view.
+  // Base for the Draft/Archived links: the main catalog, or the open alphabet.
+  const viewBase = viewScopeCategory
+    ? `/browse?category=${encodeURIComponent(viewScopeCategory)}`
+    : "/browse";
+  const viewHref = (status: string) =>
+    `${viewBase}${viewScopeCategory ? "&" : "?"}status=${status}`;
+
   const hasActiveFilters =
     currentCategory || currentColorVar || currentStatusView || currentQuery;
 
@@ -118,6 +140,28 @@ export default function FilterControls({
         </div>
       </FilterGroup>
 
+      {alphabetCategories.length > 0 && (
+        <FilterGroup label="Alphabets">
+          <div className="space-y-0.5">
+            {/* One entry: the sets themselves are picked on the /alphabets page. */}
+            <Link
+              href="/alphabets"
+              className="font-ui flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left text-sm text-ink-soft transition-colors hover:text-espresso"
+            >
+              <span className="flex-1 truncate">All alphabets</span>
+            </Link>
+            {alphabetCategories.includes(currentCategory) && (
+              <RadioRow
+                label={currentCategory}
+                checked
+                count={alphabetCategoryCounts?.[currentCategory]}
+                onSelect={() => setParam("category", currentCategory)}
+              />
+            )}
+          </div>
+        </FilterGroup>
+      )}
+
       {collabCategories.length > 0 && (
         <FilterGroup label="Collabs">
           <div className="space-y-0.5">
@@ -152,18 +196,18 @@ export default function FilterControls({
           <ViewLinkRow
             label="DRAFT"
             count={draftCount}
-            href="/browse?status=DRAFT"
+            href={viewHref("DRAFT")}
             active={currentStatusView === "DRAFT"}
           />
           <ViewLinkRow
             label="ARCHIVED"
             count={archivedCount}
-            href="/browse?status=ARCHIVED"
+            href={viewHref("ARCHIVED")}
             active={currentStatusView === "ARCHIVED"}
           />
           {currentStatusView && (
             <Link
-              href="/browse"
+              href={viewBase}
               className="font-ui mt-1.5 inline-flex items-center gap-1 px-1.5 py-1 text-xs text-ink-muted transition-colors hover:text-cherry"
             >
               <span aria-hidden>←</span> Back to active designs

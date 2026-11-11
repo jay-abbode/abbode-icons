@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getIconCatalog, type Icon } from "@/lib/sheets";
-import { isPremadeCategory } from "@/lib/categories";
+import { isPremadeCategory, pickAlphabetCover } from "@/lib/categories";
 import Header from "@/components/Header";
 import Curtain from "@/components/Curtain";
 import SearchBar from "@/components/SearchBar";
@@ -22,11 +22,16 @@ export default async function HomePage() {
     byCategory.set(icon.category, arr);
   }
 
-  const categories = catalog.categories.map((name) => {
+  const tiles = catalog.categories.map((name) => {
     const items = byCategory.get(name) || [];
     const sample = items.find((i) => i.pngFileId) || items[0];
     return { name, count: items.length, sample };
   });
+  // Lettering sets aren't listed here one by one: a single "Alphabets" tile
+  // opens /alphabets, where each set has its own tile.
+  const alphabetSet = new Set(catalog.alphabetCategories);
+  const categories = tiles.filter((t) => !alphabetSet.has(t.name));
+  const alphabetDesigns = catalog.icons.filter((i) => i.isAlphabet);
 
   return (
     <>
@@ -84,6 +89,14 @@ export default async function HomePage() {
                 accent={isPremadeCategory(category.name)}
               />
             ))}
+            {alphabetDesigns.length > 0 && (
+              <CategoryTile
+                name="Alphabets"
+                count={alphabetDesigns.length}
+                sample={pickAlphabetCover(alphabetDesigns)}
+                href="/alphabets"
+              />
+            )}
           </div>
         </section>
 
@@ -109,17 +122,20 @@ function CategoryTile({
   count,
   sample,
   accent = false,
+  href,
 }: {
   name: string;
   count: number;
   sample?: Icon;
   /** Special-category treatment: berry border, faint wash, berry title. */
   accent?: boolean;
+  /** Where the tile goes. Defaults to this category on the browse page. */
+  href?: string;
 }) {
   const slug = encodeURIComponent(name);
   return (
     <Link
-      href={`/browse?category=${slug}`}
+      href={href ?? `/browse?category=${slug}`}
       className={`group relative flex aspect-[4/5] flex-col overflow-hidden rounded-2xl border p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_30px_-12px_rgba(187,55,103,0.20)] focus-ring ${
         accent
           ? "border-pink bg-pink-soft/40 hover:border-berry"

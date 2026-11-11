@@ -1,6 +1,6 @@
 import { getSheetsClient } from "./google";
 import { parseThreadSlots, parseThreadStops } from "./threadPalette";
-import { orderCategories } from "./categories";
+import { detectAlphabetCategories, orderCategories } from "./categories";
 
 /**
  * Public shape of a single icon, as the rest of the app sees it.
@@ -39,6 +39,15 @@ export interface Icon {
    * their own "Collabs" categories on the browse page.
    */
   isCollab: boolean;
+  /**
+   * True when this design belongs to an alphabet category (Varsity Letters,
+   * Bandana, Yacht Flags …), detected from the category's shape — see
+   * detectAlphabetCategories in lib/categories.ts. Unlike collabs, alphabet
+   * designs STAY in `IconCatalog.icons`: downloads, order stats and the icons
+   * API still need them. Browsing surfaces filter on this flag to keep
+   * lettering sets in their own "Alphabets" section.
+   */
+  isAlphabet: boolean;
   notes: string | null;
   oldName: string | null;
   /** Drive file ID for the PNG, or null. */
@@ -92,6 +101,12 @@ export interface IconCatalog {
   collabIcons: Icon[];
   /** Categories that contain collab designs, alphabetical. */
   collabCategories: string[];
+  /**
+   * Categories that are lettering sets, alphabetical. A subset of
+   * `categories` (which stays complete) — browsing surfaces list these under
+   * "Alphabets" instead of among the regular categories.
+   */
+  alphabetCategories: string[];
   /** Total icons including those with status other than "Approved"/"Active". */
   totalCount: number;
   /** Timestamp this snapshot was fetched (used for cache headers). */
@@ -198,6 +213,8 @@ async function fetchCatalogFromSheet(): Promise<IconCatalog> {
       isMultiColor,
       status: getCellText(row, col.status) || "Unknown",
       isCollab,
+      // Set after the loop, once every row's category is known.
+      isAlphabet: false,
       notes: getCellText(row, col.notes) || null,
       oldName: getCellText(row, col.oldName) || null,
       pngFileId: extractDriveFileId(getCellHyperlink(row, col.png)),
@@ -233,6 +250,14 @@ async function fetchCatalogFromSheet(): Promise<IconCatalog> {
     }
   }
 
+  // Flag lettering sets. Detection needs the whole category, so it runs once
+  // all rows are in. Every status counts toward it — a set that's still all
+  // DRAFT (Varsity Letters) is an alphabet too.
+  const alphabetSet = detectAlphabetCategories(icons);
+  for (const icon of icons) {
+    if (alphabetSet.has(icon.category)) icon.isAlphabet = true;
+  }
+
   return {
     icons,
     // Alphabetical, but with "Premade Designs" pinned to the bottom of the list
@@ -242,6 +267,7 @@ async function fetchCatalogFromSheet(): Promise<IconCatalog> {
     categories: orderCategories(Array.from(categorySet)),
     collabIcons,
     collabCategories: Array.from(collabCategorySet).sort((a, b) => a.localeCompare(b)),
+    alphabetCategories: Array.from(alphabetSet).sort((a, b) => a.localeCompare(b)),
     totalCount: icons.length,
     fetchedAt: new Date().toISOString(),
   };

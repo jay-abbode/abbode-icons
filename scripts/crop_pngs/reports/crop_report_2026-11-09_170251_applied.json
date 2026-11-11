@@ -1,0 +1,665 @@
+[
+  {
+    "slug": "pills",
+    "name": "Pills",
+    "category": "Apothecary",
+    "file_id": "1Y7QfD23PrASUll4nF45WcvY14pQwY604",
+    "status": "cropped",
+    "original_size": [
+      454,
+      510
+    ],
+    "new_size": [
+      410,
+      464
+    ],
+    "saved_bytes": 22457,
+    "error": null
+  },
+  {
+    "slug": "adderall",
+    "name": "Adderall",
+    "category": "Apothecary",
+    "file_id": "1hK8vVmC3xrixUbIlsaC4FKCPyR3kpHy0",
+    "status": "cropped",
+    "original_size": [
+      433,
+      429
+    ],
+    "new_size": [
+      390,
+      383
+    ],
+    "saved_bytes": 34599,
+    "error": null
+  },
+  {
+    "slug": "ozempic-vial",
+    "name": "Ozempic Vial",
+    "category": "Apothecary",
+    "file_id": "1vTnPuxYubJCkHBDCfGI3A0oPTcb4J747",
+    "status": "cropped",
+    "original_size": [
+      265,
+      510
+    ],
+    "new_size": [
+      221,
+      464
+    ],
+    "saved_bytes": -11237,
+    "error": null
+  },
+  {
+    "slug": "pill-bottle",
+    "name": "Pill Bottle",
+    "category": "Apothecary",
+    "file_id": "1jJUR-jwZGMXTgj7l6e8MkXEl4sNv-coE",
+    "status": "cropped",
+    "original_size": [
+      352,
+      510
+    ],
+    "new_size": [
+      305,
+      464
+    ],
+    "saved_bytes": -23062,
+    "error": null
+  },
+  {
+    "slug": "california-border",
+    "name": "California Border",
+    "category": "California",
+    "file_id": "1tZI0SFREpFAUg4LD-mOezGnCPhXYiu-F",
+    "status": "cropped",
+    "original_size": [
+      437,
+      510
+    ],
+    "new_size": [
+      393,
+      465
+    ],
+    "saved_bytes": -14107,
+    "error": null
+  },
+  {
+    "slug": "la-logo",
+    "name": "LA Logo",
+    "category": "California",
+    "file_id": "1jhhNMW5c4JiQ9XFBnWsGN2Z7XBVuTvaA",
+    "status": "cropped",
+    "original_size": [
+      412,
+      509
+    ],
+    "new_size": [
+      367,
+      464
+    ],
+    "saved_bytes": 7306,
+    "error": null
+  },
+  {
+    "slug": "charleston-iced-tea",
+    "name": "Charleston Iced Tea",
+    "category": "Charleston",
+    "file_id": "1IUq-8qDzgNXjs2Tf4hpVVpTPtdqB0HgF",
+    "status": "cropped",
+    "original_size": [
+      279,
+      509
+    ],
+    "new_size": [
+      237,
+      462
+    ],
+    "saved_bytes": 17552,
+    "error": null
+  },
+  {
+    "slug": "charleston-row-houses",
+    "name": "Charleston Row Houses",
+    "category": "Charleston",
+    "file_id": "1yx_F3XN2UXFw-Tpjp2Tq8COjbdq2NJhp",
+    "status": "cropped",
+    "original_size": [
+      507,
+      495
+    ],
+    "new_size": [
+      460,
+      447
+    ],
+    "saved_bytes": 79362,
+    "error": null
+  },
+  {
+    "slug": "chicago-baseball-cap",
+    "name": "Chicago Baseball Cap",
+    "category": "Chicago",
+    "file_id": "1Ngkw6oEs8jpr8ZMKEdK9ubvnzCcV3gCz",
+    "status": "cropped",
+    "original_size": [
+      510,
+      402
+    ],
+    "new_size": [
+      467,
+      356
+    ],
+    "saved_bytes": 2230,
+    "error": null
+  },
+  {
+    "slug": "red-wine",
+    "name": "Red Wine",
+    "category": "Drinks",
+    "file_id": "1VNGukgskgXt_ezimDmtEt54s2NOTkD-J",
+    "status": "cropped",
+    "original_size": [
+      255,
+      509
+    ],
+    "new_size": [
+      210,
+      461
+    ],
+    "saved_bytes": -5217,
+    "error": null
+  },
+  {
+    "slug": "spicy-marg",
+    "name": "Spicy Marg",
+    "category": "Drinks",
+    "file_id": "1VjINLRnGHdBHCGYkeycZHNxs1c7eziaz",
+    "status": "cropped",
+    "original_size": [
+      476,
+      509
+    ],
+    "new_size": [
+      431,
+      463
+    ],
+    "saved_bytes": 2309,
+    "error": null
+  },
+  {
+    "slug": "fries",
+    "name": "Fries",
+    "category": "Food",
+    "file_id": "1xjYDsoPnQ8UsnqGrh6O5Vzq1S0WcaJE5",
+    "status": "cropped",
+    "original_size": [
+      356,
+      511
+    ],
+    "new_size": [
+      312,
+      465
+    ],
+    "saved_bytes": 16781,
+    "error": null
+  },
+  {
+    "slug": "bagel-and-lox",
+    "name": "Bagel & Lox",
+    "category": "Food",
+    "file_id": "1xbpi9-i_zPHdjv7t-TFqX_2bX1Pu9J28",
+    "status": "cropped",
+    "original_size": [
+      510,
+      363
+    ],
+    "new_size": [
+      466,
+      318
+    ],
+    "saved_bytes": 14087,
+    "error": null
+  },
+  {
+    "slug": "burger",
+    "name": "Burger",
+    "category": "Food",
+    "file_id": "1QVT3tLYLQAlMjsWPWXDXGLYE1RXuIPqW",
+    "status": "cropped",
+    "original_size": [
+      510,
+      425
+    ],
+    "new_size": [
+      463,
+      381
+    ],
+    "saved_bytes": 47521,
+    "error": null
+  },
+  {
+    "slug": "honey-bear",
+    "name": "Honey Bear",
+    "category": "Food",
+    "file_id": "1Cj30NS_jD7_u24bHLW5Hw76vUfoeHE94",
+    "status": "cropped",
+    "original_size": [
+      247,
+      510
+    ],
+    "new_size": [
+      204,
+      463
+    ],
+    "saved_bytes": 26105,
+    "error": null
+  },
+  {
+    "slug": "sushi-roll",
+    "name": "Sushi Roll",
+    "category": "Food",
+    "file_id": "1VUdS_JsQdwu5ABQPmItfLR1NSVb37DHo",
+    "status": "cropped",
+    "original_size": [
+      435,
+      423
+    ],
+    "new_size": [
+      388,
+      376
+    ],
+    "saved_bytes": 3171,
+    "error": null
+  },
+  {
+    "slug": "peach",
+    "name": "Peach",
+    "category": "Food",
+    "file_id": "1IUVb3fKJiRgE2e9wCmqa2vQgz0JT0UbX",
+    "status": "cropped",
+    "original_size": [
+      510,
+      488
+    ],
+    "new_size": [
+      466,
+      443
+    ],
+    "saved_bytes": 68462,
+    "error": null
+  },
+  {
+    "slug": "ski-goggles",
+    "name": "Ski Goggles",
+    "category": "Hobby",
+    "file_id": "11q3CIes6Onh_y8wkxwVoCGfq3Gnpu5yR",
+    "status": "cropped",
+    "original_size": [
+      510,
+      278
+    ],
+    "new_size": [
+      467,
+      233
+    ],
+    "saved_bytes": 18074,
+    "error": null
+  },
+  {
+    "slug": "lighter",
+    "name": "Lighter",
+    "category": "Hobby",
+    "file_id": "1wJz0kN2FI1IjxsYPuSGQmk8ftSppNNIK",
+    "status": "cropped",
+    "original_size": [
+      187,
+      509
+    ],
+    "new_size": [
+      141,
+      460
+    ],
+    "saved_bytes": 22172,
+    "error": null
+  },
+  {
+    "slug": "ski-pass",
+    "name": "Ski Pass",
+    "category": "Hobby",
+    "file_id": "1x5aBpTiFJa8K1BFsayOngsKDaTMaz4FI",
+    "status": "cropped",
+    "original_size": [
+      305,
+      509
+    ],
+    "new_size": [
+      261,
+      465
+    ],
+    "saved_bytes": 9131,
+    "error": null
+  },
+  {
+    "slug": "pink-lighter",
+    "name": "Pink Lighter",
+    "category": "Hobby",
+    "file_id": "17xeDE6G4AWGZdpFRUPrSHN4oDlirE7YR",
+    "status": "cropped",
+    "original_size": [
+      182,
+      509
+    ],
+    "new_size": [
+      138,
+      463
+    ],
+    "saved_bytes": 14506,
+    "error": null
+  },
+  {
+    "slug": "bicycle",
+    "name": "Bicycle",
+    "category": "Hobby",
+    "file_id": "1fopDe4xs32KkBcgOe5eZLgH1vgxs0Gaz",
+    "status": "cropped",
+    "original_size": [
+      510,
+      347
+    ],
+    "new_size": [
+      467,
+      303
+    ],
+    "saved_bytes": -11784,
+    "error": null
+  },
+  {
+    "slug": "orange-shopping-bag",
+    "name": "Orange Shopping Bag",
+    "category": "Hobby",
+    "file_id": "1sAR51g7uCxLO_2PL9Hdw4eB6Y_1zA1nP",
+    "status": "cropped",
+    "original_size": [
+      454,
+      510
+    ],
+    "new_size": [
+      409,
+      462
+    ],
+    "saved_bytes": 23042,
+    "error": null
+  },
+  {
+    "slug": "lucky-cat",
+    "name": "Lucky Cat",
+    "category": "Japan",
+    "file_id": "1g6R6pKCNNPpSAumQrWnIQuAnJ_puHt1e",
+    "status": "cropped",
+    "original_size": [
+      385,
+      511
+    ],
+    "new_size": [
+      341,
+      464
+    ],
+    "saved_bytes": 256,
+    "error": null
+  },
+  {
+    "slug": "sun",
+    "name": "Sun",
+    "category": "Nature",
+    "file_id": "1BsJuPIkPIpqzAoa8_qaVeeN4owX_7YBT",
+    "status": "cropped",
+    "original_size": [
+      493,
+      509
+    ],
+    "new_size": [
+      444,
+      460
+    ],
+    "saved_bytes": 35413,
+    "error": null
+  },
+  {
+    "slug": "butterfly",
+    "name": "Butterfly",
+    "category": "Nature",
+    "file_id": "1jADrKuCHgdiMU9_u2B5WSPJKwcz_Go93",
+    "status": "cropped",
+    "original_size": [
+      510,
+      428
+    ],
+    "new_size": [
+      466,
+      383
+    ],
+    "saved_bytes": 32041,
+    "error": null
+  },
+  {
+    "slug": "pink-flower",
+    "name": "Pink Flower",
+    "category": "Nature",
+    "file_id": "1i1E80544X0FAXPQkkIbIFt0o0LSNVLpr",
+    "status": "cropped",
+    "original_size": [
+      509,
+      472
+    ],
+    "new_size": [
+      462,
+      424
+    ],
+    "saved_bytes": 11947,
+    "error": null
+  },
+  {
+    "slug": "hibiscus",
+    "name": "Hibiscus",
+    "category": "Nature",
+    "file_id": "10gsacGb6g9vqmP2yeRC_FtP1RKFdqprD",
+    "status": "cropped",
+    "original_size": [
+      510,
+      476
+    ],
+    "new_size": [
+      465,
+      430
+    ],
+    "saved_bytes": 7209,
+    "error": null
+  },
+  {
+    "slug": "daisy",
+    "name": "Daisy",
+    "category": "Nature",
+    "file_id": "1Vv8E-yAooopNAjnAnD1ZLw5pRCC63ti_",
+    "status": "cropped",
+    "original_size": [
+      509,
+      475
+    ],
+    "new_size": [
+      463,
+      429
+    ],
+    "saved_bytes": -21974,
+    "error": null
+  },
+  {
+    "slug": "metrocard",
+    "name": "MetroCard",
+    "category": "NYC",
+    "file_id": "1v0mlZnqGEY4ec6vuIHHMpxfypDTcV0Si",
+    "status": "cropped",
+    "original_size": [
+      510,
+      365
+    ],
+    "new_size": [
+      466,
+      321
+    ],
+    "saved_bytes": 36114,
+    "error": null
+  },
+  {
+    "slug": "volleyball",
+    "name": "Volleyball",
+    "category": "Sports",
+    "file_id": "1banHO8rYYmIr0Ip6EZbmD5tkQrzvwl5f",
+    "status": "cropped",
+    "original_size": [
+      435,
+      432
+    ],
+    "new_size": [
+      390,
+      388
+    ],
+    "saved_bytes": -17388,
+    "error": null
+  },
+  {
+    "slug": "basketball",
+    "name": "Basketball",
+    "category": "Sports",
+    "file_id": "1kaUVM1zxYVXJ9dzdlxGQ_gLtJgubDbTj",
+    "status": "cropped",
+    "original_size": [
+      435,
+      425
+    ],
+    "new_size": [
+      391,
+      378
+    ],
+    "saved_bytes": 55069,
+    "error": null
+  },
+  {
+    "slug": "skier",
+    "name": "Skier",
+    "category": "Sports",
+    "file_id": "1PiUCFvSl4H86PVgraCg2vauAT_PnAihy",
+    "status": "cropped",
+    "original_size": [
+      509,
+      510
+    ],
+    "new_size": [
+      464,
+      465
+    ],
+    "saved_bytes": 22065,
+    "error": null
+  },
+  {
+    "slug": "sun-tan-lotion",
+    "name": "Sun Tan Lotion",
+    "category": "Summer",
+    "file_id": "1lJ6gPlLLKtDx7xr2KSNJAOnExzpBeFgg",
+    "status": "cropped",
+    "original_size": [
+      215,
+      507
+    ],
+    "new_size": [
+      171,
+      460
+    ],
+    "saved_bytes": 26876,
+    "error": null
+  },
+  {
+    "slug": "beach-chair",
+    "name": "Beach Chair",
+    "category": "Summer",
+    "file_id": "1RcnVNonZn_D2wW5vLm3z_uzkNsWyh36H",
+    "status": "cropped",
+    "original_size": [
+      510,
+      498
+    ],
+    "new_size": [
+      467,
+      451
+    ],
+    "saved_bytes": 19038,
+    "error": null
+  },
+  {
+    "slug": "cape-cod-stamp",
+    "name": "Cape Cod Stamp",
+    "category": "Summer",
+    "file_id": "1YbPrkHoK4Evp9mKE-8yVlgg__WwxzXqX",
+    "status": "cropped",
+    "original_size": [
+      463,
+      510
+    ],
+    "new_size": [
+      418,
+      466
+    ],
+    "saved_bytes": 32571,
+    "error": null
+  },
+  {
+    "slug": "flamingo",
+    "name": "Flamingo",
+    "category": "Summer",
+    "file_id": "1dGD3D69GV4oJir89LH7xZF7dW0hlkZ4a",
+    "status": "cropped",
+    "original_size": [
+      377,
+      509
+    ],
+    "new_size": [
+      332,
+      461
+    ],
+    "saved_bytes": 4295,
+    "error": null
+  },
+  {
+    "slug": "convertible-beetle",
+    "name": "Convertible Beetle",
+    "category": "Travel",
+    "file_id": "1d-59SWYDxEViDuRLzP8U9vkSH-2somqK",
+    "status": "cropped",
+    "original_size": [
+      659,
+      304
+    ],
+    "new_size": [
+      615,
+      259
+    ],
+    "saved_bytes": 14692,
+    "error": null
+  },
+  {
+    "slug": "majong-tiles",
+    "name": "Majong Tiles",
+    "category": "",
+    "file_id": "1a9AQsijc5lrxFpA0izmt67jGvEewmMJ0",
+    "status": "cropped",
+    "original_size": [
+      394,
+      509
+    ],
+    "new_size": [
+      346,
+      461
+    ],
+    "saved_bytes": -5433,
+    "error": null
+  }
+]
