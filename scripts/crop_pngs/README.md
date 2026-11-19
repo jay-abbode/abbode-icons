@@ -62,6 +62,8 @@ status:
 
 - `cropped` — would trim from original size to new size
 - `already_tight` — no meaningful empty space; would be skipped
+- `padding_kept` — already tight at the top and both sides; the space under
+  the design is left in place (see "Padded letters" below)
 - `no_foreground` — couldn't detect content; would be skipped (investigate
   these manually)
 - `no_png` — no PNG file ID in the sheet
@@ -108,6 +110,7 @@ reuses this script's setup and runs the same way.
 | `--no-backup` | off | Skip saving local backups of originals. Not recommended. |
 | `--backup-root DIR` | `backups/` | Local folder to store the original backups in. |
 | `--padding N` | 5 | Pixels of margin to keep around the cropped design. Set to 0 for flush. |
+| `--trim-underneath` | off | Also trim the space under a design that is already tight at the top and sides. |
 | `--limit N` | none | Stop after processing N icons. |
 | `--sheet-id` | from .env.local | Override the sheet ID. |
 
@@ -117,11 +120,25 @@ reuses this script's setup and runs the same way.
   `MASTER` tab. PNGs sitting in Drive but not in the sheet are left alone.
 - It will not re-crop already-tight PNGs (anything where the design covers
   more than 95% of the image).
+- It will not trim the space under a design that is already tight at the top
+  and both sides (see "Padded letters" below).
 - It will not change file IDs, filenames, parent folders, or sharing
   settings. Just the file content.
 - It will not modify your sheet.
 - It will not touch any OFM or DST files.
 - File sizes after cropping are typically 20–50% smaller than the originals.
+
+## Padded letters
+
+In a lettering set where one letter has a tail (the Q in Polka Dot, Shadow and
+Stripe), every other letter's PNG carries transparent rows underneath, so all
+of them sit on a canvas as tall as the Q's and load at the same scale in the
+previewer. Those PNGs are tight at the top and on both sides (5 px), with the
+extra space only below.
+
+Auto-crop leaves such a file alone and reports it as `padding_kept`. A fresh
+DesignShop export has padding on all four sides, so it is still cropped as
+before. To trim the space underneath anyway, run with `--trim-underneath`.
 
 ## If the algorithm makes a wrong call
 

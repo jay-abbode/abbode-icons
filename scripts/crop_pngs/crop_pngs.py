@@ -92,7 +92,7 @@ class IconRow:
 @dataclass
 class CropResult:
     icon: IconRow
-    status: str           # "cropped", "already_tight", "no_png", "no_foreground", "error"
+    status: str           # "cropped", "already_tight", "padding_kept", "no_png", "no_foreground", "error"
     original_size: Optional[tuple[int, int]] = None
     new_size: Optional[tuple[int, int]] = None
     saved_bytes: Optional[int] = None
@@ -320,12 +320,19 @@ def foreground_ratio(bbox, img_size) -> float:
 
 
 def crop_png_bytes(
-    png_bytes: bytes, padding: int
+    png_bytes: bytes, padding: int, keep_space_underneath: bool = True
 ) -> tuple[Optional[bytes], dict]:
     """
     Returns (new_png_bytes_or_None, info_dict).
     info_dict always contains: original_size, status, [new_size, foreground_ratio]
     new_png_bytes_or_None is None if no crop is needed or no foreground detected.
+
+    keep_space_underneath: a PNG that is already tight at the top and on both
+    sides is left alone, whatever space it has under the design. That space is
+    deliberate: lettering sets are padded underneath so every letter sits on a
+    canvas as tall as the letter with a tail (the Q), and they all load at the
+    same scale. A fresh DesignShop export has padding on all four sides, so it
+    is cropped as before.
     """
     img = Image.open(BytesIO(png_bytes))
     img.load()
@@ -355,6 +362,15 @@ def crop_png_bytes(
             "original_size": original_size,
             "foreground_ratio": ratio,
         }
+    if (keep_space_underneath
+            and padded[0] == 0 and padded[1] == 0 and padded[2] == original_size[0]
+            and padded[3] < original_size[1]):
+        # Tight at the top and both sides; the only spare space is underneath.
+        return None, {
+            "status": "padding_kept",
+            "original_size": original_size,
+            "foreground_ratio": ratio,
+        }
     cropped = img.crop(padded)
 
     out = BytesIO()
@@ -379,6 +395,7 @@ def process_one(
     apply: bool,
     backup_dir: Optional[Path],
     padding: int,
+    keep_space_underneath: bool = True,
 ) -> CropResult:
     if not icon.png_file_id:
         return CropResult(icon=icon, status="no_png")
@@ -389,7 +406,7 @@ def process_one(
         return CropResult(icon=icon, status="error", error=f"download: {e}")
 
     try:
-        new_bytes, info = crop_png_bytes(png_bytes, padding)
+        new_bytes, info = crop_png_bytes(png_bytes, padding, keep_space_underneath)
     except Exception as e:
         return CropResult(icon=icon, status="error", error=f"crop: {e}")
 
@@ -474,6 +491,11 @@ def main():
     parser.add_argument(
         "--padding", type=int, default=DEFAULT_PADDING_PX,
         help=f"Pixels of margin to keep around the cropped design (default {DEFAULT_PADDING_PX}).",
+    )
+    parser.add_argument(
+        "--trim-underneath", action="store_true",
+        help="Also trim the space under a design that is already tight at the top "
+             "and sides. Off by default: that space is deliberate (padded letters).",
     )
     parser.add_argument(
         "--limit", type=int, default=None,
@@ -563,6 +585,7 @@ def main():
                 apply=args.apply,
                 backup_dir=backup_dir,
                 padding=args.padding,
+                keep_space_underneath=not args.trim_underneath,
             )
         )
 
@@ -591,6 +614,8 @@ def main():
                 print(f"  CROPPED        {r.icon.name}  {r.original_size} -> {r.new_size}")
             elif r.status == "already_tight":
                 print(f"  ALREADY TIGHT  {r.icon.name}  (>= {SKIP_IF_FOREGROUND_RATIO_ABOVE:.0%} foreground — nothing to trim)")
+            elif r.status == "padding_kept":
+                print(f"  PADDING KEPT   {r.icon.name}  (tight at the top and sides — space underneath left in place)")
             else:
                 print(f"  {r.status.upper():14s} {r.icon.name}" + (f"  ({r.error})" if r.error else ""))
 

@@ -1,0 +1,32 @@
+ABBODE ICONS - AUTO-CROP KEEPS THE PADDING UNDER PADDED LETTERS
+===============================================================
+
+WHY
+  Polka Dot, Shadow and Stripe letters are padded underneath so every letter
+  sits on a canvas as tall as the Q (whose tail drops below the baseline) and
+  they all load at the same scale in the previewer.
+
+  Auto-crop trimmed every pushed PNG to 5 px on all four sides, so a portal
+  send would have cut that padding straight back off and reported success.
+
+WHAT CHANGED
+  A PNG that is already tight at the top and on both sides (within 5 px) is
+  left alone, whatever space it has underneath. It shows up as:
+
+      PADDING KEPT   Polka Dot A - Black and Tusk  (tight at the top and sides
+                     - space underneath left in place)
+
+  Everything else is cropped exactly as before: a fresh DesignShop export has
+  padding on all four sides. Checked against all 1,385 originals in
+  scripts/crop_pngs/backups: every crop decision and every output byte is the
+  same as with the previous script.
+
+  To trim the space underneath anyway:
+      python scripts\crop_pngs\crop_pngs.py --only "Icon Name" --apply --trim-underneath
+
+FILES IN THIS ZIP (extract into the repo root, overwrite)
+  scripts/crop_pngs/crop_pngs.py
+  scripts/crop_pngs/README.md
+  AUTOCROP_KEEP_PADDING.txt
+
+NO VERCEL REDEPLOY - local script only.
